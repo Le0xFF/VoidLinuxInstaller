@@ -51,65 +51,90 @@ function connect_to_wifi () {
   declare wifi_essid
   declare wifi_passphrase
   
-  echo -e "\nChecking internet connectivity..."
+  while true; do
   
-  if ! ping -c2 8.8.8.8 > /dev/null ; then
-    echo -e "\nNo internet connection found."
+    echo -e "\nChecking internet connectivity..."
     
-    if [[ -e /var/service/NetworkManager ]] ; then
+    if ! ping -c2 8.8.8.8 &> /dev/null ; then
+      echo -e -n "\nNo internet connection found. Do you want to use wifi? (y/n): "
+      read -n 1 yn
     
-      while true; do
-        echo -e -n "\nEnter your ESSID and press [ENTER]: "
-        read wifi_essid
-        
-        if [[ ! -z "${wifi_essid}" ]]; then
-          read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
+      if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+      
+        if [[ -e /var/service/NetworkManager ]] ; then
+          while true; do
+            echo
+            read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
             if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+              echo
+              echo
+              nmcli device wifi
+              echo
               nmcli --ask device wifi connect ${wifi_essid} hidden yes
               break
-            else
+            elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+              echo
+              echo
+              nmcli device wifi
+              echo
               nmcli --ask device wifi connect ${wifi_essid}
               break
             fi
+          done
+          
         else
-          echo -e "\nPlease enter a valid ESSID."
+          echo
+          ip a
+          echo
+          while true; do
+            echo -e -n "\nEnter the wifi interface and press [ENTER]: "
+            read wifi_interface
+            if [[ ! -z "${wifi_interface}" ]]; then
+              echo -e -n "\nEnter your ESSID and press [ENTER]: "
+              read wifi_essid
+              if [[ -d /etc/wpa_supplicant/ ]]; then
+                continue
+              else
+                mkdir -p /etc/wpa_supplicant/
+              fi
+              echo -e "\nGenerating configuration files..."
+              wpa_passphrase "${wifi_essid}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
+              wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${wifi_interface}"
+              echo -e "\nEnabling wpa_supplicant service..."
+              if [[ -e /var/service/wpa_supplicant ]]; then
+                echo -e "\nService already enabled, restarting..."
+                sv restart {dhcpcd,wpa_supplicant}
+              else
+                echo -e "\nCreating service, starting..."
+                ln -s /etc/sv/wpa_supplicant /var/service/
+                sv restart {dhcpcd,wpa_supplicant}
+              fi
+              break
+              
+            else
+              echo -e "\nPlease input a valid wifi interface."
+            fi
+            
+          done
         fi
-      done
       
+        if ping -c2 8.8.8.8 &> /dev/null ; then
+          echo -e "\nSuccessfully connected to the internet."
+        fi
+        
+        break
+        
+      elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+        echo -e -n "\nPlease connect your ethernet cable and wait a minute before checking internet again."
+        read -n 1 -r wait
+      fi
+    
     else
-      ip a
-      
-      while true; do
-        echo -e -n "\nEnter the wifi interface and press [ENTER]: "
-        read wifi_interface
-      
-        if [[ ! -z "${wifi_interface}" ]]; then
-          echo -e -n "\nEnter your ESSID and press [ENTER]: "
-          read wifi_essid
-          
-          if [[ -d /etc/wpa_supplicant/ ]]; then
-            continue
-          else
-            mkdir -p /etc/wpa_supplicant/
-          fi
-          
-          echo -e "\nConnecting to wifi..."
-          wpa_passphrase "${wifi_essid}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
-          wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${wifi_interface}"
-        else
-          echo -e "\nPlease input a valid wifi interface."
-        fi
-      done
-      
-     fi
-    
-    if ping -c2 8.8.8.8 > /dev/null ; then
-      echo -e "\nSuccessfully connected to the internet."
+      echo -e "\nAlready connected to the internet."
+      break
     fi
-    
-  else
-    echo -e "\nAlready connected to the internet."
-  fi
+
+  done
 
 }
 
