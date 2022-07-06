@@ -21,34 +21,42 @@ function check_if_run_as_root () {
 }
 
 function set_keyboard_layout () {
-
-  echo -e -n "\nPress any key to list all the keyboard layouts, move with arrow keys and press \"q\" to exit the list."
-  read -n 1 key
+  
   echo
+  read -n 1 -r -p "Do you want to change your keyboard layout? (y/n): " yn
   
-  ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
-  
-  while true ; do
-  
+  if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+
+    echo -e -n "\n\nPress any key to list all the keyboard layouts, move with arrow keys and press \"q\" to exit the list."
+    read -n 1 key
     echo
-    read -p "Choose the keyboard layout you want to set and press [ENTER] or press [ENTER] to keep the one currently set: " user_keyboard_layout
   
-    if [[ -z "${user_keyboard_layout}" ]]; then
-      echo -e "\nNo keyboard layout selected, keeping the previous one."
-      break
-    else
-    
-      if loadkeys ${user_keyboard_layout} 2>/dev/null ; then
-        echo -e "\nKeyboad layout set to \"${user_keyboard_layout}\"."
+    ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
+  
+    while true ; do
+  
+      echo
+      read -p "Choose the keyboard layout you want to set and press [ENTER] or press [ENTER] to keep the one currently set: " user_keyboard_layout
+  
+      if [[ -z "${user_keyboard_layout}" ]]; then
+        echo -e "\nNo keyboard layout selected, keeping the previous one."
         break
       else
-        echo -e "\nNot a valid keyboard layout, please try again.\n"
-      fi
-      
-    fi
     
-  done
-
+        if loadkeys ${user_keyboard_layout} 2>/dev/null ; then
+          echo -e "\nKeyboad layout set to \"${user_keyboard_layout}\"."
+          break
+        else
+          echo -e "\nNot a valid keyboard layout, please try again.\n"
+        fi
+      
+      fi
+    
+    done
+  
+  elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+    echo -e "\n\nKeeping the previous keyboard layout."
+  fi
 }
 
 function connect_to_wifi () {
