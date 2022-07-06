@@ -18,8 +18,8 @@ function check_if_bash () {
 function check_if_run_as_root () {
 
   if [[ "${UID}" != "0" ]]; then
-	  echo "Please run this script as root."
-	  exit 1
+    echo "Please run this script as root."
+    exit 1
   fi
 
 }
@@ -87,7 +87,7 @@ function check_and_connect_to_internet () {
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
   
-      echo -e "\nChecking internet connectivity..."
+      echo -e "\n\nChecking internet connectivity..."
     
       if ! ping -c2 8.8.8.8 &> /dev/null ; then
         echo -e -n "\nNo internet connection found. Do you want to use wifi? (y/n): "
@@ -189,8 +189,9 @@ function check_and_connect_to_internet () {
       fi
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+      echo -e "\n\nChecking if already connected..."
       if ping -c2 8.8.8.8 &> /dev/null ; then
-        echo -e "\n\nYou are already connected to the internet."
+        echo -e "\nYou are already connected to the internet."
         echo -e "If you don't want to be online, please unplug your ethernet cable or disconnect your wifi."
         break
       else
@@ -213,7 +214,7 @@ function disk_wiping () {
     read -n 1 -r -p "Do you want to format any drive? (y/n): " yn
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-    
+      
       echo -e "\nPrinting all the connected drive(s):\n"
       lsblk -p
   
@@ -221,7 +222,7 @@ function disk_wiping () {
       read -r -p "Which drive do you want to use? Please enter the full path (i.e. /dev/sda): " user_drive
     
       if [[ ! -e "${user_drive}" ]] ; then
-        echo -e "\nPlease select a valid drive."
+        echo -e "\nPlease select a valid drive.\n"
       
       else
         echo -e "\nYou selected ${user_drive}."
@@ -241,7 +242,7 @@ function disk_wiping () {
       fi
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\n\nNo drive(s) formatted."
+      echo -e "\n\nNo drive formatted."
       break
     
     else
@@ -251,6 +252,105 @@ function disk_wiping () {
   done
 }
 
+function disk_partitioning () {
+  
+  while true; do
+  
+    echo -e -n "\nIf you already partitioned any drive, select \"n\"\n"
+    read -n 1 -r -p "Do you want to partition any drive? (y/n): " yn
+    echo
+    
+    if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+    
+      if [[ ! -z "${user_drive}" ]] ; then
+      
+        while true; do
+          
+          echo -e -n "\nSuggested disk layout:"
+          echo -e -n "\n- Less than 1 GB for /boot/efi partition [EFI System];"
+          echo -e -n "\n- Rest of the disk for / partition [Linux filesystem]."
+          echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because it will be created later as a logical one.\n"
+          
+          echo -e -n "\nDrive selected for partitioning: ${user_drive}\n\n"
+          
+          read -r -p "Which tool do you want to use? (fdisk/cfdisk/sfdisk): " tool
+      
+          case "${tool}" in
+            fdisk)
+              fdisk "${user_drive}"
+              ;;
+            cfdisk)
+              cfdisk "${user_drive}"
+              ;;
+            sfdisk)
+              sfdisk "${user_drive}"
+              ;;
+            *)
+              echo -e -n "\nPlease select only one of the three suggested tools."
+              ;;
+          esac
+          
+          echo
+          lsblk -p "${user_drive}"
+          echo
+          read -n 1 -r -p "Is this partition table okay? (y/n): " yn
+          
+          if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+            echo -e -n "\n\nDrive partitioned, keeping changes.\n"
+            break
+          elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+            echo -e -n "\n\nPlease partition your drive again.\n"
+          else
+            echo -e "\nPlease answer y or n."
+          fi
+          
+        done
+        
+      else
+      
+        while true; do
+        
+          echo -e "\nPrinting all the connected drive(s):\n"
+          lsblk -p
+          echo
+          
+          read -r -p "Which drive do you want to partition? Please enter the full path (i.e. /dev/sda): " user_drive
+    
+          if [[ ! -e "${user_drive}" ]] ; then
+            echo -e "\nPlease select a valid drive."
+      
+          else
+            echo -e "\nYou selected ${user_drive}."
+            echo -e "\nTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST."
+            read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+          
+            if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+              echo -e "\nAborting, select another drive."
+            elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+              echo -e "\nCorrect drive selected, no partitioning performed, back to tool selection..."
+              break
+            else
+              echo -e "\nPlease answer y or n."
+            fi
+            
+          fi
+          
+        done
+        
+      fi
+    
+    elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+      echo -e "\nNo additional changes were made."
+      break
+    
+    else
+      echo -e "\nPlease answer y or n."
+    fi
+  
+  done
+  
+}
+
 # Main
 
 check_if_bash
@@ -258,3 +358,4 @@ check_if_run_as_root
 set_keyboard_layout
 check_and_connect_to_internet
 disk_wiping
+disk_partitioning
