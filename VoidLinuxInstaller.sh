@@ -227,7 +227,7 @@ function disk_wiping () {
       break
     
     else
-        echo -e "\nPlease answer y or n."
+      echo -e "\nPlease answer y or n."
     fi
   
   done
