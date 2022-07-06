@@ -191,30 +191,43 @@ function disk_wiping () {
   
   while true; do
   
-    echo -e "\nPrinting all the connected drive(s):\n"
-    lsblk -p
-  
     echo
-    read -r -p "Which drive do you want to use? Please enter the full path (i.e. /dev/sda): " user_drive
+    read -n 1 -r -p "Do you want to format any drive? (y/n): " yn
     
-    if [[ ! -e "${user_drive}" ]] ; then
-      echo -e "\nPlease select a valid drive."
+    if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+    
+      echo -e "\nPrinting all the connected drive(s):\n"
+      lsblk -p
+  
+      echo
+      read -r -p "Which drive do you want to use? Please enter the full path (i.e. /dev/sda): " user_drive
+    
+      if [[ ! -e "${user_drive}" ]] ; then
+        echo -e "\nPlease select a valid drive."
       
-    else
-      echo -e "\nYou selected ${user_drive}."
-      echo -e "\nTHIS DRIVE WILL BE FORMATTED, EVERY DATA INSIDE WILL BE ERASED."
-      read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
-    
-      if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-        echo -e "\nAborting, select another drive."
-      elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-        echo -e "\nWiping the drive...."
-        wipefs -a "${user_drive}"
-        break
       else
-        echo -e "\nPlease answer y or n."
+        echo -e "\nYou selected ${user_drive}."
+        echo -e "\nTHIS DRIVE WILL BE FORMATTED, EVERY DATA INSIDE WILL BE ERASED."
+        read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+    
+        if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+          echo -e "\nAborting, select another drive."
+        elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+          echo -e "\nWiping the drive...."
+          wipefs -a "${user_drive}"
+          break
+        else
+          echo -e "\nPlease answer y or n."
+        fi
+    
       fi
     
+    elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+      echo -e "\n\nNo drive(s) formatted."
+      break
+    
+    else
+        echo -e "\nPlease answer y or n."
     fi
   
   done
