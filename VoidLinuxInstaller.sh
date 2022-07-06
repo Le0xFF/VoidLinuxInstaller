@@ -22,13 +22,15 @@ function check_if_run_as_root () {
 
 function set_keyboard_layout () {
 
-  read -n 1 -r -p "Press any key to list all the keyboard layouts, move with arrow keys and press \"q\" to exit the list." key
-  ls --color=always -laR /usr/share/kbd/keymaps/ | less --RAW-CONTROL-CHARS --no-init
+  echo -e -n "\nPress any key to list all the keyboard layouts, move with arrow keys and press \"q\" to exit the list."
+  read -n 1 key
+  echo
   
-  echo -e "\nTo set a keyboard layout, write its name, without \".map.gz\" (i.e. us.map.gz -> us).\n"
+  ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
   
   while true ; do
   
+    echo
     read -p "Choose the keyboard layout you want to set and press [ENTER] or press [ENTER] to keep the one currently set: " user_keyboard_layout
   
     if [[ -z "${user_keyboard_layout}" ]]; then
