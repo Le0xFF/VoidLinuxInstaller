@@ -22,44 +22,55 @@ function check_if_run_as_root () {
 
 function set_keyboard_layout () {
   
-  echo
-  read -n 1 -r -p "Do you want to change your keyboard layout? (y/n): " yn
+  while true; do
   
-  if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-
-    echo -e -n "\n\nPress any key to list all the keyboard layouts, move with arrow keys and press \"q\" to exit the list."
-    read -n 1 key
     echo
+    read -n 1 -r -p "Do you want to change your keyboard layout? (y/n): " yn
   
-    ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
-  
-    while true ; do
-  
+    if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+
+      echo -e -n "\n\nPress any key to list all the keyboard layouts, move with arrow keys and press \"q\" to exit the list."
+      read -n 1 key
       echo
-      read -p "Choose the keyboard layout you want to set and press [ENTER] or press [ENTER] to keep the one currently set: " user_keyboard_layout
   
-      if [[ -z "${user_keyboard_layout}" ]]; then
-        echo -e "\nNo keyboard layout selected, keeping the previous one."
-        break
-      else
-    
-        if loadkeys ${user_keyboard_layout} 2>/dev/null ; then
-          echo -e "\nKeyboad layout set to \"${user_keyboard_layout}\"."
+      ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
+  
+      while true ; do
+  
+        echo
+        read -p "Choose the keyboard layout you want to set and press [ENTER] or press [ENTER] to keep the one currently set: " user_keyboard_layout
+  
+        if [[ -z "${user_keyboard_layout}" ]]; then
+          echo -e "\nNo keyboard layout selected, keeping the previous one."
           break
         else
-          echo -e "\nNot a valid keyboard layout, please try again.\n"
-        fi
       
-      fi
+          if loadkeys ${user_keyboard_layout} 2>/dev/null ; then
+            echo -e "\nKeyboad layout set to \"${user_keyboard_layout}\"."
+            break
+          else
+            echo -e "\nNot a valid keyboard layout, please try again.\n"
+          fi
+      
+        fi
     
-    done
+      done
+    
+      break
   
-  elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-    echo -e "\n\nKeeping the previous keyboard layout."
-  fi
+    elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+      echo -e "\n\nKeeping the previous keyboard layout."
+      break
+    
+    else
+      echo -e "\nPlease answer y or n."
+    fi
+  
+  done
+  
 }
 
-function connect_to_wifi () {
+function check_and_connect_to_internet () {
 
   declare wifi_interface
   declare wifi_essid
@@ -84,7 +95,7 @@ function connect_to_wifi () {
             
             if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
               echo
-              echo
+              echoHote
               nmcli device wifi
               echo
               nmcli --ask device wifi connect hidden yes
@@ -156,10 +167,13 @@ function connect_to_wifi () {
         break
         
       elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-        echo -e -n "\nPlease connect your ethernet cable and wait a minute before checking internet again."
+        echo -e -n "\nPlease connect your ethernet cable and wait a minute before pressing any key."
         read -n 1 -r wait
+      
+      else
+        echo -e "\nPlease answer y or n."
       fi
-    
+      
     else
       echo -e "\nAlready connected to the internet."
       break
@@ -181,5 +195,5 @@ function copy_wifi_configuration_files () {
 check_if_bash
 check_if_run_as_root
 set_keyboard_layout
-connect_to_wifi
+check_and_connect_to_internet
 copy_wifi_configuration_files
