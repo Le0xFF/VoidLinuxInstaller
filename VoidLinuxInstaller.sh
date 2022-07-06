@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# Variables
+
+user_drive=''
+
 # Functions
 
 function check_if_bash () {
@@ -40,7 +44,7 @@ function set_keyboard_layout () {
         echo
         read -p "Choose the keyboard layout you want to set and press [ENTER] or press [ENTER] to keep the one currently set: " user_keyboard_layout
   
-        if [[ -z "${user_keyboard_layout}" ]]; then
+        if [[ -z "${user_keyboard_layout}" ]] ; then
           echo -e "\nNo keyboard layout selected, keeping the previous one."
           break
         else
@@ -124,11 +128,11 @@ function check_and_connect_to_internet () {
             echo -e -n "\nEnter the wifi interface and press [ENTER]: "
             read wifi_interface
             
-            if [[ ! -z "${wifi_interface}" ]]; then
+            if [[ ! -z "${wifi_interface}" ]] ; then
             
               echo -e "\nEnabling wpa_supplicant service..."
               
-              if [[ -e /var/service/wpa_supplicant ]]; then
+              if [[ -e /var/service/wpa_supplicant ]] ; then
                 echo -e "\nService already enabled, restarting..."
                 sv restart {dhcpcd,wpa_supplicant}
               else
@@ -140,7 +144,7 @@ function check_and_connect_to_internet () {
               echo -e -n "\nEnter your ESSID and press [ENTER]: "
               read wifi_essid
               
-              if [[ -d /etc/wpa_supplicant/ ]]; then
+              if [[ -d /etc/wpa_supplicant/ ]] ; then
                 continue
               else
                 mkdir -p /etc/wpa_supplicant/
@@ -183,12 +187,38 @@ function check_and_connect_to_internet () {
 
 }
 
-function copy_wifi_configuration_files () {
-
-  echo -e "\nTO BE COMPLETED\n"
-
+function disk_wiping () {
+  
+  while true; do
+  
+    echo -e "\nPrinting all the connected drive(s):\n"
+    lsblk -p
+  
+    echo
+    read -r -p "Which drive do you want to use? Please enter the full path (i.e. /dev/sda): " user_drive
+    
+    if [[ ! -e "${user_drive}" ]] ; then
+      echo -e "\nPlease select a valid drive."
+      
+    else
+      echo -e "\nYou selected ${user_drive}."
+      echo -e "\nTHIS DRIVE WILL BE FORMATTED, EVERY DATA INSIDE WILL BE ERASED."
+      read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+    
+      if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+        echo -e "\nAborting, select another drive."
+      elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+        echo -e "\nWiping the drive...."
+        wipefs -a "${user_drive}"
+        break
+      else
+        echo -e "\nPlease answer y or n."
+      fi
+    
+    fi
+  
+  done
 }
-
 
 # Main
 
@@ -196,4 +226,4 @@ check_if_bash
 check_if_run_as_root
 set_keyboard_layout
 check_and_connect_to_internet
-copy_wifi_configuration_files
+disk_wiping
