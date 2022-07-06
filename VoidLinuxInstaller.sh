@@ -82,107 +82,125 @@ function check_and_connect_to_internet () {
   
   while true; do
   
-    echo -e "\nChecking internet connectivity..."
+    echo
+    read -n 1 -r -p "Do you want to connect to the internet? (y/n): " yn
     
-    if ! ping -c2 8.8.8.8 &> /dev/null ; then
-      echo -e -n "\nNo internet connection found. Do you want to use wifi? (y/n): "
-      read -n 1 yn
+    if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+  
+      echo -e "\nChecking internet connectivity..."
     
-      if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+      if ! ping -c2 8.8.8.8 &> /dev/null ; then
+        echo -e -n "\nNo internet connection found. Do you want to use wifi? (y/n): "
+        read -n 1 yn
+    
+        if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
-        if [[ -e /var/service/NetworkManager ]] ; then
+          if [[ -e /var/service/NetworkManager ]] ; then
         
-          while true; do
+            while true; do
           
+              echo
+              read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
+            
+              if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+                echo
+                echoHote
+                nmcli device wifi
+                echo
+                nmcli --ask device wifi connect hidden yes
+                break
+              elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+                echo
+                echo
+                nmcli device wifi
+                echo
+                nmcli --ask device wifi connect
+                break
+              fi
+            
+            done
+          
+          else
+            
+            ### UNTESTED ###
+            
             echo
-            read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
+            ip a
+            echo
             
-            if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-              echo
-              echoHote
-              nmcli device wifi
-              echo
-              nmcli --ask device wifi connect hidden yes
-              break
-            elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-              echo
-              echo
-              nmcli device wifi
-              echo
-              nmcli --ask device wifi connect
-              break
-            fi
+            while true; do
+          
+              echo -e -n "\nEnter the wifi interface and press [ENTER]: "
+              read wifi_interface
             
-          done
-          
-        else
-          
-          ### UNTESTED ###
-          
-          echo
-          ip a
-          echo
-          
-          while true; do
-          
-            echo -e -n "\nEnter the wifi interface and press [ENTER]: "
-            read wifi_interface
+              if [[ ! -z "${wifi_interface}" ]] ; then
             
-            if [[ ! -z "${wifi_interface}" ]] ; then
-            
-              echo -e "\nEnabling wpa_supplicant service..."
+                echo -e "\nEnabling wpa_supplicant service..."
               
-              if [[ -e /var/service/wpa_supplicant ]] ; then
-                echo -e "\nService already enabled, restarting..."
-                sv restart {dhcpcd,wpa_supplicant}
+                if [[ -e /var/service/wpa_supplicant ]] ; then
+                  echo -e "\nService already enabled, restarting..."
+                  sv restart {dhcpcd,wpa_supplicant}
+                else
+                  echo -e "\nCreating service, starting..."
+                  ln -s /etc/sv/wpa_supplicant /var/service/
+                  sv restart {dhcpcd,wpa_supplicant}
+                fi
+            
+                echo -e -n "\nEnter your ESSID and press [ENTER]: "
+                read wifi_essid
+              
+                if [[ -d /etc/wpa_supplicant/ ]] ; then
+                  continue
+                else
+                  mkdir -p /etc/wpa_supplicant/
+                fi
+              
+                echo -e "\nGenerating configuration files..."
+                wpa_passphrase "${wifi_essid}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
+                wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${wifi_interface}"
+              
+                break
+              
               else
-                echo -e "\nCreating service, starting..."
-                ln -s /etc/sv/wpa_supplicant /var/service/
-                sv restart {dhcpcd,wpa_supplicant}
+                echo -e "\nPlease input a valid wifi interface."
               fi
             
-              echo -e -n "\nEnter your ESSID and press [ENTER]: "
-              read wifi_essid
-              
-              if [[ -d /etc/wpa_supplicant/ ]] ; then
-                continue
-              else
-                mkdir -p /etc/wpa_supplicant/
-              fi
-              
-              echo -e "\nGenerating configuration files..."
-              wpa_passphrase "${wifi_essid}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
-              wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${wifi_interface}"
-              
-              break
-              
-            else
-              echo -e "\nPlease input a valid wifi interface."
-            fi
-            
-          done
+            done
           
-        fi
+          fi
       
-        if ping -c2 8.8.8.8 &> /dev/null ; then
-          echo -e "\nSuccessfully connected to the internet."
+          if ping -c2 8.8.8.8 &> /dev/null ; then
+            echo -e "\nSuccessfully connected to the internet."
+          fi
+        
+          break
+        
+        elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+          echo -e -n "\nPlease connect your ethernet cable and wait a minute before pressing any key."
+          read -n 1 -r wait
+      
+        else
+          echo -e "\nPlease answer y or n."
         fi
-        
-        break
-        
-      elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-        echo -e -n "\nPlease connect your ethernet cable and wait a minute before pressing any key."
-        read -n 1 -r wait
       
       else
-        echo -e "\nPlease answer y or n."
+        echo -e "\nAlready connected to the internet."
+        break
       fi
-      
+    
+    elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+      if ping -c2 8.8.8.8 &> /dev/null ; then
+        echo -e "\n\nYou are already connected to the internet."
+        echo -e "If you don't want to be online, please unplug your ethernet cable or disconnect your wifi."
+        break
+      else
+        echo -e "\nYou are not connected to the internet, continuing..."
+      fi
+    
     else
-      echo -e "\nAlready connected to the internet."
-      break
+      echo -e "\nPlease answer y or n."
     fi
-
+    
   done
 
 }
