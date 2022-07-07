@@ -75,10 +75,6 @@ function set_keyboard_layout () {
 }
 
 function check_and_connect_to_internet () {
-
-  declare wifi_interface
-  declare wifi_essid
-  declare wifi_passphrase
   
   while true; do
   
@@ -124,13 +120,14 @@ function check_and_connect_to_internet () {
             
             ### UNTESTED ###
             
+            while true; do
+            
+            echo
             echo
             ip a
             echo
-            
-            while true; do
           
-              echo -e -n "\nEnter the wifi interface and press [ENTER]: "
+              echo -e -n "Enter the wifi interface and press [ENTER]: "
               read wifi_interface
             
               if [[ ! -z "${wifi_interface}" ]] ; then
@@ -143,7 +140,9 @@ function check_and_connect_to_internet () {
                 else
                   echo -e "\nCreating service, starting..."
                   ln -s /etc/sv/wpa_supplicant /var/service/
-                  sv restart {dhcpcd,wpa_supplicant}
+                  sv restart dhcpcd
+                  sleep 1
+                  sv start wpa_supplicant
                 fi
             
                 echo -e -n "\nEnter your ESSID and press [ENTER]: "
@@ -211,42 +210,50 @@ function disk_wiping () {
   while true; do
   
     echo
-    read -n 1 -r -p "Do you want to format any drive? (y/n): " yn
+    read -n 1 -r -p "Do you want to wipe any drive? (y/n): " yn
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
-      echo -e "\nPrinting all the connected drive(s):\n"
-      lsblk -p
-  
-      echo
-      read -r -p "Which drive do you want to use? Please enter the full path (i.e. /dev/sda): " user_drive
-    
-      if [[ ! -e "${user_drive}" ]] ; then
-        echo -e "\nPlease select a valid drive.\n"
+      out="0"
       
-      else
-        echo -e "\nYou selected ${user_drive}."
-        echo -e "\nTHIS DRIVE WILL BE FORMATTED, EVERY DATA INSIDE WILL BE ERASED."
-        read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+      while [ ${out} -eq "0" ] ; do
+      
+        echo -e "\nPrinting all the connected drive(s):\n"
+        lsblk -p
     
-        if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e "\nAborting, select another drive."
-        elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-          echo -e "\nWiping the drive...."
-          wipefs -a "${user_drive}"
-          break
+        echo
+        read -r -p "Which drive do you want to wipe? Please enter the full path (i.e. /dev/sda): " user_drive
+      
+        if [[ ! -e "${user_drive}" ]] ; then
+          echo -e "\nPlease select a valid drive."
+      
         else
-          echo -e "\nPlease answer y or n."
+          while true; do
+          echo -e "\nYou selected ${user_drive}."
+          echo -e "\nTHIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST."
+          read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+        
+          if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+            echo -e "\nAborting, select another drive."
+            break
+          elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+            echo -e "\nWiping the drive...."
+            wipefs -a "${user_drive}"
+            out="1"
+            break
+          else
+            echo -e "\nPlease answer y or n."
+          fi
+          done
         fi
-    
-      fi
-    
+      done
+      
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\n\nNo drive formatted."
+      echo -e "\n\nNo drive wiped."
       break
     
     else
-      echo -e "\nPlease answer y or n."
+      echo -e "\n\nPlease answer y or n."
     fi
   
   done
