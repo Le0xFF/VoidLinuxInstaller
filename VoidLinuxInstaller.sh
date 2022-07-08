@@ -248,7 +248,7 @@ function disk_wiping () {
       done
       
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\n\nNo drive wiped."
+      echo -e "\n\nNo additional changes were made."
       break
     
     else
@@ -261,89 +261,112 @@ function disk_wiping () {
 function disk_partitioning () {
   
   while true; do
-  
-    echo -e -n "\nIf you already partitioned any drive, select \"n\"\n"
+    
+    echo
     read -n 1 -r -p "Do you want to partition any drive? (y/n): " yn
     echo
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+      
+      out1="0"
+      
+      while [ "${out1}" -eq "0" ] ; do
     
-      if [[ ! -z "${user_drive}" ]] ; then
-      
-        while true; do
-          
-          echo -e -n "\nSuggested disk layout:"
-          echo -e -n "\n- Less than 1 GB for /boot/efi partition [EFI System];"
-          echo -e -n "\n- Rest of the disk for / partition [Linux filesystem]."
-          echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because it will be created later as a logical one.\n"
-          
-          echo -e -n "\nDrive selected for partitioning: ${user_drive}\n\n"
-          
-          read -r -p "Which tool do you want to use? (fdisk/cfdisk/sfdisk): " tool
-      
-          case "${tool}" in
-            fdisk)
-              fdisk "${user_drive}"
-              ;;
-            cfdisk)
-              cfdisk "${user_drive}"
-              ;;
-            sfdisk)
-              sfdisk "${user_drive}"
-              ;;
-            *)
-              echo -e -n "\nPlease select only one of the three suggested tools."
-              ;;
-          esac
-          
-          echo
-          lsblk -p "${user_drive}"
-          echo
-          read -n 1 -r -p "Is this partition table okay? (y/n): " yn
-          
-          if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-            echo -e -n "\n\nDrive partitioned, keeping changes.\n"
-            break
-          elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-            echo -e -n "\n\nPlease partition your drive again.\n"
-          else
-            echo -e "\nPlease answer y or n."
-          fi
-          
-        done
+        if [[ ! -z "${user_drive}" ]] ; then
         
-      else
+          out="0"
       
-        while true; do
-        
-          echo -e "\nPrinting all the connected drive(s):\n"
-          lsblk -p
-          echo
+          while [ "${out}" -eq "0" ] ; do
           
-          read -r -p "Which drive do you want to partition? Please enter the full path (i.e. /dev/sda): " user_drive
-    
-          if [[ ! -e "${user_drive}" ]] ; then
-            echo -e "\nPlease select a valid drive."
+            echo -e -n "\nSuggested disk layout:"
+            echo -e -n "\n- Less than 1 GB for /boot/efi partition [EFI System];"
+            echo -e -n "\n- Rest of the disk for / partition [Linux filesystem]."
+            echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because it will be created later as a logical one.\n"
+          
+            echo -e -n "\nDrive selected for partitioning: ${user_drive}\n\n"
+          
+            read -r -p "Which tool do you want to use? (fdisk/cfdisk/sfdisk): " tool
       
-          else
-            echo -e "\nYou selected ${user_drive}."
-            echo -e "\nTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST."
-            read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+            case "${tool}" in
+              fdisk)
+                fdisk "${user_drive}"
+                break
+                ;;
+              cfdisk)
+                cfdisk "${user_drive}"
+                break
+                ;;
+              sfdisk)
+                sfdisk "${user_drive}"
+                break
+                ;;
+              *)
+                echo -e -n "\nPlease select only one of the three suggested tools.\n"
+                ;;
+            esac
+            
+          done
           
-            if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-              echo -e "\nAborting, select another drive."
-            elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-              echo -e "\nCorrect drive selected, no partitioning performed, back to tool selection..."
+          while true; do
+            echo
+            lsblk -p "${user_drive}"
+            echo
+            read -n 1 -r -p "Is this the desired partition table? (y/n): " yn
+          
+            if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+              echo -e -n "\n\nDrive partitioned, keeping changes.\n"
+              out="1"
+              out1="1"
+              break
+            elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+              echo -e -n "\n\nPlease partition your drive again.\n"
               break
             else
-              echo -e "\nPlease answer y or n."
+              echo -e "\n\nPlease answer y or n."
             fi
-            
-          fi
+          done
           
-        done
+        else
+      
+          out="0"
+      
+          while [ ${out} -eq "0" ] ; do
         
-      fi
+            echo -e "\nPrinting all the connected drive(s):\n"
+            lsblk -p
+            echo
+          
+            read -r -p "Which drive do you want to partition? Please enter the full path (i.e. /dev/sda): " user_drive
+    
+            if [[ ! -e "${user_drive}" ]] ; then
+              echo -e "\nPlease select a valid drive."
+      
+            else
+          
+              while true; do
+              echo -e "\nYou selected ${user_drive}."
+              echo -e "\nTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST."
+              read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+          
+              if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+                echo -e "\nAborting, select another drive."
+                break
+              elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+                echo -e "\nCorrect drive selected, back to tool selection..."
+                out="1"
+                break
+              else
+                echo -e "\nPlease answer y or n."
+              fi
+              done
+            
+            fi
+          
+          done
+        
+        fi
+      
+      done
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
       echo -e "\nNo additional changes were made."
@@ -351,6 +374,7 @@ function disk_partitioning () {
     
     else
       echo -e "\nPlease answer y or n."
+    
     fi
   
   done
