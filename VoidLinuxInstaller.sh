@@ -33,7 +33,7 @@ function set_keyboard_layout () {
   
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
 
-      echo -e -n "\n\nPress any key to list all the keyboard layouts, move with arrow keys and press \"q\" to exit the list."
+      echo -e -n "\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
       read -n 1 key
       echo
   
@@ -42,7 +42,7 @@ function set_keyboard_layout () {
       while true ; do
   
         echo
-        read -p "Choose the keyboard layout you want to set and press [ENTER] or press [ENTER] to keep the one currently set: " user_keyboard_layout
+        read -p "Choose the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: " user_keyboard_layout
   
         if [[ -z "${user_keyboard_layout}" ]] ; then
           echo -e "\nNo keyboard layout selected, keeping the previous one."
@@ -53,17 +53,14 @@ function set_keyboard_layout () {
             echo -e "\nKeyboad layout set to \"${user_keyboard_layout}\"."
             break
           else
-            echo -e "\nNot a valid keyboard layout, please try again.\n"
+            echo -e "\nNot a valid keyboard layout, please try again."
           fi
-      
         fi
     
       done
     
-      break
-  
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\n\nKeeping the previous keyboard layout."
+      echo -e "\n\nKeeping the last selected keyboard layout."
       break
     
     else
@@ -100,7 +97,7 @@ function check_and_connect_to_internet () {
             
               if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
                 echo
-                echoHote
+                echo
                 nmcli device wifi
                 echo
                 nmcli --ask device wifi connect hidden yes
@@ -112,7 +109,9 @@ function check_and_connect_to_internet () {
                 echo
                 nmcli --ask device wifi connect
                 break
-              fi
+               else
+                 echo -e "\nPlease answer y or n."
+               fi
             
             done
           
