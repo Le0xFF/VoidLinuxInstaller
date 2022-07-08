@@ -279,6 +279,7 @@ function disk_partitioning () {
           while [ "${out}" -eq "0" ] ; do
           
             echo -e -n "\nSuggested disk layout:"
+            echo -e -n "\n- GPT as disk label type for UEFI systems;"
             echo -e -n "\n- Less than 1 GB for /boot/efi partition [EFI System];"
             echo -e -n "\n- Rest of the disk for / partition [Linux filesystem]."
             echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because it will be created later as a logical one.\n"
