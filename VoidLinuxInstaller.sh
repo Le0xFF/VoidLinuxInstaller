@@ -49,7 +49,7 @@ function set_keyboard_layout () {
           break
         else
       
-          if loadkeys ${user_keyboard_layout} 2>/dev/null ; then
+          if loadkeys ${user_keyboard_layout} 2> /dev/null ; then
             echo -e "\nKeyboad layout set to \"${user_keyboard_layout}\"."
             break
           else
@@ -210,6 +210,7 @@ function disk_wiping () {
   
     echo
     read -n 1 -r -p "Do you want to wipe any drive? (y/n): " yn
+    echo
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
@@ -217,7 +218,7 @@ function disk_wiping () {
       
       while [ ${out} -eq "0" ] ; do
       
-        echo -e "\n\nPrinting all the connected drives:\n"
+        echo -e "\nPrinting all the connected drives:\n"
         lsblk -p
     
         echo
@@ -228,7 +229,7 @@ function disk_wiping () {
       
         else
           while true; do
-          echo -e "\nYou selected ${user_drive}."
+          echo -e "\nDrive selected for wiping: ${user_drive}"
           echo -e "\nTHIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST."
           read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
         
@@ -236,7 +237,7 @@ function disk_wiping () {
             echo -e "\nAborting, select another drive."
             break
           elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-            if cat /proc/mounts | grep "${user_drive}" &> dev/null ; then
+            if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
               echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before wiping...\n"
               cd $HOME
               umount -l "${user_drive}"?*
@@ -245,7 +246,7 @@ function disk_wiping () {
 
             echo -e -n "\nWiping the drive..."
             wipefs -a "${user_drive}"
-            echo -e -n "\nDrive successfully wiped."
+            echo -e -n "\nDrive successfully wiped.\n"
             out="1"
             break
           else
@@ -256,7 +257,7 @@ function disk_wiping () {
       done
       
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\n\nNo additional changes were made."
+      echo -e "\nNo additional changes were made."
       break
     
     else
@@ -281,6 +282,13 @@ function disk_partitioning () {
       while [ "${out1}" -eq "0" ] ; do
     
         if [[ ! -z "${user_drive}" ]] ; then
+
+          if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
+            echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before partitioning...\n"
+            cd $HOME
+            umount -l "${user_drive}"?*
+            echo -e -n "\nDrive unmounted successfully.\n"
+          fi
         
           out="0"
       
@@ -361,6 +369,13 @@ function disk_partitioning () {
                 echo -e "\nAborting, select another drive."
                 break
               elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+                if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
+                  echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before selecting it for partitioning...\n"
+                  cd $HOME
+                  umount -l "${user_drive}"?*
+                  echo -e -n "\nDrive unmounted successfully.\n"
+                fi
+
                 echo -e "\nCorrect drive selected, back to tool selection..."
                 out="1"
                 break
