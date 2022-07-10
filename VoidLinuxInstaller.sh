@@ -217,7 +217,7 @@ function disk_wiping () {
       
       while [ ${out} -eq "0" ] ; do
       
-        echo -e "\nPrinting all the connected drive(s):\n"
+        echo -e "\n\nPrinting all the connected drives:\n"
         lsblk -p
     
         echo
@@ -236,8 +236,16 @@ function disk_wiping () {
             echo -e "\nAborting, select another drive."
             break
           elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-            echo -e "\nWiping the drive...."
+            if cat /proc/mounts | grep "${user_drive}" &> dev/null ; then
+              echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before wiping...\n"
+              cd $HOME
+              umount -l "${user_drive}"?*
+              echo -e -n "\nDrive unmounted successfully.\n"
+            fi
+
+            echo -e -n "\nWiping the drive..."
             wipefs -a "${user_drive}"
+            echo -e -n "\nDrive successfully wiped."
             out="1"
             break
           else
