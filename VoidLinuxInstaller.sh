@@ -3,6 +3,8 @@
 # Variables
 
 user_drive=''
+encrypted_partition=''
+encrypted_name=''
 
 # Functions
 
@@ -194,6 +196,7 @@ function check_and_connect_to_internet () {
         break
       else
         echo -e "\nYou are not connected to the internet, continuing..."
+        break
       fi
     
     else
@@ -222,7 +225,7 @@ function disk_wiping () {
         lsblk -p
     
         echo
-        read -r -p "Which drive do you want to wipe? Please enter the full path (i.e. /dev/sda): " user_drive
+        read -r -p "Which drive do you want to wipe? Please enter the full drive path (i.e. /dev/sda): " user_drive
       
         if [[ ! -e "${user_drive}" ]] ; then
           echo -e "\nPlease select a valid drive."
@@ -244,7 +247,7 @@ function disk_wiping () {
               echo -e -n "\nDrive unmounted successfully.\n"
             fi
 
-            echo -e -n "\nWiping the drive..."
+            echo -e -n "\nWiping the drive...\n"
             wipefs -a "${user_drive}"
             echo -e -n "\nDrive successfully wiped.\n"
             out="1"
@@ -353,7 +356,7 @@ function disk_partitioning () {
             lsblk -p
             echo
           
-            read -r -p "Which drive do you want to partition? Please enter the full path (i.e. /dev/sda): " user_drive
+            read -r -p "Which drive do you want to partition? Please enter the full drive path (i.e. /dev/sda): " user_drive
     
             if [[ ! -e "${user_drive}" ]] ; then
               echo -e "\nPlease select a valid drive."
@@ -405,6 +408,86 @@ function disk_partitioning () {
   
 }
 
+function disk_encryption () {
+
+  out="0"
+
+  while [ "${out}" -eq "0" ]; do
+  
+    echo -e -n "\nPrinting all the connected drives:\n\n"
+    lsblk -p
+    
+    echo
+    read -r -p "Which / [root] partition do you want to encrypt? Please enter the full partition path (i.e. /dev/sda1): " encrypted_partition
+      
+    if [[ ! -e "${encrypted_partition}" ]] ; then
+      echo -e -n "\nPlease select a valid partition.\n"
+      
+    else
+      while true; do
+        echo -e -n "\nYou selected: ${encrypted_partition}.\n\n"
+        read -r -p "Is this correct? (y/n and [ENTER]): " yn
+        
+        if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+          echo -e -n "\nAborting, select another partition.\n"
+          break
+        elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+          echo -e -n "\nCorrect partition selected.\n"
+
+          echo -e -n "\nKeep in mind that GRUB LUKS version 2 support is still limited.\n(https://savannah.gnu.org/bugs/?55093)\nChoosing it could result in an unbootable system.\nIt's strongly recommended to use LUKS version 1.\n"
+
+          while true ; do
+            echo -e -n "\nWhich LUKS version do you want to use? (1/2 and [ENTER]): "
+            read ot
+            if [[ "${ot}" == "1" ]] || [[ "${ot}" == "2" ]] ; then
+              echo -e -n "\nUsing LUKS version "${ot}".\n\n"
+              cryptsetup luksFormat --type=luks"${ot}" "${encrypted_partition}"
+              break
+            else
+              echo -e -n "\nPlease enter 1 or 2.\n"
+            fi
+          done
+
+          out1="0"
+
+          while [ "${out1}" -eq "0" ] ; do
+            echo -e -n "\nEnter a name for the encrypted partition without any spaces (i.e. MyEncryptedLinuxDrive): "
+            read encrypted_name
+            if [[ -z "${encrypted_name}" ]] ; then
+              echo -e -n "\nPlease enter a valid name.\n"
+            else
+              while true ; do
+                echo -e -n "\nYou entered: "${encrypted_name}".\n\n"
+                read -n 1 -r -p "Is this the desired name? (y/n): " yn
+          
+                if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+                  echo -e -n "\n\nPartition will now be mounted as: /dev/mapper/"${encrypted_name}"\n\n"
+                  cryptsetup open "${encrypted_partition}" "${encrypted_name}"
+                  out1="1"
+                  break
+                elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+                  echo -e -n "\n\nPlease select another name.\n"
+                  break
+                else
+                  echo -e "\n\nPlease answer y or n."
+                fi
+              done
+            fi
+          done
+
+          out="1"
+          break
+        else
+          echo -e -n "\nPlease answer y or n.\n"
+        fi
+      done
+
+    fi
+    
+  done
+ 
+}
+
 # Main
 
 check_if_bash
@@ -413,3 +496,4 @@ set_keyboard_layout
 check_and_connect_to_internet
 disk_wiping
 disk_partitioning
+disk_encryption
