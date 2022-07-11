@@ -5,6 +5,10 @@
 user_drive=''
 encrypted_partition=''
 encrypted_name=''
+vg_name=''
+lv_root_name=''
+lv_root_size=''
+lv_home_name=''
 
 # Functions
 
@@ -444,7 +448,7 @@ function disk_encryption () {
           out1="0"
 
           while [ "${out1}" -eq "0" ] ; do
-            echo -e -n "\nEnter a name for the encrypted partition without any spaces (i.e. MyEncryptedLinuxDrive): "
+            echo -e -n "\nEnter a name for the encrypted partition without any spaces (i.e. MyEncryptedLinuxPartition): "
             read encrypted_name
             if [[ -z "${encrypted_name}" ]] ; then
               echo -e -n "\nPlease enter a valid name.\n"
@@ -481,6 +485,116 @@ function disk_encryption () {
  
 }
 
+function lvm_creation () {
+
+  echo -e -n "\nCreating logical partitions wih LVM.\n"
+
+  out1='0'
+
+  while [ "${out1}" -eq "0" ] ; do
+
+    out='0'
+
+    while [ "${out}" -eq "0" ]; do
+
+      echo -e -n "\nEnter a name for the volume group without any spaces (i.e. MyLinuxVolumeGroup): "
+      read vg_name
+    
+      if [[ -z "${vg_name}" ]] ; then
+        echo -e -n "\nPlease enter a valid name.\n"
+      else
+        while true ; do
+          echo -e -n "\nYou entered: "${vg_name}".\n\n"
+          read -n 1 -r -p "Is this the desired name? (y/n): " yn
+          
+          if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+            echo -e -n "\n\nVolume group will now be mounted as: /dev/mapper/"${vg_name}"\n\n"
+            vgcreate "${vg_name}" /dev/mapper/"${encrypted_name}"
+            out="1"
+            break
+          elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+            echo -e -n "\n\nPlease select another name.\n"
+            break
+          else
+            echo -e "\n\nPlease answer y or n."
+          fi
+
+        done
+
+      fi
+
+    done
+
+    out='0'
+
+    while [ "${out}" -eq "0" ]; do
+
+      echo -e -n "\nEnter a name for the logical root partition without any spaces and its size.\nBe sure to make no errors (i.e. MyLogicLinuxRootPartition 100G): "
+      read lv_root_name lv_root_size
+    
+      if [[ -z "${lv_root_name}" ]] || [[ -z "${lv_root_size}" ]] ; then
+        echo -e -n "\nPlease enter valid values.\n"
+      else
+        while true ; do
+          echo -e -n "\nYou entered: "${lv_root_name}" and "${lv_root_size}".\n\n"
+          read -n 1 -r -p "Are these correct? (y/n): " yn
+          
+          if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+            echo -e -n "\n\nLogical volume "${lv_root_name}" of size "${lv_root_size}" will now be created.\n\n"
+            lvcreate --name "${lv_root_name}" -L "${lv_root_size}" "${vg_name}"
+            out="1"
+            break
+          elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+            echo -e -n "\n\nPlease select other values.\n"
+            break
+          else
+            echo -e "\n\nPlease answer y or n."
+          fi
+
+        done
+
+      fi
+
+    done
+
+    out='0'
+
+    while [ "${out}" -eq "0" ]; do
+
+      echo -e -n "\nEnter a name for the logical home partition without any spaces.\nIts size will be the remaining free space (i.e. MyLogicLinuxHomePartition): "
+      read lv_home_name
+    
+      if [[ -z "${lv_home_name}" ]] ; then
+        echo -e -n "\nPlease enter a valid name.\n"
+      else
+        while true ; do
+          echo -e -n "\nYou entered: "${lv_home_name}".\n\n"
+          read -n 1 -r -p "Is this the desired name? (y/n): " yn
+          
+          if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+            echo -e -n "\n\nLogical volume "${lv_home_name}" will now be created.\n\n"
+            lvcreate --name "${lv_home_name}" -l +100%FREE "${vg_name}"
+            out="1"
+            break
+          elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+            echo -e -n "\n\nPlease select another name.\n"
+            break
+          else
+            echo -e "\n\nPlease answer y or n."
+          fi
+
+        done
+
+      fi
+
+    done
+
+    break
+
+  done
+  
+}
+
 # Main
 
 check_if_bash
@@ -490,3 +604,4 @@ check_and_connect_to_internet
 disk_wiping
 disk_partitioning
 disk_encryption
+lvm_creation
