@@ -76,16 +76,16 @@ function set_keyboard_layout () {
 function check_and_connect_to_internet () {
   
   while true; do
-  
-    echo
-    read -n 1 -r -p "Do you want to connect to the internet? (y/n): " yn
+
+    echo -e "\nChecking internet connectivity..."
+
+    if ! ping -c2 8.8.8.8 &> /dev/null ; then
+      echo -e -n "\nNo internet connection found.\n\n"
+      read -n 1 -r -p "Do you want to connect to the internet? (y/n): " yn
     
-    if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-  
-      echo -e "\n\nChecking internet connectivity..."
+      if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
     
-      if ! ping -c2 8.8.8.8 &> /dev/null ; then
-        echo -e -n "\nNo internet connection found. Do you want to use wifi? (y/n): "
+        echo -e -n "\n\nDo you want to use wifi? (y/n): "
         read -n 1 yn
     
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
@@ -93,7 +93,7 @@ function check_and_connect_to_internet () {
           if [[ -e /var/service/NetworkManager ]] ; then
         
             while true; do
-          
+              echo
               echo
               read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
             
@@ -111,9 +111,9 @@ function check_and_connect_to_internet () {
                 echo
                 nmcli --ask device wifi connect
                 break
-               else
-                 echo -e "\nPlease answer y or n."
-               fi
+              else
+                echo -e -n "\n\nPlease answer y or n."
+              fi
             
             done
           
@@ -123,10 +123,10 @@ function check_and_connect_to_internet () {
             
             while true; do
             
-            echo
-            echo
-            ip a
-            echo
+              echo
+              echo
+              ip a
+              echo
           
               echo -e -n "Enter the wifi interface and press [ENTER]: "
               read wifi_interface
@@ -176,33 +176,26 @@ function check_and_connect_to_internet () {
           break
         
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\nPlease connect your ethernet cable and wait a minute before pressing any key."
+          echo -e -n "\n\nPlease connect your ethernet cable and wait a minute before pressing any key."
           read -n 1 -r wait
       
         else
           echo -e "\nPlease answer y or n."
         fi
+    
+      elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+        echo
+        break
       
       else
-        echo -e "\nAlready connected to the internet."
-        break
+        echo -e -n "\n\nPlease answer y or n.\n"
       fi
-    
-    elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\n\nChecking if already connected..."
-      if ping -c2 8.8.8.8 &> /dev/null ; then
-        echo -e "\nYou are already connected to the internet."
-        echo -e "If you don't want to be online, please unplug your ethernet cable or disconnect your wifi."
-        break
-      else
-        echo -e "\nYou are not connected to the internet, continuing..."
-        break
-      fi
-    
+
     else
-      echo -e "\nPlease answer y or n."
+      echo -e "\nAlready connected to the internet."
+      break
     fi
-    
+
   done
 
 }
