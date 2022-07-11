@@ -9,6 +9,7 @@ vg_name=''
 lv_root_name=''
 lv_root_size=''
 lv_home_name=''
+boot_partition=''
 
 # Functions
 
@@ -583,7 +584,142 @@ function lvm_creation () {
 
 function create_filesystems () {
   
-  echo -e -n "\nCreating logical partitions wih LVM.\n"
+  echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
+
+  out1='0'
+
+  while [ "${out1}" -eq "0" ]; do
+
+    echo
+    lsblk -p "${user_drive}"
+    echo
+
+    echo -e -n "\nWhich partition will be the /boot/efi partition?\n"
+    read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
+    
+    if [[ ! -e "${boot_partition}" ]] ; then
+      echo -e "\nPlease select a valid drive."
+      
+    else
+          
+      while true; do
+        echo -e "\nYou selected ${boot_partition}."
+        echo -e "\nTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST."
+        read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+          
+        if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+          echo -e "\nAborting, select another partition."
+          break
+        elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+          if cat /proc/mounts | grep "${boot_partition}" &> /dev/null ; then
+            echo -e -n "\nPartition already mounted.\nChanging directory to "${HOME}" and unmounting it before formatting...\n"
+            cd $HOME
+            umount -l "${boot_partition}"
+            echo -e -n "\nDrive unmounted successfully.\n"
+          fi
+
+          echo -e "\nCorrect partition selected.\n"
+
+          out='0'
+          
+          while [ "${out}" -eq "0" ]; do
+
+            echo -e -n "\nEnter a label for the boot partition without any spaces (i.e. MYBOOTPARTITION): "
+            read boot_name
+    
+            if [[ -z "${boot_name}" ]] ; then
+              echo -e -n "\nPlease enter a valid name.\n"
+            else
+              while true ; do
+                echo -e -n "\nYou entered: "${boot_name}".\n\n"
+                read -n 1 -r -p "Is this the desired name? (y/n): " yn
+          
+                if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+                  echo -e -n "\n\nBoot partition "${boot_partition}" will now be formatted as FAT32 with "${boot_name}" label.\n\n"
+                  mkfs.vfat -n "${boot_name}" -F 32 "${boot_partition}"
+                  out="1"
+                  break
+                elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+                  echo -e -n "\n\nPlease select another name.\n"
+                  break
+                else
+                  echo -e "\n\nPlease answer y or n."
+                fi
+              done
+            fi
+        
+          done
+
+          out1="1"
+          break
+        else
+          echo -e "\nPlease answer y or n."
+        fi
+      done
+
+    fi
+
+  done
+
+  out='0'
+
+  while [ "${out}" -eq "0" ]; do
+
+    echo -e -n "\nEnter a label for the root partition without any spaces (i.e. MyRootPartition): "
+    read root_name
+    
+    if [[ -z "${root_name}" ]] ; then
+      echo -e -n "\nPlease enter a valid name.\n"
+    else
+      while true ; do
+        echo -e -n "\nYou entered: "${root_name}".\n\n"
+        read -n 1 -r -p "Is this the desired name? (y/n): " yn
+          
+        if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+          echo -e -n "\n\nRoot partition /dev/mapper/"${vg_name}"-"${lv_root_name}" will now be formatted as BTRFS with "${root_name}" label.\n\n"
+          mkfs.btrfs -L "${root_name}" /dev/mapper/"${vg_name}"-"${lv_root_name}"
+          out="1"
+          break
+        elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+          echo -e -n "\n\nPlease select another name.\n"
+          break
+        else
+          echo -e "\n\nPlease answer y or n."
+        fi
+      done
+    fi
+
+  done
+
+  out='0'
+
+  while [ "${out}" -eq "0" ]; do
+
+    echo -e -n "\nEnter a label for the home partition without any spaces (i.e. MyHomePartition): "
+    read home_name
+    
+    if [[ -z "${home_name}" ]] ; then
+      echo -e -n "\nPlease enter a valid name.\n"
+    else
+      while true ; do
+        echo -e -n "\nYou entered: "${home_name}".\n\n"
+        read -n 1 -r -p "Is this the desired name? (y/n): " yn
+          
+        if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+          echo -e -n "\n\nHome partition /dev/mapper/"${vg_name}"-"${lv_home_name}" will now be formatted as BTRFS with "${home_name}" label.\n\n"
+          mkfs.btrfs -L "${home_name}" /dev/mapper/"${vg_name}"-"${lv_home_name}"
+          out="1"
+          break
+        elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+          echo -e -n "\n\nPlease select another name.\n"
+          break
+        else
+          echo -e "\n\nPlease answer y or n."
+        fi
+      done
+    fi
+
+  done
 
 }
 
