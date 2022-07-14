@@ -7,7 +7,7 @@
 # Description: My first attempt at creating a bash script, trying to converting my gist into a bash script. Bugs are more than expected.
 #              https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3
 #
-# Version: 1.0
+# Version: 1.0.0
 
 # Variables
 
@@ -62,6 +62,8 @@ function check_if_uefi {
 
 function intro {
 
+  clear
+
   echo -e -n "     pQQQQQQQQQQQQppq    \n"
   echo -e -n "     p               Q          Void Linux installer script\n"
   echo -e -n "      pppQppQppppQ    Q  \n"
@@ -85,9 +87,13 @@ function intro {
 function set_keyboard_layout {
   
   while true; do
+
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #     Keyboard layout change    #\n"
+    echo -e -n "#######################################\n"
   
-    echo
-    read -n 1 -r -p "Do you want to change your keyboard layout? (y/n): " yn
+    echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
+    read -n 1 yn
   
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
 
@@ -103,13 +109,16 @@ function set_keyboard_layout {
         read -p "Choose the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: " user_keyboard_layout
   
         if [[ -z "${user_keyboard_layout}" ]] ; then
-          echo -e "\nNo keyboard layout selected, keeping the previous one."
-          break
+          echo -e -n "\nNo keyboard layout selected, keeping the previous one.\n\n"
+          read -n 1 -r -p "Press any key to continue..." key
+          clear
+          break 2
         else
-      
           if loadkeys ${user_keyboard_layout} 2> /dev/null ; then
-            echo -e "\nKeyboad layout set to \"${user_keyboard_layout}\"."
-            break
+            echo -e -n "\nKeyboad layout set to \"${user_keyboard_layout}\".\n\n"
+            read -n 1 -r -p "Press any key to continue..." key
+            clear
+            break 2
           else
             echo -e "\nNot a valid keyboard layout, please try again."
           fi
@@ -118,11 +127,15 @@ function set_keyboard_layout {
       done
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\n\nKeeping the last selected keyboard layout."
+      echo -e -n "\n\nKeeping the last selected keyboard layout.\n\n"
+      read -n 1 -r -p "Press any key to continue..." key
+      clear
       break
     
     else
-      echo -e "\nPlease answer y or n."
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "Press any key to continue..." key
+      clear
     fi
   
   done
@@ -133,6 +146,10 @@ function check_and_connect_to_internet {
   
   while true; do
 
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #   Setup internet connection   #\n"
+    echo -e -n "#######################################\n"
+
     echo -e "\nChecking internet connectivity..."
 
     if ! ping -c2 8.8.8.8 &> /dev/null ; then
@@ -140,113 +157,127 @@ function check_and_connect_to_internet {
       read -n 1 -r -p "Do you want to connect to the internet? (y/n): " yn
     
       if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+
+        while true ; do
+
+          echo -e -n "\n\nDo you want to use wifi? (y/n): "
+          read -n 1 yn
     
-        echo -e -n "\n\nDo you want to use wifi? (y/n): "
-        read -n 1 yn
-    
-        if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+          if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
-          if [[ -e /var/service/NetworkManager ]] ; then
+            if [[ -e /var/service/NetworkManager ]] ; then
         
-            while true; do
-              echo
-              echo
-              read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
+              while true; do
+                echo
+                echo
+                read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
             
-              if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-                echo
-                echo
-                nmcli device wifi
-                echo
-                nmcli --ask device wifi connect hidden yes
-                break
-              elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-                echo
-                echo
-                nmcli device wifi
-                echo
-                nmcli --ask device wifi connect
-                break
-              else
-                echo -e -n "\n\nPlease answer y or n."
-              fi
+                if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+                  echo
+                  echo
+                  nmcli device wifi
+                  echo
+                  nmcli --ask device wifi connect hidden yes
+                  echo
+                  read -n 1 -r -p "Press any key to continue..." key
+                  clear
+                  break 2
+                elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+                  echo
+                  echo
+                  nmcli device wifi
+                  echo
+                  nmcli --ask device wifi connect
+                  echo
+                  read -n 1 -r -p "Press any key to continue..." key
+                  clear
+                  break 2
+                else
+                  echo -e -n "\nPlease answer y or n."
+                fi
             
-            done
+              done
           
-          else
+            else
             
             ### UNTESTED ###
             
-            while true; do
+              while true; do
             
-              echo
-              echo
-              ip a
-              echo
+                echo
+                echo
+                ip a
+                echo
           
-              echo -e -n "Enter the wifi interface and press [ENTER]: "
-              read wifi_interface
+                echo -e -n "Enter the wifi interface and press [ENTER]: "
+                read wifi_interface
             
-              if [[ ! -z "${wifi_interface}" ]] ; then
+                if [[ ! -z "${wifi_interface}" ]] ; then
             
-                echo -e "\nEnabling wpa_supplicant service..."
+                  echo -e "\nEnabling wpa_supplicant service..."
               
-                if [[ -e /var/service/wpa_supplicant ]] ; then
-                  echo -e "\nService already enabled, restarting..."
-                  sv restart {dhcpcd,wpa_supplicant}
+                  if [[ -e /var/service/wpa_supplicant ]] ; then
+                    echo -e "\nService already enabled, restarting..."
+                    sv restart {dhcpcd,wpa_supplicant}
+                  else
+                    echo -e "\nCreating service, starting..."
+                    ln -s /etc/sv/wpa_supplicant /var/service/
+                    sv restart dhcpcd
+                    sleep 1
+                    sv start wpa_supplicant
+                  fi
+
+                  echo -e -n "\nEnter your ESSID and press [ENTER]: "
+                  read wifi_essid
+
+                  if [[ ! -d /etc/wpa_supplicant/ ]] ; then
+                    mkdir -p /etc/wpa_supplicant/
+                  fi
+
+                  echo -e "\nGenerating configuration files..."
+                  wpa_passphrase "${wifi_essid}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
+                  wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${wifi_interface}"
+                  break 2
                 else
-                  echo -e "\nCreating service, starting..."
-                  ln -s /etc/sv/wpa_supplicant /var/service/
-                  sv restart dhcpcd
-                  sleep 1
-                  sv start wpa_supplicant
+                  echo -e "\nPlease input a valid wifi interface."
                 fi
-            
-                echo -e -n "\nEnter your ESSID and press [ENTER]: "
-                read wifi_essid
-              
-                if [[ ! -d /etc/wpa_supplicant/ ]] ; then
-                  mkdir -p /etc/wpa_supplicant/
-                fi
-              
-                echo -e "\nGenerating configuration files..."
-                wpa_passphrase "${wifi_essid}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
-                wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${wifi_interface}"
-              
-                break
-              
-              else
-                echo -e "\nPlease input a valid wifi interface."
-              fi
-            
-            done
-          
+              done
+            fi
+
+            if ping -c2 8.8.8.8 &> /dev/null ; then
+              echo -e -n "\nSuccessfully connected to the internet.\n\n"
+              read -n 1 -r -p "Press any key to continue..." key
+              clear
+            fi
+            break
+
+          elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+            echo -e -n "\n\nPlease connect your ethernet cable and wait a minute before pressing any key."
+            read -n 1 key
+            clear
+            break
+
+          else
+            echo -e -n "\nPlease answer y or n."
           fi
-      
-          if ping -c2 8.8.8.8 &> /dev/null ; then
-            echo -e "\nSuccessfully connected to the internet."
-          fi
-        
-          break
-        
-        elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\n\nPlease connect your ethernet cable and wait a minute before pressing any key."
-          read -n 1 -r wait
-      
-        else
-          echo -e "\nPlease answer y or n."
-        fi
-    
+
+        done
+
       elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-        echo
+        echo -e -n "\n\nNot connecting to the internet.\n\n"
+        read -n 1 -r -p "Press any key to continue..." key
+        clear
         break
-      
       else
-        echo -e -n "\n\nPlease answer y or n.\n"
+        echo -e -n "\nPlease answer y or n.\n\n"
+        read -n 1 -r -p "Press any key to continue..." key
+        clear
       fi
 
     else
-      echo -e "\nAlready connected to the internet."
+      echo -e -n "\nAlready connected to the internet.\n\n"
+      read -n 1 -r -p "Press any key to continue..." key
+      clear
       break
     fi
 
@@ -893,7 +924,9 @@ function outro {
   echo -e -n "- Run \"xbps-reconfigure -fa\"\n"
   echo -e -n "- Reboot\n"
   echo -e -n "\nEverything's done, goodbye.\n\n"
-  
+
+  rm -f /mnt/home/root/chroot.sh
+
 }
 
 # Main
