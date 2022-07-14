@@ -723,6 +723,63 @@ function create_filesystems () {
 
 }
 
+function create_btrfs_subvolumes () {
+
+  echo -e -n "\nBTRFS subvolumes will now be created with default options.\n\n"
+  echo -e -n "Default options:\n"
+  echo -e -n "- rw\n"
+  echo -e -n "- noatime\n"
+  echo -e -n "- ssd\n"
+  echo -e -n "- compress=zstd\n"
+  echo -e -n "- space_cache=v2\n"
+  echo -e -n "- commit=120\n"
+
+  echo -e -n "\nSubvolumes that will be created:\n"
+  echo -e -n "- /@\n"
+  echo -e -n "- /@snapshots\n"
+  echo -e -n "- /home/@home\n"
+  echo -e -n "- /var/cache/xbps\n"
+  echo -e -n "- /var/tmp\n"
+  echo -e -n "- /var/log\n"
+
+  echo -e -n "\nIf you prefer to change any option of that, please quit this script NOW and modify it according to you tastes.\n\n"
+  read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." key
+
+  echo -e -n "\n\nThe root partition you selected (/dev/mapper/"${vg_name}"-"${lv_root_name}") will now be mounted to /mnt.\n"
+  if cat /proc/mounts | grep /mnt &> /dev/null ; then
+    echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
+    cd $HOME
+    umount -l /mnt
+    echo -e -n "\nDone.\n"
+  fi
+
+  echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
+
+  export BTRFS_OPT=rw,noatime,ssd,compress=zstd,space_cache=v2,commit=120
+  mount -o "${BTRFS_OPT}" /dev/mapper/"${vg_name}"-"${lv_root_name}" /mnt
+  mkdir /mnt/home
+  mount -o "${BTRFS_OPT}" /dev/mapper/"${vg_name}"-"${lv_home_name}" /mnt/home
+  btrfs subvolume create /mnt/@
+  btrfs subvolume create /mnt/@snapshots
+  btrfs subvolume create /mnt/home/@home
+  umount /mnt/home
+  umount /mnt
+  mount -o "${BTRFS_OPT}",subvol=@ /dev/mapper/"${vg_name}"-"${lv_root_name}" /mnt
+  mkdir /mnt/home
+  mkdir /mnt/.snapshots
+  mount -o "${BTRFS_OPT}",subvol=@home /dev/mapper/"${vg_name}"-"${lv_home_name}" /mnt/home/
+  mount -o "${BTRFS_OPT}",subvol=@snapshots /dev/mapper/"${vg_name}"-"${lv_root_name}" /mnt/.snapshots/
+  mkdir -p /mnt/boot/efi
+  mount -o rw,noatime "${boot_partition}" /mnt/boot/efi/
+  mkdir -p /mnt/var/cache
+  btrfs subvolume create /mnt/var/cache/xbps
+  btrfs subvolume create /mnt/var/tmp
+  btrfs subvolume create /mnt/var/log
+
+  echo -e -n "\nDone.\n"
+
+}
+
 # Main
 
 check_if_bash
@@ -734,3 +791,4 @@ disk_partitioning
 disk_encryption
 lvm_creation
 create_filesystems
+create_btrfs_subvolumes
