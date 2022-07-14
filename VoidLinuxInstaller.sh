@@ -1,5 +1,14 @@
 #! /bin/bash
 
+# Author: Le0xFF
+# Script name: VoidLinuxInstaller.sh
+# Github repo: https://github.com/Le0xFF/VoidLinuxInstaller
+#
+# Description: My first attempt at creating a bash script, trying to converting my gist into a bash script. Bugs are more than expected.
+#              https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3
+#
+# Version: 1.0
+
 # Variables
 
 user_drive=''
@@ -49,6 +58,28 @@ function check_if_uefi {
     fi
   fi
 
+}
+
+function intro {
+
+  echo -e -n "     pQQQQQQQQQQQQppq    \n"
+  echo -e -n "     p               Q          Void Linux installer script\n"
+  echo -e -n "      pppQppQppppQ    Q  \n"
+  echo -e -n " {{{{{            p    Q        My first attempt at creating a bash script.\n"
+  echo -e -n "{    {   dpppppp   p    Q       Bugs and unicorns farts are expected.\n"
+  echo -e -n "{   {   p       p   p   Q\n"
+  echo -e -n "{   {   p       Q   p   Q       This script try to automate what my gist describes.\n"
+  echo -e -n "{   {   p       Q   p   Q       Link to the gist: https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3\n"
+  echo -e -n "{    {   ppppppQ   p    Q\n"
+  echo -e -n " {    {            ppppQ        This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
+  echo -e -n "  {    {{{{{{{{{{{{             with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
+  echo -e -n "   {               {     \n"
+  echo -e -n "    {{{{{{{{{{{{{{{{            Press any key to begin with the process.\n"
+  
+  read -n 1 key
+
+  clear
+  
 }
 
 function set_keyboard_layout {
@@ -871,6 +902,7 @@ check_if_bash
 check_if_run_as_root
 check_if_chroot_exists
 check_if_uefi
+intro
 set_keyboard_layout
 check_and_connect_to_internet
 disk_wiping
