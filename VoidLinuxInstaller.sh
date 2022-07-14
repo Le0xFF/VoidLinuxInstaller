@@ -16,7 +16,7 @@ boot_partition=''
 function check_if_bash () {
 
   if [[ "$(ps -p $$ | tail -1 | awk '{print $NF}')" != "bash" ]] ; then
-    echo "Please run this script with bash shell: \"bash VoidLinuxInstaller.sh\"."
+    echo "Please run this script with bash shell: \"bash "${0}".sh\"."
     exit 1
   fi
 
@@ -24,9 +24,20 @@ function check_if_bash () {
 
 function check_if_run_as_root () {
 
-  if [[ "${UID}" != "0" ]]; then
+  if [[ "${UID}" != "0" ]] ; then
     echo "Please run this script as root."
     exit 1
+  fi
+
+}
+
+function check_if_uefi () {
+
+  if ! cat /proc/mounts | grep efivar &> /dev/null ; then
+    if ! mount -t efivarfs efivarfs /sys/firmware/efi/efivars/ &> /dev/null ; then
+      echo -e -n "Please run this script only on a UEFI system."
+      exit 1
+    fi
   fi
 
 }
@@ -831,6 +842,7 @@ function install_base_system_and_chroot () {
 
 check_if_bash
 check_if_run_as_root
+check_if_uefi
 set_keyboard_layout
 check_and_connect_to_internet
 disk_wiping
