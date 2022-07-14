@@ -154,9 +154,7 @@ function check_and_connect_to_internet () {
                 echo -e -n "\nEnter your ESSID and press [ENTER]: "
                 read wifi_essid
               
-                if [[ -d /etc/wpa_supplicant/ ]] ; then
-                  continue
-                else
+                if [[ ! -d /etc/wpa_supplicant/ ]] ; then
                   mkdir -p /etc/wpa_supplicant/
                 fi
               
@@ -603,7 +601,7 @@ function create_filesystems () {
     else
           
       while true; do
-        echo -e "\nYou selected ${boot_partition}."
+        echo -e "\nYou selected: ${boot_partition}."
         echo -e "\nTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST."
         read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
           
@@ -618,7 +616,7 @@ function create_filesystems () {
             echo -e -n "\nDrive unmounted successfully.\n"
           fi
 
-          echo -e "\nCorrect partition selected.\n"
+          echo -e -n "\nCorrect partition selected.\n"
 
           out='0'
           
@@ -742,7 +740,7 @@ function create_btrfs_subvolumes () {
   echo -e -n "- /var/tmp\n"
   echo -e -n "- /var/log\n"
 
-  echo -e -n "\nIf you prefer to change any option of that, please quit this script NOW and modify it according to you tastes.\n\n"
+  echo -e -n "\nIf you prefer to change any option, please quit this script NOW and modify it according to you tastes.\n\n"
   read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." key
 
   echo -e -n "\n\nThe root partition you selected (/dev/mapper/"${vg_name}"-"${lv_root_name}") will now be mounted to /mnt.\n"
@@ -780,6 +778,55 @@ function create_btrfs_subvolumes () {
 
 }
 
+function install_base_system_and_chroot () {
+
+  while true ; do
+  
+    echo -e -n "\nSelect which architecture do you want to use:\n\n"
+    
+    select user_arch in x86_64 musl ; do
+      case "${user_arch}" in
+        x86_64)
+          echo -e -n "\n"${user_arch}" selected.\n"
+          ARCH="${user_arch}"
+          break 2
+          ;;
+        musl)
+          echo -e -n "\n"${user_arch}" selected.\n"
+          echo -e -n "\nWARNING: This was not tested at all, so expect unexpected behaviours.\n"
+          ARCH="${user_arch}"
+          break 2
+          ;;
+        *)
+          echo -e -n "\nPlease select one of the two architectures.\n"
+          ;;
+      esac
+    done
+
+  done
+
+  echo -e -n "\nInstalling base system...\n"
+  export REPO=https://repo-default.voidlinux.org/current
+  XBPS_ARCH="${ARCH}" xbps-install -Suy xbps
+  XBPS_ARCH="${ARCH}" xbps-install -Sy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
+  
+  echo -e -n "\nMounting folders for chroot...\n"
+  for dir in dev proc sys run ; do
+    mount --rbind /$dir /mnt/$dir
+    mount --make-rslave /mnt/$dir
+  done
+  
+  echo -e -n "\nCopying /etc/resolv.conf...\n"
+  cp -L /etc/resolv.conf /mnt/etc/
+
+  echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
+  cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
+
+  echo -e -n "\nChrooting...\n"
+  BTRFS_OPTS="${BTRFS_OPTS}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" PS1='(chroot) # ' chroot /mnt/ /bin/bash
+
+}
+
 # Main
 
 check_if_bash
@@ -792,3 +839,4 @@ disk_encryption
 lvm_creation
 create_filesystems
 create_btrfs_subvolumes
+install_base_system_and_chroot
