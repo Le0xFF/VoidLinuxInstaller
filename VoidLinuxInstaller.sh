@@ -13,7 +13,7 @@ boot_partition=''
 
 # Functions
 
-function check_if_bash () {
+function check_if_bash {
 
   if [[ "$(ps -p $$ | tail -1 | awk '{print $NF}')" != "bash" ]] ; then
     echo -e -n "Please run this script with bash shell: \"bash VoidLinuxInstaller.sh\".\n"
@@ -22,7 +22,7 @@ function check_if_bash () {
 
 }
 
-function check_if_run_as_root () {
+function check_if_run_as_root {
 
   if [[ "${UID}" != "0" ]] ; then
     echo -e -n "Please run this script as root.\n"
@@ -31,7 +31,7 @@ function check_if_run_as_root () {
 
 }
 
-function check_if_chroot_exists () {
+function check_if_chroot_exists {
 
   if [[ ! -e "${HOME}/chroot.sh" ]] ; then
     echo -e -n "Please be sure that "${HOME}"/chroot.sh exists.\n"
@@ -40,7 +40,7 @@ function check_if_chroot_exists () {
   
 }
 
-function check_if_uefi () {
+function check_if_uefi {
 
   if ! cat /proc/mounts | grep efivar &> /dev/null ; then
     if ! mount -t efivarfs efivarfs /sys/firmware/efi/efivars/ &> /dev/null ; then
@@ -51,7 +51,7 @@ function check_if_uefi () {
 
 }
 
-function set_keyboard_layout () {
+function set_keyboard_layout {
   
   while true; do
   
@@ -98,7 +98,7 @@ function set_keyboard_layout () {
   
 }
 
-function check_and_connect_to_internet () {
+function check_and_connect_to_internet {
   
   while true; do
 
@@ -223,7 +223,7 @@ function check_and_connect_to_internet () {
 
 }
 
-function disk_wiping () {
+function disk_wiping {
   
   while true; do
   
@@ -240,8 +240,8 @@ function disk_wiping () {
         echo -e "\nPrinting all the connected drives:\n"
         lsblk -p
     
-        echo
-        read -r -p "Which drive do you want to wipe? Please enter the full drive path (i.e. /dev/sda): " user_drive
+        echo -e -n "\nWhich drive do you want to wipe?\nPlease enter the full drive path (i.e. /dev/sda): "
+        read user_drive
       
         if [[ ! -e "${user_drive}" ]] ; then
           echo -e "\nPlease select a valid drive."
@@ -286,7 +286,7 @@ function disk_wiping () {
   done
 }
 
-function disk_partitioning () {
+function disk_partitioning {
   
   while true; do
     
@@ -326,14 +326,17 @@ function disk_partitioning () {
             case "${tool}" in
               fdisk)
                 fdisk "${user_drive}"
+                sync
                 break
                 ;;
               cfdisk)
                 cfdisk "${user_drive}"
+                sync
                 break
                 ;;
               sfdisk)
                 sfdisk "${user_drive}"
+                sync
                 break
                 ;;
               *)
@@ -372,7 +375,8 @@ function disk_partitioning () {
             lsblk -p
             echo
           
-            read -r -p "Which drive do you want to partition? Please enter the full drive path (i.e. /dev/sda): " user_drive
+            echo -e -n "\nWhich drive do you want to partition?\nPlease enter the full drive path (i.e. /dev/sda): "
+            read user_drive
     
             if [[ ! -e "${user_drive}" ]] ; then
               echo -e "\nPlease select a valid drive."
@@ -424,7 +428,7 @@ function disk_partitioning () {
   
 }
 
-function disk_encryption () {
+function disk_encryption {
 
   out="0"
 
@@ -433,8 +437,8 @@ function disk_encryption () {
     echo -e -n "\nPrinting all the connected drives:\n\n"
     lsblk -p
     
-    echo
-    read -r -p "Which / [root] partition do you want to encrypt? Please enter the full partition path (i.e. /dev/sda1): " encrypted_partition
+    echo -e -n "\nWhich / [root] partition do you want to encrypt?\nPlease enter the full partition path (i.e. /dev/sda1): "
+    read encrypted_partition
       
     if [[ ! -e "${encrypted_partition}" ]] ; then
       echo -e -n "\nPlease select a valid partition.\n"
@@ -504,7 +508,7 @@ function disk_encryption () {
  
 }
 
-function lvm_creation () {
+function lvm_creation {
 
   echo -e -n "\nCreating logical partitions wih LVM.\n"
 
@@ -600,7 +604,7 @@ function lvm_creation () {
 
 }
 
-function create_filesystems () {
+function create_filesystems {
   
   echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
 
@@ -741,7 +745,7 @@ function create_filesystems () {
 
 }
 
-function create_btrfs_subvolumes () {
+function create_btrfs_subvolumes {
 
   echo -e -n "\nBTRFS subvolumes will now be created with default options.\n\n"
   echo -e -n "Default options:\n"
@@ -798,7 +802,7 @@ function create_btrfs_subvolumes () {
 
 }
 
-function install_base_system_and_chroot () {
+function install_base_system_and_chroot {
 
   while true ; do
   
@@ -844,8 +848,21 @@ function install_base_system_and_chroot () {
 
   echo -e -n "\nChrooting...\n"
   cp "${HOME}"/chroot.sh /mnt/root/
-  BTRFS_OPTS="${BTRFS_OPTS}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" PS1='(chroot) # ' chroot /mnt/ /bin/bash "${HOME}"/chroot.sh
+  BTRFS_OPTS="${BTRFS_OPTS}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" encrypted_name="${encrypted_name}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" user_drive="${user_drive}" PS1='(chroot) # ' chroot /mnt/ /bin/bash "${HOME}"/chroot.sh
 
+}
+
+function outro {
+
+  echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
+  echo -e -n "- Change your hostname in /etc/hostname\n"
+  echo -e -n "- Modify /etc/rc.conf according to the official documentation\n"
+  echo -e -n "- Uncomment the right line in /etc/default/libc-locales\n"
+  echo -e -n "- Add the same uncommented line in /etc/locale.conf\n"
+  echo -e -n "- Run \"xbps-reconfigure -fa\"\n"
+  echo -e -n "- Reboot\n"
+  echo -e -n "\nEverything's done, goodbye.\n\n"
+  
 }
 
 # Main
@@ -863,3 +880,5 @@ lvm_creation
 create_filesystems
 create_btrfs_subvolumes
 install_base_system_and_chroot
+outro
+exit
