@@ -16,7 +16,7 @@ boot_partition=''
 function check_if_bash () {
 
   if [[ "$(ps -p $$ | tail -1 | awk '{print $NF}')" != "bash" ]] ; then
-    echo "Please run this script with bash shell: \"bash "${0}".sh\"."
+    echo -e -n "Please run this script with bash shell: \"bash VoidLinuxInstaller.sh\".\n"
     exit 1
   fi
 
@@ -25,10 +25,19 @@ function check_if_bash () {
 function check_if_run_as_root () {
 
   if [[ "${UID}" != "0" ]] ; then
-    echo "Please run this script as root."
+    echo -e -n "Please run this script as root.\n"
     exit 1
   fi
 
+}
+
+function check_if_chroot_exists () {
+
+  if [[ ! -e "${HOME}/chroot.sh" ]] ; then
+    echo -e -n "Please be sure that "${HOME}"/chroot.sh exists.\n"
+    exit 1
+  fi
+  
 }
 
 function check_if_uefi () {
@@ -834,7 +843,9 @@ function install_base_system_and_chroot () {
   cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
 
   echo -e -n "\nChrooting...\n"
-  BTRFS_OPTS="${BTRFS_OPTS}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" PS1='(chroot) # ' chroot /mnt/ /bin/bash
+  cp "${HOME}"/chroot.sh /mnt/root/
+  BTRFS_OPTS="${BTRFS_OPTS}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" PS1='(chroot) # ' chroot /mnt/ /bin/bash "bash $HOME/chroot.sh; exit"
+  echo -e -n "\nHello again\n"
 
 }
 
@@ -842,6 +853,7 @@ function install_base_system_and_chroot () {
 
 check_if_bash
 check_if_run_as_root
+check_if_chroot_exists
 check_if_uefi
 set_keyboard_layout
 check_and_connect_to_internet
