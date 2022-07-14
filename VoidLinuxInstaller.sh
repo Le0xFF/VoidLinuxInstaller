@@ -831,7 +831,7 @@ function install_base_system_and_chroot () {
   XBPS_ARCH="${ARCH}" xbps-install -Sy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
   
   echo -e -n "\nMounting folders for chroot...\n"
-  for dir in dev proc sys run ; do
+  for dir in sys dev proc ; do
     mount --rbind /$dir /mnt/$dir
     mount --make-rslave /mnt/$dir
   done
@@ -844,8 +844,7 @@ function install_base_system_and_chroot () {
 
   echo -e -n "\nChrooting...\n"
   cp "${HOME}"/chroot.sh /mnt/root/
-  BTRFS_OPTS="${BTRFS_OPTS}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" PS1='(chroot) # ' chroot /mnt/ /bin/bash "bash $HOME/chroot.sh; exit"
-  echo -e -n "\nHello again\n"
+  BTRFS_OPTS="${BTRFS_OPTS}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" PS1='(chroot) # ' chroot /mnt/ /bin/bash "${HOME}"/chroot.sh
 
 }
 
