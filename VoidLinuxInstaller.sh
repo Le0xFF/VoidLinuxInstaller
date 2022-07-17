@@ -43,7 +43,7 @@ function check_if_run_as_root {
 function check_if_chroot_exists {
 
   if [[ ! -e "${HOME}/chroot.sh" ]] ; then
-    echo -e -n "Please be sure that "${HOME}"/chroot.sh exists.\n"
+    echo -e -n "Please be sure that ${HOME}/chroot.sh exists.\n"
     exit 1
   fi
   
@@ -76,9 +76,9 @@ function intro {
   echo -e -n " {    {            ppppQ        This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
   echo -e -n "  {    {{{{{{{{{{{{             with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
   echo -e -n "   {               {     \n"
-  echo -e -n "    {{{{{{{{{{{{{{{{            Press any key to begin with the process.\n"
+  echo -e -n "    {{{{{{{{{{{{{{{{            [Press any key to begin with the process...]\n"
   
-  read -n 1 key
+  read -n 1 -r key
 
   clear
   
@@ -93,12 +93,12 @@ function set_keyboard_layout {
     echo -e -n "#######################################\n"
   
     echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
-    read -n 1 yn
+    read -n 1 -r yn
   
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
 
       echo -e -n "\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
-      read -n 1 key
+      read -n 1 -r key
       echo
   
       ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
@@ -106,17 +106,17 @@ function set_keyboard_layout {
       while true ; do
   
         echo
-        read -p "Choose the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: " user_keyboard_layout
+        read -r -p "Type the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: " user_keyboard_layout
   
         if [[ -z "${user_keyboard_layout}" ]] ; then
           echo -e -n "\nNo keyboard layout selected, keeping the previous one.\n\n"
-          read -n 1 -r -p "Press any key to continue..." key
+          read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
         else
           if loadkeys ${user_keyboard_layout} 2> /dev/null ; then
-            echo -e -n "\nKeyboad layout set to \"${user_keyboard_layout}\".\n\n"
-            read -n 1 -r -p "Press any key to continue..." key
+            echo -e -n "\nKeyboad layout set to: \"$"{user_keyboard_layout}"\".\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
             clear
             break 2
           else
@@ -128,13 +128,13 @@ function set_keyboard_layout {
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
       echo -e -n "\n\nKeeping the last selected keyboard layout.\n\n"
-      read -n 1 -r -p "Press any key to continue..." key
+      read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
     
     else
       echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "Press any key to continue..." key
+      read -n 1 -r -p "[Press any key to continue...]" key
       clear
     fi
   
@@ -150,7 +150,7 @@ function check_and_connect_to_internet {
     echo -e -n "# VLI #   Setup internet connection   #\n"
     echo -e -n "#######################################\n"
 
-    echo -e "\nChecking internet connectivity..."
+    echo -e -n "\nChecking internet connectivity...\n"
 
     if ! ping -c2 8.8.8.8 &> /dev/null ; then
       echo -e -n "\nNo internet connection found.\n\n"
@@ -161,7 +161,7 @@ function check_and_connect_to_internet {
         while true ; do
 
           echo -e -n "\n\nDo you want to use wifi? (y/n): "
-          read -n 1 yn
+          read -n 1 -r yn
     
           if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
@@ -179,7 +179,7 @@ function check_and_connect_to_internet {
                   echo
                   nmcli --ask device wifi connect hidden yes
                   echo
-                  read -n 1 -r -p "Press any key to continue..." key
+                  read -n 1 -r -p "[Press any key to continue...]" key
                   clear
                   break 2
                 elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
@@ -189,7 +189,7 @@ function check_and_connect_to_internet {
                   echo
                   nmcli --ask device wifi connect
                   echo
-                  read -n 1 -r -p "Press any key to continue..." key
+                  read -n 1 -r -p "[Press any key to continue...]" key
                   clear
                   break 2
                 else
@@ -210,17 +210,17 @@ function check_and_connect_to_internet {
                 echo
           
                 echo -e -n "Enter the wifi interface and press [ENTER]: "
-                read wifi_interface
+                read -r wifi_interface
             
-                if [[ ! -z "${wifi_interface}" ]] ; then
+                if [[ -n "${wifi_interface}" ]] ; then
             
-                  echo -e "\nEnabling wpa_supplicant service..."
+                  echo -e -n "\nEnabling wpa_supplicant service...\n"
               
                   if [[ -e /var/service/wpa_supplicant ]] ; then
-                    echo -e "\nService already enabled, restarting..."
+                    echo -e -n "\nService already enabled, restarting...\n"
                     sv restart {dhcpcd,wpa_supplicant}
                   else
-                    echo -e "\nCreating service, starting..."
+                    echo -e -n "\nCreating service, starting...\n"
                     ln -s /etc/sv/wpa_supplicant /var/service/
                     sv restart dhcpcd
                     sleep 1
@@ -228,32 +228,32 @@ function check_and_connect_to_internet {
                   fi
 
                   echo -e -n "\nEnter your ESSID and press [ENTER]: "
-                  read wifi_essid
+                  read -r wifi_essid
 
                   if [[ ! -d /etc/wpa_supplicant/ ]] ; then
                     mkdir -p /etc/wpa_supplicant/
                   fi
 
-                  echo -e "\nGenerating configuration files..."
+                  echo -e -n "\nGenerating configuration files..."
                   wpa_passphrase "${wifi_essid}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
                   wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${wifi_interface}"
                   break 2
                 else
-                  echo -e "\nPlease input a valid wifi interface."
+                  echo -e -n "\nPlease input a valid wifi interface.\n"
                 fi
               done
             fi
 
             if ping -c2 8.8.8.8 &> /dev/null ; then
               echo -e -n "\nSuccessfully connected to the internet.\n\n"
-              read -n 1 -r -p "Press any key to continue..." key
+              read -n 1 -r -p "[Press any key to continue...]" key
               clear
             fi
             break
 
           elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
             echo -e -n "\n\nPlease connect your ethernet cable and wait a minute before pressing any key."
-            read -n 1 key
+            read -n 1 -r key
             clear
             break
 
@@ -265,18 +265,18 @@ function check_and_connect_to_internet {
 
       elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
         echo -e -n "\n\nNot connecting to the internet.\n\n"
-        read -n 1 -r -p "Press any key to continue..." key
+        read -n 1 -r -p "[Press any key to continue...]" key
         clear
         break
       else
         echo -e -n "\nPlease answer y or n.\n\n"
-        read -n 1 -r -p "Press any key to continue..." key
+        read -n 1 -r -p "[Press any key to continue...]" key
         clear
       fi
 
     else
       echo -e -n "\nAlready connected to the internet.\n\n"
-      read -n 1 -r -p "Press any key to continue..." key
+      read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
     fi
@@ -295,27 +295,25 @@ function disk_wiping {
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
-      out="0"
+      while true ; do
       
-      while [ ${out} -eq "0" ] ; do
-      
-        echo -e "\nPrinting all the connected drives:\n"
+        echo -e -n "\nPrinting all the connected drives:\n\n"
         lsblk -p
     
         echo -e -n "\nWhich drive do you want to wipe?\nPlease enter the full drive path (i.e. /dev/sda): "
-        read user_drive
+        read -r user_drive
       
         if [[ ! -e "${user_drive}" ]] ; then
-          echo -e "\nPlease select a valid drive."
+          echo -e -n "\nPlease select a valid drive.\n"
       
         else
           while true; do
-          echo -e "\nDrive selected for wiping: ${user_drive}"
-          echo -e "\nTHIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST."
+          echo -e -n "\nDrive selected for wiping: "${user_drive}"\n"
+          echo -e -n "\nTHIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.\n"
           read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
         
           if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-            echo -e "\nAborting, select another drive."
+            echo -e -n "\nAborting, select another drive.\n"
             break
           elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
             if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
@@ -327,22 +325,22 @@ function disk_wiping {
 
             echo -e -n "\nWiping the drive...\n"
             wipefs -a "${user_drive}"
+            sync
             echo -e -n "\nDrive successfully wiped.\n"
-            out="1"
-            break
+            break 2
           else
-            echo -e "\nPlease answer y or n."
+            echo -e -n "\nPlease answer y or n.\n"
           fi
           done
         fi
       done
       
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\nNo additional changes were made."
+      echo -e -n "\nNo additional changes were made.\n"
       break
     
     else
-      echo -e "\n\nPlease answer y or n."
+      echo -e -n "\n\nPlease answer y or n.\n"
     fi
   
   done
@@ -358,11 +356,9 @@ function disk_partitioning {
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
-      out1="0"
-      
-      while [ "${out1}" -eq "0" ] ; do
+      while true ; do
     
-        if [[ ! -z "${user_drive}" ]] ; then
+        if [[ -n "${user_drive}" ]] ; then
 
           if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
             echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before partitioning...\n"
@@ -370,10 +366,8 @@ function disk_partitioning {
             umount -l "${user_drive}"?*
             echo -e -n "\nDrive unmounted successfully.\n"
           fi
-        
-          out="0"
       
-          while [ "${out}" -eq "0" ] ; do
+          while true ; do
           
             echo -e -n "\nSuggested disk layout:"
             echo -e -n "\n- GPT as disk label type for UEFI systems;"
@@ -416,38 +410,33 @@ function disk_partitioning {
           
             if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
               echo -e -n "\n\nDrive partitioned, keeping changes.\n"
-              out="1"
-              out1="1"
-              break
+              break 2
             elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
               echo -e -n "\n\nPlease partition your drive again.\n"
               break
             else
-              echo -e "\n\nPlease answer y or n."
+              echo -e -n "\n\nPlease answer y or n.\n"
             fi
           done
           
         else
       
-          out="0"
-      
-          while [ ${out} -eq "0" ] ; do
+          while true ; do
         
-            echo -e "\nPrinting all the connected drive(s):\n"
+            echo -e -n "\nPrinting all the connected drive(s):\n\n"
             lsblk -p
-            echo
           
-            echo -e -n "\nWhich drive do you want to partition?\nPlease enter the full drive path (i.e. /dev/sda): "
-            read user_drive
+            echo -e -n "\n\nWhich drive do you want to partition?\nPlease enter the full drive path (i.e. /dev/sda): "
+            read -r user_drive
     
             if [[ ! -e "${user_drive}" ]] ; then
-              echo -e "\nPlease select a valid drive."
+              echo -e -n "\nPlease select a valid drive.\n"
       
             else
           
               while true; do
-              echo -e "\nYou selected ${user_drive}."
-              echo -e "\nTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST."
+              echo -e -n "\nYou selected "${user_drive}".\n"
+              echo -e -n "\nTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST.\n"
               read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
           
               if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
@@ -456,14 +445,13 @@ function disk_partitioning {
               elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
                 if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
                   echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before selecting it for partitioning...\n"
-                  cd $HOME
+                  cd "$HOME"
                   umount -l "${user_drive}"?*
                   echo -e -n "\nDrive unmounted successfully.\n"
                 fi
 
-                echo -e "\nCorrect drive selected, back to tool selection..."
-                out="1"
-                break
+                echo -e -n "\nCorrect drive selected, back to tool selection...\n"
+                break 2
               else
                 echo -e "\nPlease answer y or n."
               fi
@@ -478,12 +466,11 @@ function disk_partitioning {
       done
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e "\nNo additional changes were made."
+      echo -e -n "\nNo additional changes were made.\n"
       break
     
     else
-      echo -e "\nPlease answer y or n."
-    
+      echo -e -n "\nPlease answer y or n.\n"
     fi
   
   done
@@ -492,9 +479,7 @@ function disk_partitioning {
 
 function disk_encryption {
 
-  out="0"
-
-  while [ "${out}" -eq "0" ]; do
+  while true ; do
   
     echo -e -n "\nPrinting all the connected drives:\n\n"
     lsblk -p
@@ -530,9 +515,7 @@ function disk_encryption {
             fi
           done
 
-          out1="0"
-
-          while [ "${out1}" -eq "0" ] ; do
+          while true ; do
             echo -e -n "\nEnter a name for the encrypted partition without any spaces (i.e. MyEncryptedLinuxPartition): "
             read encrypted_name
             if [[ -z "${encrypted_name}" ]] ; then
@@ -545,20 +528,18 @@ function disk_encryption {
                 if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
                   echo -e -n "\n\nPartition will now be mounted as: /dev/mapper/"${encrypted_name}"\n\n"
                   cryptsetup open "${encrypted_partition}" "${encrypted_name}"
-                  out1="1"
-                  break
+                  break 2
                 elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
                   echo -e -n "\n\nPlease select another name.\n"
                   break
                 else
-                  echo -e "\n\nPlease answer y or n."
+                  echo -e -n "\n\nPlease answer y or n.\n"
                 fi
               done
             fi
           done
 
-          out="1"
-          break
+          break 2
         else
           echo -e -n "\nPlease answer y or n.\n"
         fi
@@ -574,12 +555,10 @@ function lvm_creation {
 
   echo -e -n "\nCreating logical partitions wih LVM.\n"
 
-  out='0'
-
-  while [ "${out}" -eq "0" ]; do
+  while true ; do
 
     echo -e -n "\nEnter a name for the volume group without any spaces (i.e. MyLinuxVolumeGroup): "
-    read vg_name
+    read -r vg_name
     
     if [[ -z "${vg_name}" ]] ; then
       echo -e -n "\nPlease enter a valid name.\n"
@@ -591,22 +570,19 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nVolume group will now be mounted as: /dev/mapper/"${vg_name}"\n\n"
           vgcreate "${vg_name}" /dev/mapper/"${encrypted_name}"
-          out="1"
-          break
+          break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\n\nPlease select another name.\n"
           break
         else
-          echo -e "\n\nPlease answer y or n."
+          echo -e -n "\n\nPlease answer y or n.\n"
         fi
       done
     fi
 
   done
 
-  out='0'
-
-  while [ "${out}" -eq "0" ]; do
+  while true ; do
 
     echo -e -n "\nEnter a name for the logical root partition without any spaces and its size.\nBe sure to make no errors (i.e. MyLogicLinuxRootPartition 100G): "
     read lv_root_name lv_root_size
@@ -621,25 +597,22 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nLogical volume "${lv_root_name}" of size "${lv_root_size}" will now be created.\n\n"
           lvcreate --name "${lv_root_name}" -L "${lv_root_size}" "${vg_name}"
-          out="1"
-          break
+          break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\n\nPlease select other values.\n"
           break
         else
-          echo -e "\n\nPlease answer y or n."
+          echo -e -n "\n\nPlease answer y or n.\n"
         fi
       done
     fi
 
   done
 
-  out='0'
-
-  while [ "${out}" -eq "0" ]; do
+  while true ; do
 
     echo -e -n "\nEnter a name for the logical home partition without any spaces.\nIts size will be the remaining free space (i.e. MyLogicLinuxHomePartition): "
-    read lv_home_name
+    read -r lv_home_name
     
     if [[ -z "${lv_home_name}" ]] ; then
       echo -e -n "\nPlease enter a valid name.\n"
@@ -651,13 +624,12 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nLogical volume "${lv_home_name}" will now be created.\n\n"
           lvcreate --name "${lv_home_name}" -l +100%FREE "${vg_name}"
-          out="1"
-          break
+          break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\n\nPlease select another name.\n"
           break
         else
-          echo -e "\n\nPlease answer y or n."
+          echo -e -n "\n\nPlease answer y or n.\n"
         fi
       done
     fi
@@ -670,9 +642,7 @@ function create_filesystems {
   
   echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
 
-  out1='0'
-
-  while [ "${out1}" -eq "0" ]; do
+  while true ; do
 
     echo
     lsblk -p "${user_drive}"
@@ -682,34 +652,32 @@ function create_filesystems {
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
     
     if [[ ! -e "${boot_partition}" ]] ; then
-      echo -e "\nPlease select a valid drive."
+      echo -e -n "\nPlease select a valid drive.\n"
       
     else
           
       while true; do
-        echo -e "\nYou selected: ${boot_partition}."
-        echo -e "\nTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST."
+        echo -e -n "\nYou selected: "${boot_partition}".\n"
+        echo -e -n "\nTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.\n"
         read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
           
         if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e "\nAborting, select another partition."
+          echo -e -n "\nAborting, select another partition.\n"
           break
         elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           if cat /proc/mounts | grep "${boot_partition}" &> /dev/null ; then
             echo -e -n "\nPartition already mounted.\nChanging directory to "${HOME}" and unmounting it before formatting...\n"
-            cd $HOME
+            cd "$HOME"
             umount -l "${boot_partition}"
             echo -e -n "\nDrive unmounted successfully.\n"
           fi
 
           echo -e -n "\nCorrect partition selected.\n"
-
-          out='0'
           
-          while [ "${out}" -eq "0" ]; do
+          while true ; do
 
             echo -e -n "\nEnter a label for the boot partition without any spaces (i.e. MYBOOTPARTITION): "
-            read boot_name
+            read -r boot_name
     
             if [[ -z "${boot_name}" ]] ; then
               echo -e -n "\nPlease enter a valid name.\n"
@@ -721,23 +689,21 @@ function create_filesystems {
                 if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
                   echo -e -n "\n\nBoot partition "${boot_partition}" will now be formatted as FAT32 with "${boot_name}" label.\n\n"
                   mkfs.vfat -n "${boot_name}" -F 32 "${boot_partition}"
-                  out="1"
-                  break
+                  break 2
                 elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
                   echo -e -n "\n\nPlease select another name.\n"
                   break
                 else
-                  echo -e "\n\nPlease answer y or n."
+                  echo -e -n "\n\nPlease answer y or n.\n"
                 fi
               done
             fi
         
           done
 
-          out1="1"
-          break
+          break 2
         else
-          echo -e "\nPlease answer y or n."
+          echo -e -n "\nPlease answer y or n.\n"
         fi
       done
 
@@ -745,12 +711,10 @@ function create_filesystems {
 
   done
 
-  out='0'
-
-  while [ "${out}" -eq "0" ]; do
+  while true ; do
 
     echo -e -n "\nEnter a label for the root partition without any spaces (i.e. MyRootPartition): "
-    read root_name
+    read -r root_name
     
     if [[ -z "${root_name}" ]] ; then
       echo -e -n "\nPlease enter a valid name.\n"
@@ -762,25 +726,22 @@ function create_filesystems {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nRoot partition /dev/mapper/"${vg_name}"-"${lv_root_name}" will now be formatted as BTRFS with "${root_name}" label.\n\n"
           mkfs.btrfs -L "${root_name}" /dev/mapper/"${vg_name}"-"${lv_root_name}"
-          out="1"
-          break
+          break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\n\nPlease select another name.\n"
           break
         else
-          echo -e "\n\nPlease answer y or n."
+          echo -e -n "\n\nPlease answer y or n.\n"
         fi
       done
     fi
 
   done
 
-  out='0'
-
-  while [ "${out}" -eq "0" ]; do
+  while true ; do
 
     echo -e -n "\nEnter a label for the home partition without any spaces (i.e. MyHomePartition): "
-    read home_name
+    read -r home_name
     
     if [[ -z "${home_name}" ]] ; then
       echo -e -n "\nPlease enter a valid name.\n"
@@ -792,13 +753,12 @@ function create_filesystems {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nHome partition /dev/mapper/"${vg_name}"-"${lv_home_name}" will now be formatted as BTRFS with "${home_name}" label.\n\n"
           mkfs.btrfs -L "${home_name}" /dev/mapper/"${vg_name}"-"${lv_home_name}"
-          out="1"
-          break
+          break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\n\nPlease select another name.\n"
           break
         else
-          echo -e "\n\nPlease answer y or n."
+          echo -e -n "\n\nPlease answer y or n.\n"
         fi
       done
     fi
@@ -832,7 +792,7 @@ function create_btrfs_subvolumes {
   echo -e -n "\n\nThe root partition you selected (/dev/mapper/"${vg_name}"-"${lv_root_name}") will now be mounted to /mnt.\n"
   if cat /proc/mounts | grep /mnt &> /dev/null ; then
     echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
-    cd $HOME
+    cd "$HOME"
     umount -l /mnt
     echo -e -n "\nDone.\n"
   fi

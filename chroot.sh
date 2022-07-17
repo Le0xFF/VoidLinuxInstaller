@@ -14,14 +14,15 @@ function set_root {
 function edit_fstab {
 
   echo -e -n "\nExporting variables that will be used for fstab...\n"
-  export UEFI_UUID=$(blkid -s UUID -o value ${boot_partition})
-  export LUKS_UUID=$(blkid -s UUID -o value ${encrypted_partition})
-  export ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/${vg_name}-${lv_root_name})
-  export HOME_UUID=$(blkid -s UUID -o value /dev/mapper/${vg_name}-${lv_home_name})
+  export UEFI_UUID=$(blkid -s UUID -o value "${boot_partition}")
+  export LUKS_UUID=$(blkid -s UUID -o value "${encrypted_partition}")
+  export ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/"${vg_name}"-"${lv_root_name}")
+  export HOME_UUID=$(blkid -s UUID -o value /dev/mapper/"${vg_name}"-"${lv_home_name}")
   
   echo -e -n "\nWriting fstab...\n"
   sed -i '/tmpfs/d' /etc/fstab
 cat << EOF >> /etc/fstab
+
 UUID=$ROOT_UUID / btrfs $BTRFS_OPT,subvol=@ 0 1
 UUID=$HOME_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
 UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
@@ -43,6 +44,7 @@ function generate_random_key {
 
   echo -e -n "\nAdding random key to /etc/crypttab...\n"
 cat << EOF >> /etc/crypttab
+
 $encrypted_name UUID=$LUKS_UUID /boot/volume.key luks
 EOF
   
