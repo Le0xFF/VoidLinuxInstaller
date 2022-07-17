@@ -637,29 +637,40 @@ function disk_encryption {
 
 function lvm_creation {
 
-  echo -e -n "\nCreating logical partitions wih LVM.\n"
-
   while true ; do
+
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #   Logical Volume Management   #\n"
+    echo -e -n "#######################################\n"
+
+    echo -e -n "\nCreating logical partitions wih LVM.\n"
 
     echo -e -n "\nEnter a name for the volume group without any spaces (i.e. MyLinuxVolumeGroup): "
     read -r vg_name
     
     if [[ -z "${vg_name}" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n"
+      echo -e -n "\nPlease enter a valid name.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     else
       while true ; do
         echo -e -n "\nYou entered: "${vg_name}".\n\n"
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
         
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-          echo -e -n "\n\nVolume group will now be mounted as: /dev/mapper/"${vg_name}"\n\n"
+          echo -e -n "\n\nVolume group will now be created and mounted as: /dev/mapper/"${vg_name}"\n\n"
           vgcreate "${vg_name}" /dev/mapper/"${encrypted_name}"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n"
+          echo -e -n "\n\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         else
-          echo -e -n "\n\nPlease answer y or n.\n"
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
         fi
       done
     fi
@@ -668,11 +679,17 @@ function lvm_creation {
 
   while true ; do
 
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #   Logical Volume Management   #\n"
+    echo -e -n "#######################################\n"
+
     echo -e -n "\nEnter a name for the logical root partition without any spaces and its size.\nBe sure to make no errors (i.e. MyLogicLinuxRootPartition 100G): "
-    read lv_root_name lv_root_size
+    read -r lv_root_name lv_root_size
     
     if [[ -z "${lv_root_name}" ]] || [[ -z "${lv_root_size}" ]] ; then
-      echo -e -n "\nPlease enter valid values.\n"
+      echo -e -n "\nPlease enter valid values.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     else
       while true ; do
         echo -e -n "\nYou entered: "${lv_root_name}" and "${lv_root_size}".\n\n"
@@ -681,12 +698,17 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nLogical volume "${lv_root_name}" of size "${lv_root_size}" will now be created.\n\n"
           lvcreate --name "${lv_root_name}" -L "${lv_root_size}" "${vg_name}"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\n\nPlease select other values.\n"
+          echo -e -n "\n\nPlease select other values.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         else
-          echo -e -n "\n\nPlease answer y or n.\n"
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
         fi
       done
     fi
@@ -695,11 +717,17 @@ function lvm_creation {
 
   while true ; do
 
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #   Logical Volume Management   #\n"
+    echo -e -n "#######################################\n"
+
     echo -e -n "\nEnter a name for the logical home partition without any spaces.\nIts size will be the remaining free space (i.e. MyLogicLinuxHomePartition): "
     read -r lv_home_name
     
     if [[ -z "${lv_home_name}" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n"
+      echo -e -n "\nPlease enter a valid name.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear      
     else
       while true ; do
         echo -e -n "\nYou entered: "${lv_home_name}".\n\n"
@@ -708,12 +736,17 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nLogical volume "${lv_home_name}" will now be created.\n\n"
           lvcreate --name "${lv_home_name}" -l +100%FREE "${vg_name}"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n"
+          echo -e -n "\n\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         else
-          echo -e -n "\n\nPlease answer y or n.\n"
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
         fi
       done
     fi
@@ -724,6 +757,10 @@ function lvm_creation {
 
 function create_filesystems {
   
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #      Filesystem creation      #\n"
+  echo -e -n "#######################################\n"
+
   echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
 
   while true ; do
