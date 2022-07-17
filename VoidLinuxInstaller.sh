@@ -769,7 +769,7 @@ function create_filesystems {
     echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
 
     echo
-    lsblk -p "${user_drive}"
+    lsblk -p
     echo
 
     echo -e -n "\nWhich partition will be the /boot/efi partition?\n"
