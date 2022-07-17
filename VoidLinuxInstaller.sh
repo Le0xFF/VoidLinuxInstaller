@@ -689,6 +689,7 @@ function create_filesystems {
                 if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
                   echo -e -n "\n\nBoot partition "${boot_partition}" will now be formatted as FAT32 with "${boot_name}" label.\n\n"
                   mkfs.vfat -n "${boot_name}" -F 32 "${boot_partition}"
+                  sync
                   break 2
                 elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
                   echo -e -n "\n\nPlease select another name.\n"
@@ -726,6 +727,7 @@ function create_filesystems {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nRoot partition /dev/mapper/"${vg_name}"-"${lv_root_name}" will now be formatted as BTRFS with "${root_name}" label.\n\n"
           mkfs.btrfs -L "${root_name}" /dev/mapper/"${vg_name}"-"${lv_root_name}"
+          sync
           break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\n\nPlease select another name.\n"
@@ -753,6 +755,7 @@ function create_filesystems {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nHome partition /dev/mapper/"${vg_name}"-"${lv_home_name}" will now be formatted as BTRFS with "${home_name}" label.\n\n"
           mkfs.btrfs -L "${home_name}" /dev/mapper/"${vg_name}"-"${lv_home_name}"
+          sync
           break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\n\nPlease select another name.\n"
