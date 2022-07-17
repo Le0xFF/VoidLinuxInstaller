@@ -1034,7 +1034,7 @@ function install_base_system_and_chroot {
 
   done
 
-  echo -e -n "\nInstalling base system...\n"
+  echo -e -n "\nInstalling base system...\n\n"
   export REPO=https://repo-default.voidlinux.org/current
   XBPS_ARCH="${ARCH}" xbps-install -Suy xbps
   XBPS_ARCH="${ARCH}" xbps-install -Sy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
@@ -1051,13 +1051,36 @@ function install_base_system_and_chroot {
   echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
   cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
 
-  echo -e -n "\nChrooting...\n"
+  echo -e -n "\nChrooting...\n\n"
+  read -n 1 -r -p "[Press any key to continue...]" key
   cp "${HOME}"/chroot.sh /mnt/root/
   BTRFS_OPT="${BTRFS_OPT}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" encrypted_name="${encrypted_name}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" user_drive="${user_drive}" PS1='(chroot) # ' chroot /mnt/ /bin/bash "${HOME}"/chroot.sh
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #   Base system installation    #\n"
+  echo -e -n "#######################################\n"
+  
+  echo -e -n "\nCleaning...\n"
+  rm -f /mnt/home/root/chroot.sh
+
+  echo -e -n "\nUnmounting partitions...\n\n"
+  umount /dev/mapper/"${vg_name}"-"${lv_home_name}"
+  umount /dev/mapper/"${vg_name}"-"${lv_root_name}"
+  umount -l /dev/mapper/"${vg_name}"-"${lv_root_name}"
+  lvchange -an /dev/mapper/"${vg_name}"-"${lv_home_name}"
+  lvchange -an /dev/mapper/"${vg_name}"-"${lv_root_name}"
+  cryptsetup close /dev/mapper/"${encrypted_name}"
+
+  read -n 1 -r -p "[Press any key to continue...]" key
+  clear
 
 }
 
 function outro {
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #    Installation completed     #\n"
+  echo -e -n "#######################################\n"
 
   echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
   echo -e -n "- Change your hostname in /etc/hostname\n"
@@ -1068,7 +1091,8 @@ function outro {
   echo -e -n "- Reboot\n"
   echo -e -n "\nEverything's done, goodbye.\n\n"
 
-  rm -f /mnt/home/root/chroot.sh
+  read -n 1 -r -p "[Press any key to exit...]" key
+  clear
 
 }
 
