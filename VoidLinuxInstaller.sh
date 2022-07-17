@@ -432,7 +432,7 @@ function disk_partitioning {
           done
           
           while true; do
-          
+
             clear
             echo -e -n "#######################################\n"
             echo -e -n "# VLI #       Disk partitioning       #\n"
@@ -515,7 +515,7 @@ function disk_partitioning {
       done
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e -n "\nNo additional changes were made.\n\n"
+      echo -e -n "\n\nNo additional changes were made.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
@@ -533,15 +533,21 @@ function disk_partitioning {
 function disk_encryption {
 
   while true ; do
+
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #        Disk encryption        #\n"
+    echo -e -n "#######################################\n"
   
     echo -e -n "\nPrinting all the connected drives:\n\n"
     lsblk -p
     
     echo -e -n "\nWhich / [root] partition do you want to encrypt?\nPlease enter the full partition path (i.e. /dev/sda1): "
-    read encrypted_partition
+    read -r encrypted_partition
       
     if [[ ! -e "${encrypted_partition}" ]] ; then
-      echo -e -n "\nPlease select a valid partition.\n"
+      echo -e -n "\nPlease select a valid partition.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
       
     else
       while true; do
@@ -549,12 +555,20 @@ function disk_encryption {
         read -r -p "Is this correct? (y/n and [ENTER]): " yn
         
         if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\nAborting, select another partition.\n"
+          echo -e -n "\nAborting, select another partition.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-          echo -e -n "\nCorrect partition selected.\n"
+          echo -e -n "\nCorrect partition selected.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
 
-          echo -e -n "\nKeep in mind that GRUB LUKS version 2 support is still limited.\n(https://savannah.gnu.org/bugs/?55093)\nChoosing it could result in an unbootable system.\nIt's strongly recommended to use LUKS version 1.\n"
+          echo -e -n "#######################################\n"
+          echo -e -n "# VLI #        Disk encryption        #\n"
+          echo -e -n "#######################################\n"
+          echo -e -n "\nThe selected partition will now be encrypted with LUKS.\n"
+          echo -e -n "\nKeep in mind that GRUB LUKS version 2 support is still limited (https://savannah.gnu.org/bugs/?55093).\nChoosing it could result in an unbootable system so it's strongly recommended to use LUKS version 1.\n"
 
           while true ; do
             echo -e -n "\nWhich LUKS version do you want to use? (1/2 and [ENTER]): "
@@ -562,17 +576,26 @@ function disk_encryption {
             if [[ "${ot}" == "1" ]] || [[ "${ot}" == "2" ]] ; then
               echo -e -n "\nUsing LUKS version "${ot}".\n\n"
               cryptsetup luksFormat --type=luks"${ot}" "${encrypted_partition}"
+              echo -e -n "\nPartition successfully encrypted.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
               break
             else
-              echo -e -n "\nPlease enter 1 or 2.\n"
+              echo -e -n "\nPlease enter 1 or 2.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
             fi
           done
 
           while true ; do
+            echo -e -n "#######################################\n"
+            echo -e -n "# VLI #        Disk encryption        #\n"
+            echo -e -n "#######################################\n"
             echo -e -n "\nEnter a name for the encrypted partition without any spaces (i.e. MyEncryptedLinuxPartition): "
-            read encrypted_name
+            read -r encrypted_name
             if [[ -z "${encrypted_name}" ]] ; then
-              echo -e -n "\nPlease enter a valid name.\n"
+              echo -e -n "\nPlease enter a valid name.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
             else
               while true ; do
                 echo -e -n "\nYou entered: "${encrypted_name}".\n\n"
@@ -581,12 +604,19 @@ function disk_encryption {
                 if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
                   echo -e -n "\n\nPartition will now be mounted as: /dev/mapper/"${encrypted_name}"\n\n"
                   cryptsetup open "${encrypted_partition}" "${encrypted_name}"
+                  echo -e -n "\nEncrypted partition successfully mounted.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                  clear
                   break 2
                 elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-                  echo -e -n "\n\nPlease select another name.\n"
+                  echo -e -n "\n\nPlease select another name.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                  clear
                   break
                 else
-                  echo -e -n "\n\nPlease answer y or n.\n"
+                  echo -e -n "\nPlease answer y or n.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                  clear
                 fi
               done
             fi
@@ -594,7 +624,8 @@ function disk_encryption {
 
           break 2
         else
-          echo -e -n "\nPlease answer y or n.\n"
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
         fi
       done
 
