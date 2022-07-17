@@ -660,6 +660,7 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nVolume group will now be created and mounted as: /dev/mapper/"${vg_name}"\n\n"
           vgcreate "${vg_name}" /dev/mapper/"${encrypted_name}"
+          echo
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
@@ -698,6 +699,7 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nLogical volume "${lv_root_name}" of size "${lv_root_size}" will now be created.\n\n"
           lvcreate --name "${lv_root_name}" -L "${lv_root_size}" "${vg_name}"
+          echo
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
@@ -736,6 +738,7 @@ function lvm_creation {
         if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           echo -e -n "\n\nLogical volume "${lv_home_name}" will now be created.\n\n"
           lvcreate --name "${lv_home_name}" -l +100%FREE "${vg_name}"
+          echo
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
@@ -756,14 +759,14 @@ function lvm_creation {
 }
 
 function create_filesystems {
-  
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #      Filesystem creation      #\n"
-  echo -e -n "#######################################\n"
-
-  echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
 
   while true ; do
+
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #      Filesystem creation      #\n"
+    echo -e -n "#######################################\n"
+
+    echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
 
     echo
     lsblk -p "${user_drive}"
@@ -773,17 +776,19 @@ function create_filesystems {
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
     
     if [[ ! -e "${boot_partition}" ]] ; then
-      echo -e -n "\nPlease select a valid drive.\n"
-      
+      echo -e -n "\nPlease select a valid drive.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     else
-          
       while true; do
         echo -e -n "\nYou selected: "${boot_partition}".\n"
         echo -e -n "\nTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.\n"
         read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
           
         if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\nAborting, select another partition.\n"
+          echo -e -n "\nAborting, select another partition.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           if cat /proc/mounts | grep "${boot_partition}" &> /dev/null ; then
@@ -791,17 +796,26 @@ function create_filesystems {
             cd "$HOME"
             umount -l "${boot_partition}"
             echo -e -n "\nDrive unmounted successfully.\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
           fi
 
-          echo -e -n "\nCorrect partition selected.\n"
+          echo -e -n "\nCorrect partition selected.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           
           while true ; do
+
+            echo -e -n "#######################################\n"
+            echo -e -n "# VLI #      Filesystem creation      #\n"
+            echo -e -n "#######################################\n"
 
             echo -e -n "\nEnter a label for the boot partition without any spaces (i.e. MYBOOTPARTITION): "
             read -r boot_name
     
             if [[ -z "${boot_name}" ]] ; then
-              echo -e -n "\nPlease enter a valid name.\n"
+              echo -e -n "\nPlease enter a valid name.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
             else
               while true ; do
                 echo -e -n "\nYou entered: "${boot_name}".\n\n"
@@ -811,21 +825,27 @@ function create_filesystems {
                   echo -e -n "\n\nBoot partition "${boot_partition}" will now be formatted as FAT32 with "${boot_name}" label.\n\n"
                   mkfs.vfat -n "${boot_name}" -F 32 "${boot_partition}"
                   sync
-                  break 2
+                  echo -e -n "\nPartition successfully formatted.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                  clear
+                  break 4
                 elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-                  echo -e -n "\n\nPlease select another name.\n"
+                  echo -e -n "\n\nPlease select another name.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                  clear
                   break
                 else
-                  echo -e -n "\n\nPlease answer y or n.\n"
+                  echo -e -n "\nPlease answer y or n.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
                 fi
               done
             fi
         
           done
 
-          break 2
         else
-          echo -e -n "\nPlease answer y or n.\n"
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
         fi
       done
 
@@ -835,13 +855,20 @@ function create_filesystems {
 
   while true ; do
 
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #      Filesystem creation      #\n"
+    echo -e -n "#######################################\n"
+
     echo -e -n "\nEnter a label for the root partition without any spaces (i.e. MyRootPartition): "
     read -r root_name
     
     if [[ -z "${root_name}" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n"
+      echo -e -n "\nPlease enter a valid name.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     else
       while true ; do
+
         echo -e -n "\nYou entered: "${root_name}".\n\n"
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
@@ -849,12 +876,18 @@ function create_filesystems {
           echo -e -n "\n\nRoot partition /dev/mapper/"${vg_name}"-"${lv_root_name}" will now be formatted as BTRFS with "${root_name}" label.\n\n"
           mkfs.btrfs -L "${root_name}" /dev/mapper/"${vg_name}"-"${lv_root_name}"
           sync
+          echo -e -n "\nPartition successfully formatted.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n"
+          echo -e -n "\n\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         else
-          echo -e -n "\n\nPlease answer y or n.\n"
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
         fi
       done
     fi
@@ -863,11 +896,17 @@ function create_filesystems {
 
   while true ; do
 
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #      Filesystem creation      #\n"
+    echo -e -n "#######################################\n"
+
     echo -e -n "\nEnter a label for the home partition without any spaces (i.e. MyHomePartition): "
     read -r home_name
     
     if [[ -z "${home_name}" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n"
+      echo -e -n "\nPlease enter a valid name.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     else
       while true ; do
         echo -e -n "\nYou entered: "${home_name}".\n\n"
@@ -877,12 +916,18 @@ function create_filesystems {
           echo -e -n "\n\nHome partition /dev/mapper/"${vg_name}"-"${lv_home_name}" will now be formatted as BTRFS with "${home_name}" label.\n\n"
           mkfs.btrfs -L "${home_name}" /dev/mapper/"${vg_name}"-"${lv_home_name}"
           sync
+          echo -e -n "\nPartition successfully formatted.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break 2
         elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n"
+          echo -e -n "\n\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         else
-          echo -e -n "\n\nPlease answer y or n.\n"
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
         fi
       done
     fi
