@@ -937,6 +937,10 @@ function create_filesystems {
 }
 
 function create_btrfs_subvolumes {
+  
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #        BTRFS subvolume        #\n"
+  echo -e -n "#######################################\n"
 
   echo -e -n "\nBTRFS subvolumes will now be created with default options.\n\n"
   echo -e -n "Default options:\n"
@@ -963,7 +967,8 @@ function create_btrfs_subvolumes {
     echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
     cd "$HOME"
     umount -l /mnt
-    echo -e -n "\nDone.\n"
+    echo -e -n "\nDone.\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" key
   fi
 
   echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
@@ -989,11 +994,17 @@ function create_btrfs_subvolumes {
   btrfs subvolume create /mnt/var/tmp
   btrfs subvolume create /mnt/var/log
 
-  echo -e -n "\nDone.\n"
+  echo -e -n "\nDone.\n\n"
+  read -n 1 -r -p "[Press any key to continue...]" key
+  clear
 
 }
 
 function install_base_system_and_chroot {
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #   Base system installation    #\n"
+  echo -e -n "#######################################\n"
 
   while true ; do
   
@@ -1002,18 +1013,21 @@ function install_base_system_and_chroot {
     select user_arch in x86_64 musl ; do
       case "${user_arch}" in
         x86_64)
-          echo -e -n "\n"${user_arch}" selected.\n"
+          echo -e -n "\n"${user_arch}" selected.\n\n"
           ARCH="${user_arch}"
+          read -n 1 -r -p "[Press any key to continue...]" key
           break 2
           ;;
         musl)
           echo -e -n "\n"${user_arch}" selected.\n"
-          echo -e -n "\nWARNING: This was not tested at all, so expect unexpected behaviours.\n"
+          echo -e -n "\nWARNING: This was not tested at all, so expect unexpected behaviours.\n\n"
           ARCH="${user_arch}"
+          read -n 1 -r -p "[Press any key to continue...]" key
           break 2
           ;;
         *)
-          echo -e -n "\nPlease select one of the two architectures.\n"
+          echo -e -n "\nPlease select one of the two architectures.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
           ;;
       esac
     done
