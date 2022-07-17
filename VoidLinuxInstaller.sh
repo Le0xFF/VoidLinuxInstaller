@@ -288,23 +288,32 @@ function check_and_connect_to_internet {
 function disk_wiping {
   
   while true; do
+
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #          Disk wiping          #\n"
+    echo -e -n "#######################################\n"
   
     echo
     read -n 1 -r -p "Do you want to wipe any drive? (y/n): " yn
-    echo
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
       while true ; do
-      
+
+        clear
+        echo -e -n "#######################################\n"
+        echo -e -n "# VLI #          Disk wiping          #\n"
+        echo -e -n "#######################################\n"
         echo -e -n "\nPrinting all the connected drives:\n\n"
         lsblk -p
     
-        echo -e -n "\nWhich drive do you want to wipe?\nPlease enter the full drive path (i.e. /dev/sda): "
+        echo -e -n "\nWhich drive do you want to wipe?\nIt will be automatically selected as the drive to be partitioned.\n\nPlease enter the full drive path (i.e. /dev/sda): "
         read -r user_drive
       
         if [[ ! -e "${user_drive}" ]] ; then
-          echo -e -n "\nPlease select a valid drive.\n"
+          echo -e -n "\nPlease select a valid drive.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
       
         else
           while true; do
@@ -313,7 +322,9 @@ function disk_wiping {
           read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
         
           if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-            echo -e -n "\nAborting, select another drive.\n"
+            echo -e -n "\nAborting, select another drive.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
             break
           elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
             if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
@@ -326,21 +337,28 @@ function disk_wiping {
             echo -e -n "\nWiping the drive...\n"
             wipefs -a "${user_drive}"
             sync
-            echo -e -n "\nDrive successfully wiped.\n"
-            break 2
+            echo -e -n "\nDrive successfully wiped.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break 3
           else
-            echo -e -n "\nPlease answer y or n.\n"
+            echo -e -n "\nPlease answer y or n.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
           fi
           done
         fi
       done
       
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e -n "\nNo additional changes were made.\n"
+      echo -e -n "\n\nNo additional changes were made.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
       break
     
     else
-      echo -e -n "\n\nPlease answer y or n.\n"
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     fi
   
   done
@@ -349,10 +367,13 @@ function disk_wiping {
 function disk_partitioning {
   
   while true; do
+
+    echo -e -n "#######################################\n"
+    echo -e -n "# VLI #       Disk partitioning       #\n"
+    echo -e -n "#######################################\n"
     
     echo
     read -n 1 -r -p "Do you want to partition any drive? (y/n): " yn
-    echo
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
@@ -364,10 +385,17 @@ function disk_partitioning {
             echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before partitioning...\n"
             cd $HOME
             umount -l "${user_drive}"?*
-            echo -e -n "\nDrive unmounted successfully.\n"
+            echo -e -n "\nDrive unmounted successfully.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
           fi
       
           while true ; do
+
+            clear
+            echo -e -n "#######################################\n"
+            echo -e -n "# VLI #       Disk partitioning       #\n"
+            echo -e -n "#######################################\n"
           
             echo -e -n "\nSuggested disk layout:"
             echo -e -n "\n- GPT as disk label type for UEFI systems;"
@@ -396,26 +424,37 @@ function disk_partitioning {
                 break
                 ;;
               *)
-                echo -e -n "\nPlease select only one of the three suggested tools.\n"
+                echo -e -n "\nPlease select only one of the three suggested tools.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
                 ;;
             esac
             
           done
           
           while true; do
-            echo
+          
+            clear
+            echo -e -n "#######################################\n"
+            echo -e -n "# VLI #       Disk partitioning       #\n"
+            echo -e -n "#######################################\n\n"
+
             lsblk -p "${user_drive}"
             echo
             read -n 1 -r -p "Is this the desired partition table? (y/n): " yn
           
             if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-              echo -e -n "\n\nDrive partitioned, keeping changes.\n"
-              break 2
+              echo -e -n "\n\nDrive partitioned, keeping changes.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+              break 3
             elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-              echo -e -n "\n\nPlease partition your drive again.\n"
+              echo -e -n "\n\nPlease partition your drive again.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
               break
             else
-              echo -e -n "\n\nPlease answer y or n.\n"
+              echo -e -n "\nPlease answer y or n.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
             fi
           done
           
@@ -423,14 +462,20 @@ function disk_partitioning {
       
           while true ; do
         
+            clear
+            echo -e -n "#######################################\n"
+            echo -e -n "# VLI #       Disk partitioning       #\n"
+            echo -e -n "#######################################\n"
             echo -e -n "\nPrinting all the connected drive(s):\n\n"
+            
             lsblk -p
           
-            echo -e -n "\n\nWhich drive do you want to partition?\nPlease enter the full drive path (i.e. /dev/sda): "
+            echo -e -n "\nWhich drive do you want to partition?\nPlease enter the full drive path (i.e. /dev/sda): "
             read -r user_drive
     
             if [[ ! -e "${user_drive}" ]] ; then
-              echo -e -n "\nPlease select a valid drive.\n"
+              echo -e -n "\nPlease select a valid drive.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
       
             else
           
@@ -440,20 +485,24 @@ function disk_partitioning {
               read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
           
               if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-                echo -e "\nAborting, select another drive."
+                echo -e -n "\nAborting, select another drive.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
                 break
               elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
                 if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
                   echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before selecting it for partitioning...\n"
                   cd "$HOME"
                   umount -l "${user_drive}"?*
-                  echo -e -n "\nDrive unmounted successfully.\n"
+                  echo -e -n "\nDrive unmounted successfully.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
                 fi
 
-                echo -e -n "\nCorrect drive selected, back to tool selection...\n"
+                echo -e -n "\nCorrect drive selected, back to tool selection...\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
                 break 2
               else
-                echo -e "\nPlease answer y or n."
+                echo -e -n "\nPlease answer y or n.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
               fi
               done
             
@@ -466,11 +515,15 @@ function disk_partitioning {
       done
     
     elif [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
-      echo -e -n "\nNo additional changes were made.\n"
+      echo -e -n "\nNo additional changes were made.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
       break
     
     else
-      echo -e -n "\nPlease answer y or n.\n"
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     fi
   
   done
