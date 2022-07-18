@@ -33,7 +33,7 @@ Using wget to download the needed files:
 
 ``` bash
 wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/VoidLinuxInstaller.sh -O $HOME/VoidLinuxInstaller.sh
-wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/chroot.sh -O $HOME/chroot
+wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/chroot.sh -O $HOME/chroot.sh
 ```
 
 or curl if you prefer:
