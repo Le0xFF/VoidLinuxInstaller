@@ -39,10 +39,19 @@ function edit_fstab {
   sed -i '/tmpfs/d' /etc/fstab
 cat << EOF >> /etc/fstab
 
+# root partition
 UUID=$ROOT_UUID / btrfs $BTRFS_OPT,subvol=@ 0 1
+
+# home Partition
 UUID=$HOME_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
+
+# root snapshots
 UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
+
+# EFI partition
 UUID=$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
+
+# TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
 
@@ -115,6 +124,7 @@ function install_grub {
 
   echo -e -n "\nEnabling CRYPTODISK in GRUB...\n\n"
 cat << EOF >> /etc/default/grub
+
 GRUB_ENABLE_CRYPTODISK=y
 EOF
 
