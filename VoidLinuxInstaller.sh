@@ -372,8 +372,30 @@ function disk_partitioning {
     echo -e -n "# VLI #       Disk partitioning       #\n"
     echo -e -n "#######################################\n"
     
-    echo
-    read -n 1 -r -p "Do you want to partition any drive? (y/n): " yn
+    if [[ -z "${user_drive}" ]] ; then
+      echo -e -n "\nNo drive previously selected for partitioning.\n\n"
+      read -n 1 -r -p "Do you want to partition any drive? (y/n): " yn
+    else
+      while true ; do
+        echo -e -n "\nDrive previously selected for partitioning: "${user_drive}".\n\n"
+        read -n 1 -r -p "Do you want to change it? (y/n): " yn
+        if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
+          echo -e -n "\n\nKeeping the previously selected drive.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          yn="y"
+          break
+        elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+          echo -e -n "\n\nPlease select another drive.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          user_drive=''
+          yn="y"
+          break
+        else
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        fi
+      done
+    fi
     
     if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
@@ -1083,6 +1105,7 @@ function outro {
   echo -e -n "#######################################\n"
 
   echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
+  echo -e -n "- Change your default shell\n"
   echo -e -n "- Change your hostname in /etc/hostname\n"
   echo -e -n "- Modify /etc/rc.conf according to the official documentation\n"
   echo -e -n "- Uncomment the right line in /etc/default/libc-locales\n"
