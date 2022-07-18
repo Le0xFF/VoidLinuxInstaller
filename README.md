@@ -3,28 +3,27 @@
 The **VoidLinuxInstaller script** is an attempt to make [my gist](https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3) an interactive bash script.
 
 As stated in the gist, this script provides:
-- Trim on any SSD;
-- Full Disk Encryption (including /boot) with LUKS;
+- Full Disk Encryption (including `/boot`) with LUKS;
 - Logic Volume Management (LVM);
-- Separated /home partition;
+- Separated `/home` partition;
 - BTRFS as filesystem.
+- Trim on SSD;
 
 All of this is accomplished with the following steps:
 1. Changing keyboard layout;
 2. Checking internet connection;
 3. Wiping a user choosen drive;
-3. Partitioning a user choosen drive;
-4. Encrypting a user choosen drive;
-5. Applying LVM;
-6. Formatting partitions to proper filesystems;
-7. Creating BTRFS subvolumes;
-8. Installing base system;
-9. Chrooting.
+4. Partitioning a user choosen drive;
+5. Encrypting a user choosen drive;
+6. Applying LVM;
+7. Formatting partitions to proper filesystems;
+8. Creating BTRFS subvolumes;
+9. Installing base system;
+10. Chrooting.
 
-This script comes from my need to automate my gist as much as I can, and also as a way to learn Bash scripting as well.  
-*This is my first Bash script ever created so bugs, errors and really ugly code are expected!*
+This script comes from my need to automate my gist as much as I can, and also as a way to learn Bash scripting as well. *This is my first Bash script ever created so bugs, errors and really ugly code are expected!*
 
-I've tried this script a lot with KVM and following every step always brought me to a functional system, so there should be no problem from this point of view!
+I've tried this script a lot with virtual machines and following every step always brought me to a functional system, so there should be no problem from this point of view!
 
 Pull requests are absolutely welcome!
 
