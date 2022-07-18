@@ -1044,7 +1044,6 @@ function install_base_system_and_chroot {
         x86_64-musl)
           echo -e -n "\n"${user_arch}" selected.\n"
           export REPO=https://repo-default.voidlinux.org/current/musl
-          echo -e -n "\nWARNING: This was not tested at all, so expect unexpected behaviours.\n\n"
           ARCH="${user_arch}"
           read -n 1 -r -p "[Press any key to continue...]" key
           break 2
