@@ -1032,7 +1032,7 @@ function install_base_system_and_chroot {
   
     echo -e -n "\nSelect which architecture do you want to use:\n\n"
     
-    select user_arch in x86_64 musl ; do
+    select user_arch in x86_64 x86_64-musl ; do
       case "${user_arch}" in
         x86_64)
           echo -e -n "\n"${user_arch}" selected.\n\n"
@@ -1040,7 +1040,7 @@ function install_base_system_and_chroot {
           read -n 1 -r -p "[Press any key to continue...]" key
           break 2
           ;;
-        musl)
+        x86_64-musl)
           echo -e -n "\n"${user_arch}" selected.\n"
           echo -e -n "\nWARNING: This was not tested at all, so expect unexpected behaviours.\n\n"
           ARCH="${user_arch}"
