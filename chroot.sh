@@ -62,7 +62,7 @@ function generate_random_key {
   echo -e -n "\nGenerate random key to avoid typing password twice at boot...\n\n"
   dd bs=512 count=4 if=/dev/random of=/boot/volume.key
   
-  echo -e -n "\n\nRandom key generated, unlocking the encrypted partition...\n"
+  echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
   cryptsetup luksAddKey "${encrypted_partition}" /boot/volume.key
   chmod 000 /boot/volume.key
   chmod -R g-rwx,o-rwx /boot
