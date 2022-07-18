@@ -1070,9 +1070,11 @@ function install_base_system_and_chroot {
   echo -e -n "\nCopying /etc/resolv.conf...\n"
   cp -L /etc/resolv.conf /mnt/etc/
 
-  echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
-  cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
-
+  if [[ ! -e /var/services/NetworkManager ]] ; then
+    echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
+    cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
+  fi
+  
   echo -e -n "\nChrooting...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   cp "${HOME}"/chroot.sh /mnt/root/
