@@ -1037,11 +1037,13 @@ function install_base_system_and_chroot {
         x86_64)
           echo -e -n "\n"${user_arch}" selected.\n\n"
           ARCH="${user_arch}"
+          export REPO=https://repo-default.voidlinux.org/current
           read -n 1 -r -p "[Press any key to continue...]" key
           break 2
           ;;
         x86_64-musl)
           echo -e -n "\n"${user_arch}" selected.\n"
+          export REPO=https://repo-default.voidlinux.org/current/musl
           echo -e -n "\nWARNING: This was not tested at all, so expect unexpected behaviours.\n\n"
           ARCH="${user_arch}"
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -1057,7 +1059,6 @@ function install_base_system_and_chroot {
   done
 
   echo -e -n "\nInstalling base system...\n\n"
-  export REPO=https://repo-default.voidlinux.org/current
   XBPS_ARCH="${ARCH}" xbps-install -Suy xbps
   XBPS_ARCH="${ARCH}" xbps-install -Sy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
   
