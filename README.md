@@ -29,24 +29,22 @@ Pull requests are absolutely welcome!
 
 ## How to run it
 
-Using wget to download the needed files:
+Using wget to download the needed file:
 
 ``` bash
 wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/VoidLinuxInstaller.sh -O $HOME/VoidLinuxInstaller.sh
-wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/chroot.sh -O $HOME/chroot.sh
 ```
 
 or curl if you prefer:
 
 ``` bash
 curl -o $HOME/VoidLinuxInstaller.sh https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/VoidLinuxInstaller.sh
-curl -o $HOME/chroot.sh https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/chroot.sh
 ```
 
-then make them executable:
+then make it executable:
 
 ``` bash
-chmod +x $HOME/*.sh
+chmod +x $HOME/VoidLinuxInstaller.sh
 ```
 
 and finally run it:
@@ -57,7 +55,7 @@ bash $HOME/VoidLinuxInstaller.sh
 
 ## Notes
 
-If you are going to use snapper and [snapper-gui](https://github.com/ricardomv/snapper-gui), it probably will complain about `.snapshots` folder already present.
+If you are going to use snapper and [snapper-gui](https://github.com/ricardomv/snapper-gui), it probably will complain about `/.snapshots` folder already present.
 To avoid that, please use [this reference from the Arch Wiki](https://wiki.archlinux.org/title/Snapper#Configuration_of_snapper_and_mount_point).
 
 ## Resources
