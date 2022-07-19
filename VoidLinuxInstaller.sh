@@ -53,7 +53,7 @@ function check_if_uefi {
 
 function create_chroot_script {
 
-  if [[ -e "${HOME}"/chroot.sh ]] ; then
+  if [[ -f "${HOME}"/chroot.sh ]] ; then
     rm -f "${HOME}"/chroot.sh
   fi
 
@@ -285,7 +285,7 @@ read -n 1 -r -p "[Press any key to continue...]" key
 clear
 EOD
 
-  if [[ ! -e "${HOME}"/chroot.sh ]] ; then
+  if [[ ! -f "${HOME}"/chroot.sh ]] ; then
     echo -e -n "Please run this script again to be sure that "${HOME}"/chroot.sh script is created too."
     exit 1
   fi
