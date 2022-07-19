@@ -209,7 +209,7 @@ EOF
       lsblk -p
       echo -e -n "\nOn Which drive do you want to install GRUB?\nPlease enter the full drive path (i.e. /dev/sda): "
       read -r user_drive
-      if [[ ! -e "\${user_drive}" ]] ; then
+      if [[ ! -b "\${user_drive}" ]] ; then
         echo -e -n "\nPlease select a valid drive.\n\n"
         read -n 1 -r -p "[Press any key to continue...]" key
       else
@@ -544,7 +544,7 @@ function disk_wiping {
         echo -e -n "\nWhich drive do you want to wipe?\nIt will be automatically selected as the drive to be partitioned.\n\nPlease enter the full drive path (i.e. /dev/sda): "
         read -r user_drive
       
-        if [[ ! -e "${user_drive}" ]] ; then
+        if [[ ! -b "${user_drive}" ]] ; then
           echo -e -n "\nPlease select a valid drive.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
@@ -729,7 +729,7 @@ function disk_partitioning {
             echo -e -n "\nWhich drive do you want to partition?\nPlease enter the full drive path (i.e. /dev/sda): "
             read -r user_drive
     
-            if [[ ! -e "${user_drive}" ]] ; then
+            if [[ ! -b "${user_drive}" ]] ; then
               echo -e -n "\nPlease select a valid drive.\n\n"
               read -n 1 -r -p "[Press any key to continue...]" key
       
@@ -800,7 +800,7 @@ function disk_encryption {
     echo -e -n "\nWhich / [root] partition do you want to encrypt?\nPlease enter the full partition path (i.e. /dev/sda1): "
     read -r encrypted_partition
       
-    if [[ ! -e "${encrypted_partition}" ]] ; then
+    if [[ ! -b "${encrypted_partition}" ]] ; then
       echo -e -n "\nPlease select a valid partition.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
@@ -1031,7 +1031,7 @@ function create_filesystems {
     echo -e -n "\nWhich partition will be the /boot/efi partition?\n"
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
     
-    if [[ ! -e "${boot_partition}" ]] ; then
+    if [[ ! -b "${boot_partition}" ]] ; then
       echo -e -n "\nPlease select a valid drive.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
@@ -1049,7 +1049,7 @@ function create_filesystems {
         elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
           if grep -q "${boot_partition}" /proc/mounts ; then
             echo -e -n "\nPartition already mounted.\nChanging directory to "${HOME}" and unmounting it before formatting...\n"
-            cd "$HOME"
+            cd "${HOME}"
             umount -l "${boot_partition}"
             echo -e -n "\nDrive unmounted successfully.\n"
             read -n 1 -r -p "[Press any key to continue...]" key
