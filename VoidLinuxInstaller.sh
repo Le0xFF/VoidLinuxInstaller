@@ -42,7 +42,7 @@ function check_if_run_as_root {
 
 function check_if_uefi {
 
-  if ! cat /proc/mounts | grep efivar &> /dev/null ; then
+  if ! grep efivar -q /proc/mounts ; then
     if ! mount -t efivarfs efivarfs /sys/firmware/efi/efivars/ &> /dev/null ; then
       echo -e -n "Please run this script only on a UEFI system."
       exit 1
@@ -193,7 +193,7 @@ EOF
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
 
-  if ! cat /proc/mounts | grep efivar &> /dev/null ; then
+  if ! grep -q efivar /proc/mounts ; then
     echo -e -n "\nMounting efivarfs...\n"
     mount -t efivarfs efivarfs /sys/firmware/efi/efivars/
   fi
@@ -386,7 +386,7 @@ function check_and_connect_to_internet {
 
     echo -e -n "\nChecking internet connectivity...\n"
 
-    if ! ping -c2 8.8.8.8 &> /dev/null ; then
+    if ! ping -c 2 8.8.8.8 &> /dev/null ; then
       echo -e -n "\nNo internet connection found.\n\n"
       read -n 1 -r -p "Do you want to connect to the internet? (y/n): " yn
     
@@ -478,7 +478,7 @@ function check_and_connect_to_internet {
               done
             fi
 
-            if ping -c2 8.8.8.8 &> /dev/null ; then
+            if ping -c 2 8.8.8.8 &> /dev/null ; then
               echo -e -n "\nSuccessfully connected to the internet.\n\n"
               read -n 1 -r -p "[Press any key to continue...]" key
               clear
@@ -561,7 +561,7 @@ function disk_wiping {
             clear
             break
           elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-            if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
+            if grep -q "${user_drive}" /proc/mounts ; then
               echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before wiping...\n"
               cd $HOME
               umount -l "${user_drive}"?*
@@ -637,7 +637,7 @@ function disk_partitioning {
     
         if [[ -n "${user_drive}" ]] ; then
 
-          if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
+          if grep -q "${user_drive}" /proc/mounts ; then
             echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before partitioning...\n"
             cd $HOME
             umount -l "${user_drive}"?*
@@ -745,7 +745,7 @@ function disk_partitioning {
                 read -n 1 -r -p "[Press any key to continue...]" key
                 break
               elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-                if cat /proc/mounts | grep "${user_drive}" &> /dev/null ; then
+                if grep -q "${user_drive}" /proc/mounts ; then
                   echo -e -n "\nDrive already mounted.\nChanging directory to "${HOME}" and unmounting every partition before selecting it for partitioning...\n"
                   cd "$HOME"
                   umount -l "${user_drive}"?*
@@ -1047,7 +1047,7 @@ function create_filesystems {
           clear
           break
         elif [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-          if cat /proc/mounts | grep "${boot_partition}" &> /dev/null ; then
+          if grep -q "${boot_partition}" /proc/mounts ; then
             echo -e -n "\nPartition already mounted.\nChanging directory to "${HOME}" and unmounting it before formatting...\n"
             cd "$HOME"
             umount -l "${boot_partition}"
@@ -1219,7 +1219,7 @@ function create_btrfs_subvolumes {
   read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." key
 
   echo -e -n "\n\nThe root partition you selected (/dev/mapper/"${vg_name}"-"${lv_root_name}") will now be mounted to /mnt.\n"
-  if cat /proc/mounts | grep /mnt &> /dev/null ; then
+  if grep -q /mnt /proc/mounts ; then
     echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
     cd "$HOME"
     umount -l /mnt
