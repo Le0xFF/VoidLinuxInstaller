@@ -399,7 +399,7 @@ function check_and_connect_to_internet {
     
           if [[ "${yn}" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
       
-            if [[ -e /var/service/NetworkManager ]] ; then
+            if [[ -L /var/service/NetworkManager ]] ; then
         
               while true; do
                 echo
@@ -450,7 +450,7 @@ function check_and_connect_to_internet {
             
                   echo -e -n "\nEnabling wpa_supplicant service...\n"
               
-                  if [[ -e /var/service/wpa_supplicant ]] ; then
+                  if [[ -L /var/service/wpa_supplicant ]] ; then
                     echo -e -n "\nService already enabled, restarting...\n"
                     sv restart {dhcpcd,wpa_supplicant}
                   else
@@ -1304,7 +1304,7 @@ function install_base_system_and_chroot {
   echo -e -n "\nCopying /etc/resolv.conf...\n"
   cp -L /etc/resolv.conf /mnt/etc/
 
-  if [[ ! -e /var/services/NetworkManager ]] ; then
+  if [[ ! -L /var/services/NetworkManager ]] ; then
     echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
     cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
   fi
