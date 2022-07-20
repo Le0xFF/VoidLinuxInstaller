@@ -298,17 +298,17 @@ function intro {
 
   clear
 
-  echo -e -n "     pQQQQQQQQQQQQppq    \n"
-  echo -e -n "     p               Q          Void Linux installer script\n"
-  echo -e -n "      pppQppQppppQ    Q  \n"
-  echo -e -n " {{{{{            p    Q        My first attempt at creating a bash script.\n"
-  echo -e -n "{    {   dpppppp   p    Q       Bugs and unicorns farts are expected.\n"
-  echo -e -n "{   {   p       p   p   Q\n"
-  echo -e -n "{   {   p       Q   p   Q       This script try to automate what my gist describes.\n"
+  echo -e -n "     pQQQQQQQQQQQQppq           ### Void Linux installer script ###\n"
+  echo -e -n "     p               Q   \n"
+  echo -e -n "      pppQppQppppQ    Q         My first attempt at creating a bash script.\n"
+  echo -e -n " {{{{{            p    Q        Bugs and unicorns farts are expected.\n"
+  echo -e -n "{    {   dpppppp   p    Q\n"
+  echo -e -n "{   {   p       p   p   Q       This script try to automate what my gist describes.\n"
   echo -e -n "{   {   p       Q   p   Q       Link to the gist: https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3\n"
-  echo -e -n "{    {   ppppppQ   p    Q\n"
-  echo -e -n " {    {            ppppQ        This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
-  echo -e -n "  {    {{{{{{{{{{{{             with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
+  echo -e -n "{   {   p       Q   p   Q\n"
+  echo -e -n "{    {   ppppppQ   p    Q       This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
+  echo -e -n " {    {            ppppQ        with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
+  echo -e -n "  {    {{{{{{{{{{{{             To understand better what the script does, please look at the README: https://github.com/Le0xFF/VoidLinuxInstaller\n"
   echo -e -n "   {               {     \n"
   echo -e -n "    {{{{{{{{{{{{{{{{            [Press any key to begin with the process...]\n"
   
@@ -656,7 +656,7 @@ function disk_partitioning {
             echo -e -n "\nSuggested disk layout:"
             echo -e -n "\n- GPT as disk label type for UEFI systems;"
             echo -e -n "\n- Less than 1 GB for /boot/efi as first partition [EFI System];"
-            echo -e -n "\n- Rest of the disk for / as second partition [Linux filesystem]."
+            echo -e -n "\n- Rest of the disk for the partition that will be logically partitioned with LVM (/ and /home) [Linux filesystem]."
             echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because it will be created later as a logical one.\n"
           
             echo -e -n "\nDrive selected for partitioning: ${user_drive}\n\n"
