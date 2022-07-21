@@ -126,12 +126,19 @@ Following the script, at the very end your drive will end up being like the foll
 
 - If you are going to use snapper and [snapper-gui](https://github.com/ricardomv/snapper-gui), it probably will complain about `/.snapshots` folder already present.  
 To avoid that, please use [this reference from the Arch Wiki](https://wiki.archlinux.org/title/Snapper#Configuration_of_snapper_and_mount_point).
+- To speed up decryption at boot you could lower the number of iteration for each key as described on the [Arch Wiki](https://wiki.archlinux.org/title/GRUB/Tips_and_tricks#Speeding_up_LUKS_decryption_in_GRUB), but keep in mind that this comes with its own security concerns.
+- **I DON'T RECOMMEND FOLLOWING THIS, IT'S HERE ONLY AS REFERENCE:**
+    * https://wiki.archlinux.org/title/GRUB/Tips_and_tricks#Manual_configuration_of_core_image_for_early_boot
+    * https://cryptsetup-team.pages.debian.net/cryptsetup/encrypted-boot.html#using-a-custom-keyboard-layout
 
 <br>
 
 ## Resources
 
-[1] https://tldp.org/LDP/Bash-Beginners-Guide/html/index.html  
-[2] https://gist.github.com/tobi-wan-kenobi/bff3af81eac27e210e1dc88ba660596e  
-[3] https://gist.github.com/gbrlsnchs/9c9dc55cd0beb26e141ee3ea59f26e21  
-[4] https://unixsheikh.com/tutorials/real-full-disk-encryption-using-grub-on-void-linux-for-bios.html
+> **[1]** https://tldp.org/LDP/Bash-Beginners-Guide/html/index.html
+
+> **[2]** https://gist.github.com/tobi-wan-kenobi/bff3af81eac27e210e1dc88ba660596e
+
+> **[3]** https://gist.github.com/gbrlsnchs/9c9dc55cd0beb26e141ee3ea59f26e21
+
+> **[4]** https://unixsheikh.com/tutorials/real-full-disk-encryption-using-grub-on-void-linux-for-bios.html
