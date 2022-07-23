@@ -23,13 +23,29 @@ Pull requests are absolutely welcome!
 
 ## How to run it?
 
-Using wget to download the needed file:
+First update `xbps` package:
+
+``` bash
+xbps-install -Sy xbps
+```
+
+then install `wget` or `curl` package:
+
+``` bash
+# For wget
+xbps-install -Sy wget
+
+# For curl
+xbps-install -Sy curl
+```
+
+then use `wget` to download the needed file:
 
 ``` bash
 wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/VoidLinuxInstaller.sh -O $HOME/VoidLinuxInstaller.sh
 ```
 
-or curl if you prefer:
+or `curl` if you prefer:
 
 ``` bash
 curl -o $HOME/VoidLinuxInstaller.sh https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/VoidLinuxInstaller.sh
