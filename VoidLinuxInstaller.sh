@@ -196,7 +196,7 @@ function install_grub {
 
   header_ig
 
-  echo -e -n "\nEnabling CRYPTODISK in GRUB...\n\n"
+  echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
 cat << EOF >> /etc/default/grub
 
 GRUB_ENABLE_CRYPTODISK=y
@@ -204,53 +204,12 @@ EOF
 
   sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=\$LUKS_UUID=\$encrypted_name rd.luks.allow-discards=\$LUKS_UUID&/" /etc/default/grub
 
-  read -n 1 -r -p "[Press any key to continue...]" key
-  clear
-
   if ! grep -q efivar /proc/mounts ; then
     echo -e -n "\nMounting efivarfs...\n"
     mount -t efivarfs efivarfs /sys/firmware/efi/efivars/
   fi
 
-  if [[ -z "\$user_drive" ]] ; then
-    while true ; do
-      clear
-      header_ig
-      
-      echo
-      lsblk -p
-      echo -e -n "\nOn Which drive do you want to install GRUB?\nPlease enter the full drive path (i.e. /dev/sda): "
-      read -r user_drive
-      if [[ ! -b "\$user_drive" ]] ; then
-        echo -e -n "\nPlease select a valid drive.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
-      else
-        while true; do
-          echo -e -n "\nYou selected: \${BLUE_LIGHT}\$user_drive\${NORMAL}.\n\n"
-          echo -e -n "\${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):\${NORMAL} "
-          read -r yn
-
-          if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
-            echo -e -n "\nAborting, select another drive.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-            break
-          elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
-            echo -e -n "\nCorrect drive selected, continuing with grub installation...\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-            break 2
-          else
-            echo -e -n "\nPlease answer y or n.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-          fi
-        done
-      fi
-    done
-  fi
-
-  clear
-  header_ig
-
-  echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}\$user_drive\${NORMAL} with \"\${BLUE_LIGHT}VoidLinux\${NORMAL}\" as bootloader-id...\n\n"
+  echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}VoidLinux\${NORMAL} as bootloader-id...\n\n"
   grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VoidLinux --boot-directory=/boot --recheck
 
   echo -e -n "\nEnabling SSD trim...\n\n"
@@ -269,7 +228,7 @@ function finish_chroot {
   echo -e -n "\${GREEN_DARK}#######\${NORMAL}       \${GREEN_LIGHT}Enabling services\${NORMAL}       \${GREEN_DARK}#\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
 
-  echo -e -n "\nEnabling internet service at first boot...\n\n"
+  echo -e -n "\nEnabling internet service at first boot...\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
   ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 
