@@ -218,8 +218,9 @@ EOF
         read -n 1 -r -p "[Press any key to continue...]" key
       else
         while true; do
-          echo -e -n "\nYou selected: "\${user_drive}".\n\n"
-          read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+          echo -e -n "\nYou selected: "\e[1;34m\${user_drive}"\e[0m.\n\n"
+          echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+          read -r yn
 
           if [[ "\${yn}" == "n" ]] || [[ "\${yn}" == "N" ]] ; then
             echo -e -n "\nAborting, select another drive.\n\n"
@@ -241,7 +242,7 @@ EOF
   clear
   header_ig
 
-  echo -e -n "\nInstalling GRUB on "\${user_drive}" with \"VoidLinux\" as bootloader-id...\n\n"
+  echo -e -n "\nInstalling GRUB on \e[1;34m"\${user_drive}"\e[0m with \"VoidLinux\" as bootloader-id...\n\n"
   grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VoidLinux --boot-directory=/boot --recheck
 
   echo -e -n "\nEnabling SSD trim...\n\n"
@@ -304,11 +305,11 @@ function intro {
   echo -e -n " \e[0;32m{{{{{\e[0m            \e[1;32mp    Q\e[0m        Bugs and unicorns farts are expected.\n"
   echo -e -n "\e[0;32m{    {\e[0m   \e[1;32mdpppppp   p    Q\e[0m\n"
   echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       p   p   Q\e[0m       This script try to automate what my gist describes.\n"
-  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       Q   p   Q\e[0m       Link to the gist: https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3\n"
+  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       Q   p   Q\e[0m       Link to the gist: \e[1;34mhttps://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3\e[0m\n"
   echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       Q   p   Q\e[0m\n"
   echo -e -n "\e[0;32m{    {\e[0m   \e[1;32mppppppQ   p    Q\e[0m       This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
   echo -e -n " \e[0;32m{    {\e[0m            \e[1;32mppppQ\e[0m        with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
-  echo -e -n "  \e[0;32m{    {{{{{{{{{{{{\e[0m             To understand better what the script does, please look at the README: https://github.com/Le0xFF/VoidLinuxInstaller\n"
+  echo -e -n "  \e[0;32m{    {{{{{{{{{{{{\e[0m             To understand better what the script does, please look at the README: \e[1;34mhttps://github.com/Le0xFF/VoidLinuxInstaller\e[0m\n"
   echo -e -n "   \e[0;32m{               {\e[0m     \n"
   echo -e -n "    \e[0;32m{{{{{{{{{{{{{{{{\e[0m            [Press any key to begin with the process...]\n"
   
@@ -569,8 +570,9 @@ function disk_wiping {
         else
           while true; do
           echo -e -n "\nDrive selected for wiping: "${user_drive}"\n"
-          echo -e -n "\nTHIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.\n"
-          read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+          echo -e -n "\n\e[1;31mTHIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.\e[0m\n"
+          echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+          read -r yn
         
           if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
             echo -e -n "\nAborting, select another drive.\n\n"
@@ -756,8 +758,9 @@ function disk_partitioning {
           
               while true; do
               echo -e -n "\nYou selected "${user_drive}".\n"
-              echo -e -n "\nTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST.\n"
-              read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+              echo -e -n "\n\e[1;31mTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST.\e[0m\n"
+              echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+              read -r yn
           
               if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
                 echo -e -n "\nAborting, select another drive.\n\n"
@@ -1069,8 +1072,9 @@ function create_filesystems {
     else
       while true; do
         echo -e -n "\nYou selected: "${boot_partition}".\n"
-        echo -e -n "\nTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.\n"
-        read -r -p "Are you sure you want to continue? (y/n and [ENTER]): " yn
+        echo -e -n "\n\e[1;31mTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.\e[0m\n"
+        echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+        read -r yn
           
         if [[ "${yn}" == "n" ]] || [[ "${yn}" == "N" ]] ; then
           echo -e -n "\nAborting, select another partition.\n\n"
