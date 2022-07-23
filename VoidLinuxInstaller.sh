@@ -363,7 +363,7 @@ function set_keyboard_layout {
           break 2
         else
           if loadkeys "$user_keyboard_layout" 2> /dev/null ; then
-            echo -e -n "\nKeyboad layout set to: \"${BLUE_LIGHT}$user_keyboard_layout${NORMAL}\".\n\n"
+            echo -e -n "\nKeyboad layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
             clear
             break 2
