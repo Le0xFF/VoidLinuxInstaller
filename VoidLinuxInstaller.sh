@@ -842,7 +842,7 @@ function disk_encryption {
       
     else
       while true; do
-        echo -e -n "\nYou selected: $encrypted_partition.\n\n"
+        echo -e -n "\nYou selected: ${BLUE_LIGHT}$encrypted_partition${NORMAL}.\n\n"
         read -r -p "Is this correct? (y/n and [ENTER]): " yn
         
         if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
@@ -887,11 +887,11 @@ function disk_encryption {
               clear
             else
               while true ; do
-                echo -e -n "\nYou entered: "$encrypted_name".\n\n"
+                echo -e -n "\nYou entered: ${BLUE_LIGHT}$encrypted_name${NORMAL}.\n\n"
                 read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
                 if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-                  echo -e -n "\n\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/"$encrypted_name"${NORMAL}\n\n"
+                  echo -e -n "\n\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n\n"
                   cryptsetup open "$encrypted_partition" "$encrypted_name"
                   echo -e -n "\nEncrypted partition successfully mounted.\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
@@ -949,12 +949,12 @@ function lvm_creation {
       clear
     else
       while true ; do
-        echo -e -n "\nYou entered: "$vg_name".\n\n"
+        echo -e -n "\nYou entered: ${BLUE_LIGHT}$vg_name${NORMAL}.\n\n"
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
         
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
           echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
-          vgcreate "${vg_name}" /dev/mapper/"${encrypted_name}"
+          vgcreate "$vg_name" /dev/mapper/"$encrypted_name"
           echo
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
@@ -1360,7 +1360,7 @@ function install_base_system_and_chroot {
   echo -e -n "\nChrooting...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   cp "$HOME"/chroot.sh /mnt/root/
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" vg_name="$vg_name" lv_root_name="$lv_root_name" lv_home_name="$lv_home_name" user_drive="$user_drive" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" vg_name="$vg_name" lv_root_name="$lv_root_name" lv_home_name="$lv_home_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
   header_ibsac
   
