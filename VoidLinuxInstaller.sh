@@ -20,6 +20,14 @@ lv_root_size=''
 lv_home_name=''
 boot_partition=''
 
+# Colours
+
+BLUE_LIGHT="\e[1;34m"
+GREEN_DARK="\e[0;32m"
+GREEN_LIGHT="\e[1;32m"
+NORMAL="\e[0m"
+RED_LIGHT="\e[1;31m"
+
 # Functions
 
 function check_if_bash {
@@ -63,11 +71,11 @@ cat << EOD >> "$HOME"/chroot.sh
 function set_root {
 
   clear
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m#######\e[0m     \e[1;32mSetting root password\e[0m     \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}     \${GREEN_LIGHT}Setting root password\${NORMAL}     \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
   
   echo -e -n "\nSetting root password:\n\n"
   passwd root
@@ -83,11 +91,11 @@ function set_root {
 
 function edit_fstab {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m#######\e[0m        \e[1;32mfstab creation\e[0m         \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}        \${GREEN_LIGHT}fstab creation\${NORMAL}         \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
 
   echo -e -n "\nExporting variables that will be used for fstab...\n"
   export UEFI_UUID=\$(blkid -s UUID -o value "\$boot_partition")
@@ -122,11 +130,11 @@ EOF
 
 function generate_random_key {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m#######\e[0m     \e[1;32mRandom key generation\e[0m     \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}     \${GREEN_LIGHT}Random key generation\${NORMAL}     \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
 
   echo -e -n "\nGenerate random key to avoid typing password twice at boot...\n\n"
   dd bs=512 count=4 if=/dev/random of=/boot/volume.key
@@ -149,11 +157,11 @@ EOF
 
 function generate_dracut_conf {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m#######\e[0m     \e[1;32mDracut configuration\e[0m      \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}     \${GREEN_LIGHT}Dracut configuration\${NORMAL}      \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
 
   echo -e -n "\nAdding random key to dracut configuration...\n"
 cat << EOF >> /etc/dracut.conf.d/10-crypt.conf
@@ -176,11 +184,11 @@ EOF
 
 function header_ig {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m#######\e[0m       \e[1;32mGRUB installation\e[0m       \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}       \${GREEN_LIGHT}GRUB installation\${NORMAL}       \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
   
 }
 
@@ -218,8 +226,8 @@ EOF
         read -n 1 -r -p "[Press any key to continue...]" key
       else
         while true; do
-          echo -e -n "\nYou selected: \e[1;34m\$user_drive\e[0m.\n\n"
-          echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+          echo -e -n "\nYou selected: \${BLUE_LIGHT}\$user_drive\${NORMAL}.\n\n"
+          echo -e -n "\${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):\${NORMAL} "
           read -r yn
 
           if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
@@ -242,7 +250,7 @@ EOF
   clear
   header_ig
 
-  echo -e -n "\nInstalling GRUB on \e[1;34m\$user_drive\e[0m with \"\e[1;34mVoidLinux\e[0m\" as bootloader-id...\n\n"
+  echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}\$user_drive\${NORMAL} with \"\${BLUE_LIGHT}VoidLinux\${NORMAL}\" as bootloader-id...\n\n"
   grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VoidLinux --boot-directory=/boot --recheck
 
   echo -e -n "\nEnabling SSD trim...\n\n"
@@ -255,11 +263,11 @@ EOF
 
 function enabling_services {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m#######\e[0m       \e[1;32mEnabling services\e[0m       \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}       \${GREEN_LIGHT}Enabling services\${NORMAL}       \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
 
   echo -e -n "\nEnabling internet service at first boot...\n\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -299,19 +307,19 @@ function intro {
 
   clear
 
-  echo -e -n "     \e[1;32mpQQQQQQQQQQQQppq\e[0m           \e[0;32m###\e[0m \e[1;32mVoid Linux installer script\e[0m \e[0;32m###\e[0m\n"
-  echo -e -n "     \e[1;32mp               Q\e[0m   \n"
-  echo -e -n "      \e[1;32mpppQppQppppQ    Q\e[0m         My first attempt at creating a bash script.\n"
-  echo -e -n " \e[0;32m{{{{{\e[0m            \e[1;32mp    Q\e[0m        Bugs and unicorns farts are expected.\n"
-  echo -e -n "\e[0;32m{    {\e[0m   \e[1;32mdpppppp   p    Q\e[0m\n"
-  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       p   p   Q\e[0m       This script try to automate what my gist describes.\n"
-  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       Q   p   Q\e[0m       Link to the gist: \e[1;34mhttps://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3\e[0m\n"
-  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       Q   p   Q\e[0m\n"
-  echo -e -n "\e[0;32m{    {\e[0m   \e[1;32mppppppQ   p    Q\e[0m       This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
-  echo -e -n " \e[0;32m{    {\e[0m            \e[1;32mppppQ\e[0m        with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
-  echo -e -n "  \e[0;32m{    {{{{{{{{{{{{\e[0m             To understand better what the script does, please look at the README: \e[1;34mhttps://github.com/Le0xFF/VoidLinuxInstaller\e[0m\n"
-  echo -e -n "   \e[0;32m{               {\e[0m     \n"
-  echo -e -n "    \e[0;32m{{{{{{{{{{{{{{{{\e[0m            [Press any key to begin with the process...]\n"
+  echo -e -n "     ${GREEN_LIGHT}pQQQQQQQQQQQQppq${NORMAL}           ${GREEN_DARK}###${NORMAL} ${GREEN_LIGHT}Void Linux installer script${NORMAL} ${GREEN_DARK}###${NORMAL}\n"
+  echo -e -n "     ${GREEN_LIGHT}p               Q${NORMAL}   \n"
+  echo -e -n "      ${GREEN_LIGHT}pppQppQppppQ    Q${NORMAL}         My first attempt at creating a bash script.\n"
+  echo -e -n " ${GREEN_DARK}{{{{{${NORMAL}            ${GREEN_LIGHT}p    Q${NORMAL}        Bugs and unicorns farts are expected.\n"
+  echo -e -n "${GREEN_DARK}{    {${NORMAL}   ${GREEN_LIGHT}dpppppp   p    Q${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}{   {${NORMAL}   ${GREEN_LIGHT}p       p   p   Q${NORMAL}       This script try to automate what my gist describes.\n"
+  echo -e -n "${GREEN_DARK}{   {${NORMAL}   ${GREEN_LIGHT}p       Q   p   Q${NORMAL}       Link to the gist: ${BLUE_LIGHT}https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}{   {${NORMAL}   ${GREEN_LIGHT}p       Q   p   Q${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}{    {${NORMAL}   ${GREEN_LIGHT}ppppppQ   p    Q${NORMAL}       This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
+  echo -e -n " ${GREEN_DARK}{    {${NORMAL}            ${GREEN_LIGHT}ppppQ${NORMAL}        with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
+  echo -e -n "  ${GREEN_DARK}{    {{{{{{{{{{{{${NORMAL}             To understand better what the script does, please look at the README: ${BLUE_LIGHT}https://github.com/Le0xFF/VoidLinuxInstaller${NORMAL}\n"
+  echo -e -n "   ${GREEN_DARK}{               {${NORMAL}     \n"
+  echo -e -n "    ${GREEN_DARK}{{{{{{{{{{{{{{{{${NORMAL}            [Press any key to begin with the process...]\n"
   
   read -n 1 -r key
 
@@ -321,9 +329,9 @@ function intro {
 
 function header_skl {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m     \e[1;32mKeyboard layout change\e[0m    \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}     ${GREEN_LIGHT}Keyboard layout change${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
@@ -356,7 +364,7 @@ function set_keyboard_layout {
           break 2
         else
           if loadkeys "$user_keyboard_layout" 2> /dev/null ; then
-            echo -e -n "\nKeyboad layout set to: \"\e[1;34m$user_keyboard_layout\e[0m\".\n\n"
+            echo -e -n "\nKeyboad layout set to: \"${BLUE_LIGHT}$user_keyboard_layout${NORMAL}\".\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
             clear
             break 2
@@ -385,9 +393,9 @@ function set_keyboard_layout {
 
 function header_cacti {
   
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m   \e[1;32mSetup internet connection\e[0m   \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}   ${GREEN_LIGHT}Setup internet connection${NORMAL}   ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
 }
 
@@ -534,9 +542,9 @@ function check_and_connect_to_internet {
 
 function header_dw {
   
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m          \e[1;32mDisk wiping\e[0m          \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}          ${GREEN_LIGHT}Disk wiping${NORMAL}          ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
 }
 
@@ -569,9 +577,9 @@ function disk_wiping {
       
         else
           while true; do
-          echo -e -n "\nDrive selected for wiping: \e[1;34m$user_drive\e[0m\n"
-          echo -e -n "\n\e[1;31mTHIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.\e[0m\n"
-          echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+          echo -e -n "\nDrive selected for wiping: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
+          echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+          echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
           read -r yn
         
           if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
@@ -619,9 +627,9 @@ function disk_wiping {
 
 function header_dp {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m       \e[1;32mDisk partitioning\e[0m       \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}       ${GREEN_LIGHT}Disk partitioning${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
@@ -636,7 +644,7 @@ function disk_partitioning {
       read -n 1 -r -p "Do you want to partition any drive? (y/n): " yn
     else
       while true ; do
-        echo -e -n "\nDrive previously selected for partitioning: \e[1;34m$user_drive\e[0m.\n\n"
+        echo -e -n "\nDrive previously selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}.\n\n"
         read -n 1 -r -p "Do you want to change it? (y/n): " yn
         if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\n\nKeeping the previously selected drive.\n\n"
@@ -682,7 +690,7 @@ function disk_partitioning {
             echo -e -n "\n- Rest of the disk for the partition that will be logically partitioned with LVM (/ and /home) [Linux filesystem]."
             echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because it will be created later as a logical one.\n"
           
-            echo -e -n "\nDrive selected for partitioning: \e[1;34m$user_drive\e[0m\n\n"
+            echo -e -n "\nDrive selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}\n\n"
           
             read -r -p "Which tool do you want to use? (fdisk/cfdisk/sfdisk): " tool
       
@@ -758,8 +766,8 @@ function disk_partitioning {
           
               while true; do
               echo -e -n "\nYou selected "$user_drive".\n"
-              echo -e -n "\n\e[1;31mTHIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST.\e[0m\n"
-              echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+              echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+              echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
               read -r yn
           
               if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
@@ -810,9 +818,9 @@ function disk_partitioning {
 
 function header_de {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m        \e[1;32mDisk encryption\e[0m        \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}        ${GREEN_LIGHT}Disk encryption${NORMAL}        ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
@@ -825,7 +833,7 @@ function disk_encryption {
     echo -e -n "\nPrinting all the connected drives:\n\n"
     lsblk -p
     
-    echo -e -n "\nWhich \e[1;34m/ [root]\e[0m partition do you want to \e[1;34mencrypt\e[0m?\nPlease enter the full partition path (i.e. /dev/sda1): "
+    echo -e -n "\nWhich ${BLUE_LIGHT}/ [root]${NORMAL} partition do you want to ${BLUE_LIGHT}encrypt${NORMAL}?\nPlease enter the full partition path (i.e. /dev/sda1): "
     read -r encrypted_partition
       
     if [[ ! -b "$encrypted_partition" ]] ; then
@@ -851,13 +859,13 @@ function disk_encryption {
           header_de
 
           echo -e -n "\nThe selected partition will now be encrypted with LUKS.\n"
-          echo -e -n "\nKeep in mind that GRUB LUKS version 2 support is still limited (https://savannah.gnu.org/bugs/?55093).\n\e[1;31mChoosing it could result in an unbootable system so it's strongly recommended to use LUKS version 1.\e[0m\n"
+          echo -e -n "\nKeep in mind that GRUB LUKS version 2 support is still limited (https://savannah.gnu.org/bugs/?55093).\n${RED_LIGHT}Choosing it could result in an unbootable system so it's strongly recommended to use LUKS version 1.${NORMAL}\n"
 
           while true ; do
             echo -e -n "\nWhich LUKS version do you want to use? (1/2 and [ENTER]): "
             read ot
             if [[ "$ot" == "1" ]] || [[ "$ot" == "2" ]] ; then
-              echo -e -n "\nUsing LUKS version \e[1;34m$ot\e[0m.\n\n"
+              echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$ot${NORMAL}.\n\n"
               cryptsetup luksFormat --type=luks"$ot" "$encrypted_partition"
               echo -e -n "\nPartition successfully encrypted.\n\n"
               read -n 1 -r -p "[Press any key to continue...]" key
@@ -872,7 +880,7 @@ function disk_encryption {
           while true ; do
             header_de
 
-            echo -e -n "\nEnter a \e[1;34mname\e[0m for the \e[1;34mencrypted partition\e[0m without any spaces (i.e. MyEncryptedLinuxPartition): "
+            echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}encrypted partition${NORMAL} without any spaces (i.e. MyEncryptedLinuxPartition): "
             read -r encrypted_name
             if [[ -z "$encrypted_name" ]] ; then
               echo -e -n "\nPlease enter a valid name.\n\n"
@@ -884,7 +892,7 @@ function disk_encryption {
                 read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
                 if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-                  echo -e -n "\n\nPartition will now be mounted as: \e[1;34m/dev/mapper/"$encrypted_name"\e[0m\n\n"
+                  echo -e -n "\n\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/"$encrypted_name"${NORMAL}\n\n"
                   cryptsetup open "$encrypted_partition" "$encrypted_name"
                   echo -e -n "\nEncrypted partition successfully mounted.\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
@@ -919,9 +927,9 @@ function disk_encryption {
 
 function header_lc {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m   \e[1;32mLogical Volume Management\e[0m   \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}   ${GREEN_LIGHT}Logical Volume Management${NORMAL}   ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
@@ -933,7 +941,7 @@ function lvm_creation {
 
     echo -e -n "\nCreating logical partitions wih LVM.\n"
 
-    echo -e -n "\nEnter a \e[1;34mname\e[0m for the \e[1;34mVolume Group\e[0m without any spaces (i.e. MyLinuxVolumeGroup): "
+    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Volume Group${NORMAL} without any spaces (i.e. MyLinuxVolumeGroup): "
     read -r vg_name
     
     if [[ -z "$vg_name" ]] ; then
@@ -946,7 +954,7 @@ function lvm_creation {
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
         
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\nVolume Group will now be created and mounted as: \e[1;34m/dev/mapper/$vg_name\e[0m\n\n"
+          echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
           vgcreate "${vg_name}" /dev/mapper/"${encrypted_name}"
           echo
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -970,7 +978,7 @@ function lvm_creation {
 
     header_lc
 
-    echo -e -n "\nEnter a \e[1;34mname\e[0m for the \e[1;34mLogical root Volume\e[0m without any spaces and its size.\nBe sure to make no errors (i.e. MyLogicLinuxRootPartition 100G): "
+    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical root Volume${NORMAL} without any spaces and its size.\nBe sure to make no errors (i.e. MyLogicLinuxRootPartition 100G): "
     read -r lv_root_name lv_root_size
     
     if [[ -z "$lv_root_name" ]] || [[ -z "$lv_root_size" ]] ; then
@@ -979,11 +987,11 @@ function lvm_creation {
       clear
     else
       while true ; do
-        echo -e -n "\nYou entered: \e[1;34m$lv_root_name\e[0m and \e[1;34m$lv_root_size\e[0m.\n\n"
+        echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_root_name${NORMAL} and ${BLUE_LIGHT}$lv_root_size${NORMAL}.\n\n"
         read -n 1 -r -p "Are these correct? (y/n): " yn
           
         if [[ "$yn" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-          echo -e -n "\n\nLogical Volume \e[1;34m$lv_root_name\e[0m of size \e[1;34m$lv_root_size\e[0m will now be created.\n\n"
+          echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} of size ${BLUE_LIGHT}$lv_root_size${NORMAL} will now be created.\n\n"
           lvcreate --name "$lv_root_name" -L "$lv_root_size" "$vg_name"
           echo
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -1007,7 +1015,7 @@ function lvm_creation {
 
     header_lc
 
-    echo -e -n "\nEnter a \e[1;34mname\e[0m for the \e[1;34mLogical home Volume\e[0m without any spaces.\nIts size will be the remaining free space (i.e. MyLogicLinuxHomePartition): "
+    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical home Volume${NORMAL} without any spaces.\nIts size will be the remaining free space (i.e. MyLogicLinuxHomePartition): "
     read -r lv_home_name
     
     if [[ -z "$lv_home_name" ]] ; then
@@ -1016,11 +1024,11 @@ function lvm_creation {
       clear      
     else
       while true ; do
-        echo -e -n "\nYou entered: \e[1;34m$lv_home_name\e[0m.\n\n"
+        echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_home_name${NORMAL}.\n\n"
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\nLogical Volume \e[1;34m$lv_home_name\e[0m will now be created.\n\n"
+          echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_home_name${NORMAL} will now be created.\n\n"
           lvcreate --name "$lv_home_name" -l +100%FREE "$vg_name"
           echo
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -1044,9 +1052,9 @@ function lvm_creation {
 
 function header_cf {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m      \e[1;32mFilesystem creation\e[0m      \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}      ${GREEN_LIGHT}Filesystem creation${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
@@ -1056,13 +1064,13 @@ function create_filesystems {
 
     header_cf
 
-    echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as \e[1;34mFAT32\e[0m.\nRoot and home partition will be formatted as \e[1;34mBTRFS\e[0m.\n"
+    echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as ${BLUE_LIGHT}FAT32${NORMAL}.\nRoot and home partition will be formatted as ${BLUE_LIGHT}BTRFS${NORMAL}.\n"
 
     echo
     lsblk -p
     echo
 
-    echo -e -n "\nWhich partition will be the \e[1;34m/boot/efi\e[0m partition?\n"
+    echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}/boot/efi${NORMAL} partition?\n"
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
     
     if [[ ! -b "$boot_partition" ]] ; then
@@ -1071,9 +1079,9 @@ function create_filesystems {
       clear
     else
       while true; do
-        echo -e -n "\nYou selected: \e[1;34m$boot_partition\e[0m.\n"
-        echo -e -n "\n\e[1;31mTHIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.\e[0m\n"
-        echo -e -n "\e[1;31mAre you sure you want to continue? (y/n and [ENTER]):\e[0m "
+        echo -e -n "\nYou selected: ${BLUE_LIGHT}$boot_partition${NORMAL}.\n"
+        echo -e -n "\n${RED_LIGHT}THIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+        echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
         read -r yn
           
         if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
@@ -1098,7 +1106,7 @@ function create_filesystems {
 
             header_cf
 
-            echo -e -n "\nEnter a \e[1;34mlabel\e[0m for the \e[1;34mboot\e[0m partition without any spaces (i.e. MYBOOTPARTITION): "
+            echo -e -n "\nEnter a ${BLUE_LIGHT}label${NORMAL} for the ${BLUE_LIGHT}boot${NORMAL} partition without any spaces (i.e. MYBOOTPARTITION): "
             read -r boot_name
     
             if [[ -z "$boot_name" ]] ; then
@@ -1107,11 +1115,11 @@ function create_filesystems {
               clear
             else
               while true ; do
-                echo -e -n "\nYou entered: \e[1;34m$boot_name\e[0m.\n\n"
+                echo -e -n "\nYou entered: ${BLUE_LIGHT}$boot_name${NORMAL}.\n\n"
                 read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
                 if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-                  echo -e -n "\n\nBoot partition \e[1;34m$boot_partition\e[0m will now be formatted as \e[1;34mFAT32\e[0m with \e[1;34m$boot_name\e[0m label.\n\n"
+                  echo -e -n "\n\nBoot partition ${BLUE_LIGHT}$boot_partition${NORMAL} will now be formatted as ${BLUE_LIGHT}FAT32${NORMAL} with ${BLUE_LIGHT}$boot_name${NORMAL} label.\n\n"
                   mkfs.vfat -n "$boot_name" -F 32 "$boot_partition"
                   sync
                   echo -e -n "\nPartition successfully formatted.\n\n"
@@ -1146,7 +1154,7 @@ function create_filesystems {
 
     header_cf
 
-    echo -e -n "\nEnter a \e[1;34mlabel\e[0m for the \e[1;34mroot\e[0m partition without any spaces (i.e. MyRootPartition): "
+    echo -e -n "\nEnter a ${BLUE_LIGHT}label${NORMAL} for the ${BLUE_LIGHT}root${NORMAL} partition without any spaces (i.e. MyRootPartition): "
     read -r root_name
     
     if [[ -z "$root_name" ]] ; then
@@ -1156,11 +1164,11 @@ function create_filesystems {
     else
       while true ; do
 
-        echo -e -n "\nYou entered: \e[1;34m$root_name\e[0m.\n\n"
+        echo -e -n "\nYou entered: ${BLUE_LIGHT}$root_name${NORMAL}.\n\n"
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\n\e[1;34mRoot\e[0m partition \e[1;34m/dev/mapper/$vg_name-$lv_root_name\e[0m will now be formatted as \e[1;34mBTRFS\e[0m with \e[1;34m$root_name\e[0m label.\n\n"
+          echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$vg_name-$lv_root_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
           mkfs.btrfs -L "$root_name" /dev/mapper/"$vg_name"-"$lv_root_name"
           sync
           echo -e -n "\nPartition successfully formatted.\n\n"
@@ -1185,7 +1193,7 @@ function create_filesystems {
 
     header_cf
 
-    echo -e -n "\nEnter a \e[1;34mlabel\e[0m for the \e[1;34mhome\e[0m partition without any spaces (i.e. MyHomePartition): "
+    echo -e -n "\nEnter a ${BLUE_LIGHT}label${NORMAL} for the ${BLUE_LIGHT}home${NORMAL} partition without any spaces (i.e. MyHomePartition): "
     read -r home_name
     
     if [[ -z "$home_name" ]] ; then
@@ -1194,11 +1202,11 @@ function create_filesystems {
       clear
     else
       while true ; do
-        echo -e -n "\nYou entered: \e[1;34m$home_name\e[0m.\n\n"
+        echo -e -n "\nYou entered: ${BLUE_LIGHT}$home_name${NORMAL}.\n\n"
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\n\e[1;34mHome\e[0m partition \e[1;34m/dev/mapper/$vg_name-$lv_home_name\e[0m will now be formatted as \e[1;34mBTRFS\e[0m with \e[1;34m$home_name\e[0m label.\n\n"
+          echo -e -n "\n\n${BLUE_LIGHT}Home${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$vg_name-$lv_home_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$home_name${NORMAL} label.\n\n"
           mkfs.btrfs -L "$home_name" /dev/mapper/"$vg_name"-"$lv_home_name"
           sync
           echo -e -n "\nPartition successfully formatted.\n\n"
@@ -1223,9 +1231,9 @@ function create_filesystems {
 
 function header_cbs {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m        \e[1;32mBTRFS subvolume\e[0m        \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}        ${GREEN_LIGHT}BTRFS subvolume${NORMAL}        ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
@@ -1250,7 +1258,7 @@ function create_btrfs_subvolumes {
   echo -e -n "- /var/tmp\n"
   echo -e -n "- /var/log\n"
 
-  echo -e -n "\n\e[1;34mIf you prefer to change any option, please quit this script NOW and modify it according to you tastes.\e[0m\n\n"
+  echo -e -n "\n${BLUE_LIGHT}If you prefer to change any option, please quit this script NOW and modify it according to you tastes.${NORMAL}\n\n"
   read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." key
 
   echo -e -n "\n\nThe root partition you selected (/dev/mapper/$vg_name-$lv_root_name) will now be mounted to /mnt.\n"
@@ -1293,9 +1301,9 @@ function create_btrfs_subvolumes {
 
 function header_ibsac {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m   \e[1;32mBase system installation\e[0m    \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}   ${GREEN_LIGHT}Base system installation${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
@@ -1305,19 +1313,19 @@ function install_base_system_and_chroot {
 
   while true ; do
   
-    echo -e -n "\nSelect which \e[1;34marchitecture\e[0m do you want to use:\n\n"
+    echo -e -n "\nSelect which ${BLUE_LIGHT}architecture${NORMAL} do you want to use:\n\n"
     
     select user_arch in x86_64 x86_64-musl ; do
       case "$user_arch" in
         x86_64)
-          echo -e -n "\n\e[1;34m$user_arch\e[0m selected.\n\n"
+          echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n\n"
           ARCH="$user_arch"
           export REPO=https://repo-default.voidlinux.org/current
           read -n 1 -r -p "[Press any key to continue...]" key
           break 2
           ;;
         x86_64-musl)
-          echo -e -n "\n\e[1;34m$user_arch\e[0m selected.\n\n"
+          echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n\n"
           ARCH="$user_arch"
           export REPO=https://repo-default.voidlinux.org/current/musl
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -1375,9 +1383,9 @@ function install_base_system_and_chroot {
 
 function outro {
 
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
-  echo -e -n "\e[0;32m# VLI #\e[0m    \e[1;32mInstallation completed\e[0m     \e[0;32m#\e[0m\n"
-  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}    ${GREEN_LIGHT}Installation completed${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
   echo -e -n "- Change your default shell\n"
