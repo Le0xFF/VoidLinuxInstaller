@@ -75,7 +75,7 @@ Here is documented how the script works in details and what will ask to the user
     `/boot/efi`;
     - it will prompt user to select a label for the **root** logical partition, that will be formatted as BTRFS;
     - it will prompt user to select a label for the **home** logical partition, that will be formatted as BTRFS;
-8. create BTRFS subvolumes with specific fstab mount options; if user wants to change them, please edit the script, looking for `create_btrfs_subvolume` function ([BTRFS mount options official documentation](https://btrfs.readthedocs.io/en/latest/btrfs-man5.html#mount-options)):
+8. create BTRFS subvolumes with specific fstab mount options; if user wants to change them, please edit the script looking for `create_btrfs_subvolumes` function ([BTRFS mount options official documentation](https://btrfs.readthedocs.io/en/latest/btrfs-man5.html#mount-options)):
     - **BTRFS mounting options**:
         * `rw,noatime,ssd,compress=zstd,space_cache=v2,commit=120`
     - **BTRFS subvolumes that will be created**:
