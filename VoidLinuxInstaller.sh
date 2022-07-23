@@ -63,11 +63,11 @@ cat << EOD >> "${HOME}"/chroot.sh
 function set_root {
 
   clear
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #            Chroot             #\n"
-  echo -e -n "#######################################\n"
-  echo -e -n "#######     Setting root password     #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m#######\e[0m     \e[1;32mSetting root password\e[0m     \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
   echo -e -n "\nSetting root password:\n\n"
   passwd root
@@ -83,11 +83,11 @@ function set_root {
 
 function edit_fstab {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #            Chroot             #\n"
-  echo -e -n "#######################################\n"
-  echo -e -n "#######        fstab creation         #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m#######\e[0m        \e[1;32mfstab creation\e[0m         \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
 
   echo -e -n "\nExporting variables that will be used for fstab...\n"
   export UEFI_UUID=\$(blkid -s UUID -o value "\${boot_partition}")
@@ -122,11 +122,11 @@ EOF
 
 function generate_random_key {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #            Chroot             #\n"
-  echo -e -n "#######################################\n"
-  echo -e -n "#######     Random key generation     #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m#######\e[0m     \e[1;32mRandom key generation\e[0m     \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
 
   echo -e -n "\nGenerate random key to avoid typing password twice at boot...\n\n"
   dd bs=512 count=4 if=/dev/random of=/boot/volume.key
@@ -149,11 +149,11 @@ EOF
 
 function generate_dracut_conf {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #            Chroot             #\n"
-  echo -e -n "#######################################\n"
-  echo -e -n "#######     Dracut configuration      #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m#######\e[0m     \e[1;32mDracut configuration\e[0m      \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
 
   echo -e -n "\nAdding random key to dracut configuration...\n"
 cat << EOF >> /etc/dracut.conf.d/10-crypt.conf
@@ -176,11 +176,11 @@ EOF
 
 function header_ig {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #            Chroot             #\n"
-  echo -e -n "#######################################\n"
-  echo -e -n "#######       GRUB installation       #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m#######\e[0m       \e[1;32mGRUB installation\e[0m       \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -254,11 +254,11 @@ EOF
 
 function enabling_services {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #            Chroot             #\n"
-  echo -e -n "#######################################\n"
-  echo -e -n "#######       Enabling services       #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m            \e[1;32mChroot\e[0m             \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m#######\e[0m       \e[1;32mEnabling services\e[0m       \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
 
   echo -e -n "\nEnabling internet service at first boot...\n\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -298,19 +298,19 @@ function intro {
 
   clear
 
-  echo -e -n "     pQQQQQQQQQQQQppq           ### Void Linux installer script ###\n"
-  echo -e -n "     p               Q   \n"
-  echo -e -n "      pppQppQppppQ    Q         My first attempt at creating a bash script.\n"
-  echo -e -n " {{{{{            p    Q        Bugs and unicorns farts are expected.\n"
-  echo -e -n "{    {   dpppppp   p    Q\n"
-  echo -e -n "{   {   p       p   p   Q       This script try to automate what my gist describes.\n"
-  echo -e -n "{   {   p       Q   p   Q       Link to the gist: https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3\n"
-  echo -e -n "{   {   p       Q   p   Q\n"
-  echo -e -n "{    {   ppppppQ   p    Q       This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
-  echo -e -n " {    {            ppppQ        with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
-  echo -e -n "  {    {{{{{{{{{{{{             To understand better what the script does, please look at the README: https://github.com/Le0xFF/VoidLinuxInstaller\n"
-  echo -e -n "   {               {     \n"
-  echo -e -n "    {{{{{{{{{{{{{{{{            [Press any key to begin with the process...]\n"
+  echo -e -n "     \e[1;32mpQQQQQQQQQQQQppq\e[0m           \e[0;32m###\e[0m \e[1;32mVoid Linux installer script\e[0m \e[0;32m###\e[0m\n"
+  echo -e -n "     \e[1;32mp               Q\e[0m   \n"
+  echo -e -n "      \e[1;32mpppQppQppppQ    Q\e[0m         My first attempt at creating a bash script.\n"
+  echo -e -n " \e[0;32m{{{{{\e[0m            \e[1;32mp    Q\e[0m        Bugs and unicorns farts are expected.\n"
+  echo -e -n "\e[0;32m{    {\e[0m   \e[1;32mdpppppp   p    Q\e[0m\n"
+  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       p   p   Q\e[0m       This script try to automate what my gist describes.\n"
+  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       Q   p   Q\e[0m       Link to the gist: https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3\n"
+  echo -e -n "\e[0;32m{   {\e[0m   \e[1;32mp       Q   p   Q\e[0m\n"
+  echo -e -n "\e[0;32m{    {\e[0m   \e[1;32mppppppQ   p    Q\e[0m       This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
+  echo -e -n " \e[0;32m{    {\e[0m            \e[1;32mppppQ\e[0m        with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
+  echo -e -n "  \e[0;32m{    {{{{{{{{{{{{\e[0m             To understand better what the script does, please look at the README: https://github.com/Le0xFF/VoidLinuxInstaller\n"
+  echo -e -n "   \e[0;32m{               {\e[0m     \n"
+  echo -e -n "    \e[0;32m{{{{{{{{{{{{{{{{\e[0m            [Press any key to begin with the process...]\n"
   
   read -n 1 -r key
 
@@ -320,9 +320,9 @@ function intro {
 
 function header_skl {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #     Keyboard layout change    #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m     \e[1;32mKeyboard layout change\e[0m    \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -384,9 +384,9 @@ function set_keyboard_layout {
 
 function header_cacti {
   
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #   Setup internet connection   #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m   \e[1;32mSetup internet connection\e[0m   \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
 
 }
 
@@ -533,9 +533,9 @@ function check_and_connect_to_internet {
 
 function header_dw {
   
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #          Disk wiping          #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m          \e[1;32mDisk wiping\e[0m          \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
 
 }
 
@@ -617,9 +617,9 @@ function disk_wiping {
 
 function header_dp {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #       Disk partitioning       #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m       \e[1;32mDisk partitioning\e[0m       \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -807,9 +807,9 @@ function disk_partitioning {
 
 function header_de {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #        Disk encryption        #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m        \e[1;32mDisk encryption\e[0m        \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -916,9 +916,9 @@ function disk_encryption {
 
 function header_lc {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #   Logical Volume Management   #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m   \e[1;32mLogical Volume Management\e[0m   \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -1041,9 +1041,9 @@ function lvm_creation {
 
 function header_cf {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #      Filesystem creation      #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m      \e[1;32mFilesystem creation\e[0m      \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -1219,9 +1219,9 @@ function create_filesystems {
 
 function header_cbs {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #        BTRFS subvolume        #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m        \e[1;32mBTRFS subvolume\e[0m        \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -1289,9 +1289,9 @@ function create_btrfs_subvolumes {
 
 function header_ibsac {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #   Base system installation    #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m   \e[1;32mBase system installation\e[0m    \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
   
 }
 
@@ -1371,9 +1371,9 @@ function install_base_system_and_chroot {
 
 function outro {
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #    Installation completed     #\n"
-  echo -e -n "#######################################\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
+  echo -e -n "\e[0;32m# VLI #\e[0m    \e[1;32mInstallation completed\e[0m     \e[0;32m#\e[0m\n"
+  echo -e -n "\e[0;32m#######################################\e[0m\n"
 
   echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
   echo -e -n "- Change your default shell\n"
