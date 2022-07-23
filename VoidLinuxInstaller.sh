@@ -1362,7 +1362,7 @@ function install_base_system_and_chroot {
   echo -e -n "\nChrooting...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   cp "$HOME"/chroot.sh /mnt/root/
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" vg_name="$vg_name" lv_root_name="$lv_root_name" lv_home_name="$lv_home_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" vg_name="$vg_name" lv_root_name="$lv_root_name" lv_home_name="$lv_home_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
   header_ibsac
   
