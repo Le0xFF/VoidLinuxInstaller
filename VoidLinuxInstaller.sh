@@ -842,8 +842,10 @@ function disk_encryption {
       
     else
       while true; do
-        echo -e -n "\nYou selected: ${BLUE_LIGHT}$encrypted_partition${NORMAL}.\n\n"
-        read -r -p "Is this correct? (y/n and [ENTER]): " yn
+        echo -e -n "\nYou selected: ${BLUE_LIGHT}$encrypted_partition${NORMAL}.\n"
+        echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE FORMATTED AND ENCRYPTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+        echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
+        read -r yn
         
         if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\nAborting, select another partition.\n\n"
