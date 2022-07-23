@@ -174,13 +174,19 @@ EOF
 
 }
 
-function install_grub {
+function header_ig {
 
   echo -e -n "#######################################\n"
   echo -e -n "# VLI #            Chroot             #\n"
   echo -e -n "#######################################\n"
   echo -e -n "#######       GRUB installation       #\n"
   echo -e -n "#######################################\n"
+  
+}
+
+function install_grub {
+
+  header_ig
 
   echo -e -n "\nEnabling CRYPTODISK in GRUB...\n\n"
 cat << EOF >> /etc/default/grub
@@ -201,11 +207,9 @@ EOF
   if [[ -z "\${user_drive}" ]] ; then
     while true ; do
       clear
-      echo -e -n "#######################################\n"
-      echo -e -n "# VLI #            Chroot             #\n"
-      echo -e -n "#######################################\n"
-      echo -e -n "#######       GRUB installation       #\n"
-      echo -e -n "#######################################\n"
+      header_ig
+      
+      echo
       lsblk -p
       echo -e -n "\nOn Which drive do you want to install GRUB?\nPlease enter the full drive path (i.e. /dev/sda): "
       read -r user_drive
@@ -235,11 +239,7 @@ EOF
   fi
 
   clear
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #            Chroot             #\n"
-  echo -e -n "#######################################\n"
-  echo -e -n "#######       GRUB installation       #\n"
-  echo -e -n "#######################################\n"
+  header_ig
 
   echo -e -n "\nInstalling GRUB on "\${user_drive}" with \"VoidLinux\" as bootloader-id...\n\n"
   grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VoidLinux --boot-directory=/boot --recheck
@@ -318,13 +318,19 @@ function intro {
   
 }
 
+function header_skl {
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #     Keyboard layout change    #\n"
+  echo -e -n "#######################################\n"
+  
+}
+
 function set_keyboard_layout {
   
-  while true; do
+  while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #     Keyboard layout change    #\n"
-    echo -e -n "#######################################\n"
+    header_skl
   
     echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
     read -n 1 -r yn
@@ -376,13 +382,19 @@ function set_keyboard_layout {
   
 }
 
+function header_cacti {
+  
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #   Setup internet connection   #\n"
+  echo -e -n "#######################################\n"
+
+}
+
 function check_and_connect_to_internet {
   
   while true; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #   Setup internet connection   #\n"
-    echo -e -n "#######################################\n"
+    header_cacti
 
     echo -e -n "\nChecking internet connectivity...\n"
 
@@ -519,13 +531,19 @@ function check_and_connect_to_internet {
 
 }
 
+function header_dw {
+  
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #          Disk wiping          #\n"
+  echo -e -n "#######################################\n"
+
+}
+
 function disk_wiping {
   
   while true; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #          Disk wiping          #\n"
-    echo -e -n "#######################################\n"
+    header_dw
   
     echo
     read -n 1 -r -p "Do you want to wipe any drive? (y/n): " yn
@@ -535,9 +553,8 @@ function disk_wiping {
       while true ; do
 
         clear
-        echo -e -n "#######################################\n"
-        echo -e -n "# VLI #          Disk wiping          #\n"
-        echo -e -n "#######################################\n"
+        header_dw
+
         echo -e -n "\nPrinting all the connected drives:\n\n"
         lsblk -p
     
@@ -598,13 +615,19 @@ function disk_wiping {
   done
 }
 
+function header_dp {
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #       Disk partitioning       #\n"
+  echo -e -n "#######################################\n"
+  
+}
+
 function disk_partitioning {
   
   while true; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #       Disk partitioning       #\n"
-    echo -e -n "#######################################\n"
+    header_dp
     
     if [[ -z "${user_drive}" ]] ; then
       echo -e -n "\nNo drive previously selected for partitioning.\n\n"
@@ -649,9 +672,7 @@ function disk_partitioning {
           while true ; do
 
             clear
-            echo -e -n "#######################################\n"
-            echo -e -n "# VLI #       Disk partitioning       #\n"
-            echo -e -n "#######################################\n"
+            header_dp
           
             echo -e -n "\nSuggested disk layout:"
             echo -e -n "\n- GPT as disk label type for UEFI systems;"
@@ -690,10 +711,9 @@ function disk_partitioning {
           while true; do
 
             clear
-            echo -e -n "#######################################\n"
-            echo -e -n "# VLI #       Disk partitioning       #\n"
-            echo -e -n "#######################################\n\n"
+            header_dp
 
+            echo
             lsblk -p "${user_drive}"
             echo
             read -n 1 -r -p "Is this the desired partition table? (y/n): " yn
@@ -719,9 +739,8 @@ function disk_partitioning {
           while true ; do
         
             clear
-            echo -e -n "#######################################\n"
-            echo -e -n "# VLI #       Disk partitioning       #\n"
-            echo -e -n "#######################################\n"
+            header_dp
+
             echo -e -n "\nPrinting all the connected drive(s):\n\n"
             
             lsblk -p
@@ -786,13 +805,19 @@ function disk_partitioning {
   
 }
 
+function header_de {
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #        Disk encryption        #\n"
+  echo -e -n "#######################################\n"
+  
+}
+
 function disk_encryption {
 
   while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #        Disk encryption        #\n"
-    echo -e -n "#######################################\n"
+    header_de
   
     echo -e -n "\nPrinting all the connected drives:\n\n"
     lsblk -p
@@ -820,9 +845,8 @@ function disk_encryption {
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
 
-          echo -e -n "#######################################\n"
-          echo -e -n "# VLI #        Disk encryption        #\n"
-          echo -e -n "#######################################\n"
+          header_de
+
           echo -e -n "\nThe selected partition will now be encrypted with LUKS.\n"
           echo -e -n "\nKeep in mind that GRUB LUKS version 2 support is still limited (https://savannah.gnu.org/bugs/?55093).\nChoosing it could result in an unbootable system so it's strongly recommended to use LUKS version 1.\n"
 
@@ -843,9 +867,8 @@ function disk_encryption {
           done
 
           while true ; do
-            echo -e -n "#######################################\n"
-            echo -e -n "# VLI #        Disk encryption        #\n"
-            echo -e -n "#######################################\n"
+            header_de
+
             echo -e -n "\nEnter a name for the encrypted partition without any spaces (i.e. MyEncryptedLinuxPartition): "
             read -r encrypted_name
             if [[ -z "${encrypted_name}" ]] ; then
@@ -891,13 +914,19 @@ function disk_encryption {
  
 }
 
+function header_lc {
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #   Logical Volume Management   #\n"
+  echo -e -n "#######################################\n"
+  
+}
+
 function lvm_creation {
 
   while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #   Logical Volume Management   #\n"
-    echo -e -n "#######################################\n"
+    header_lc
 
     echo -e -n "\nCreating logical partitions wih LVM.\n"
 
@@ -936,9 +965,7 @@ function lvm_creation {
 
   while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #   Logical Volume Management   #\n"
-    echo -e -n "#######################################\n"
+    header_lc
 
     echo -e -n "\nEnter a name for the logical root partition without any spaces and its size.\nBe sure to make no errors (i.e. MyLogicLinuxRootPartition 100G): "
     read -r lv_root_name lv_root_size
@@ -975,9 +1002,7 @@ function lvm_creation {
 
   while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #   Logical Volume Management   #\n"
-    echo -e -n "#######################################\n"
+    header_lc
 
     echo -e -n "\nEnter a name for the logical home partition without any spaces.\nIts size will be the remaining free space (i.e. MyLogicLinuxHomePartition): "
     read -r lv_home_name
@@ -1014,13 +1039,19 @@ function lvm_creation {
 
 }
 
+function header_cf {
+
+  echo -e -n "#######################################\n"
+  echo -e -n "# VLI #      Filesystem creation      #\n"
+  echo -e -n "#######################################\n"
+  
+}
+
 function create_filesystems {
 
   while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #      Filesystem creation      #\n"
-    echo -e -n "#######################################\n"
+    header_cf
 
     echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as FAT32.\nRoot and home partition will be formatted as BTRFS.\n"
 
@@ -1061,9 +1092,7 @@ function create_filesystems {
           
           while true ; do
 
-            echo -e -n "#######################################\n"
-            echo -e -n "# VLI #      Filesystem creation      #\n"
-            echo -e -n "#######################################\n"
+            header_cf
 
             echo -e -n "\nEnter a label for the boot partition without any spaces (i.e. MYBOOTPARTITION): "
             read -r boot_name
@@ -1111,9 +1140,7 @@ function create_filesystems {
 
   while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #      Filesystem creation      #\n"
-    echo -e -n "#######################################\n"
+    header_cf
 
     echo -e -n "\nEnter a label for the root partition without any spaces (i.e. MyRootPartition): "
     read -r root_name
@@ -1152,9 +1179,7 @@ function create_filesystems {
 
   while true ; do
 
-    echo -e -n "#######################################\n"
-    echo -e -n "# VLI #      Filesystem creation      #\n"
-    echo -e -n "#######################################\n"
+    header_cf
 
     echo -e -n "\nEnter a label for the home partition without any spaces (i.e. MyHomePartition): "
     read -r home_name
@@ -1192,11 +1217,17 @@ function create_filesystems {
 
 }
 
-function create_btrfs_subvolumes {
-  
+function header_cbs {
+
   echo -e -n "#######################################\n"
   echo -e -n "# VLI #        BTRFS subvolume        #\n"
   echo -e -n "#######################################\n"
+  
+}
+
+function create_btrfs_subvolumes {
+  
+  header_cbs
 
   echo -e -n "\nBTRFS subvolumes will now be created with default options.\n\n"
   echo -e -n "Default options:\n"
@@ -1256,11 +1287,17 @@ function create_btrfs_subvolumes {
 
 }
 
-function install_base_system_and_chroot {
+function header_ibsac {
 
   echo -e -n "#######################################\n"
   echo -e -n "# VLI #   Base system installation    #\n"
   echo -e -n "#######################################\n"
+  
+}
+
+function install_base_system_and_chroot {
+
+  header_ibsac
 
   while true ; do
   
@@ -1314,9 +1351,7 @@ function install_base_system_and_chroot {
   cp "${HOME}"/chroot.sh /mnt/root/
   BTRFS_OPT="${BTRFS_OPT}" boot_partition="${boot_partition}" encrypted_partition="${encrypted_partition}" encrypted_name="${encrypted_name}" vg_name="${vg_name}" lv_root_name="${lv_root_name}" lv_home_name="${lv_home_name}" user_drive="${user_drive}" PS1='(chroot) # ' chroot /mnt/ /bin/bash "${HOME}"/chroot.sh
 
-  echo -e -n "#######################################\n"
-  echo -e -n "# VLI #   Base system installation    #\n"
-  echo -e -n "#######################################\n"
+  header_ibsac
   
   echo -e -n "\nCleaning...\n"
   rm -f /mnt/home/root/chroot.sh
