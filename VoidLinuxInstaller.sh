@@ -261,7 +261,7 @@ EOF
 
 }
 
-function enabling_services {
+function finish_chroot {
 
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
@@ -273,9 +273,15 @@ function enabling_services {
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
   ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 
+  echo -e -n "\nReconfiguring every package...\n\n"
+  read -n 1 -r -p "[Press any key to continue...]" key
+  xbps-reconfigure -fa
+
+  echo -e -n "\nEverything's done, exiting chroot...\n\n"
+
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
-  
+
 }
 
 set_root
@@ -283,15 +289,8 @@ edit_fstab
 generate_random_key
 generate_dracut_conf
 install_grub
-enabling_services
-
-echo -e -n "\nReconfiguring every package...\n\n"
-xbps-reconfigure -fa
-
-echo -e -n "\nEverything's done, exiting chroot...\n\n"
-
-read -n 1 -r -p "[Press any key to continue...]" key
-clear
+finish_chroot
+exit 0
 EOD
 
   if [[ ! -f "$HOME"/chroot.sh ]] ; then
