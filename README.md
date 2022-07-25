@@ -42,25 +42,25 @@ xbps-install -Sy curl
 then use `wget` to download the needed file:
 
 ``` bash
-wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/VoidLinuxInstaller.sh -O $HOME/VoidLinuxInstaller.sh
+wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/vli.sh -O $HOME/vli.sh
 ```
 
 or `curl` if you prefer:
 
 ``` bash
-curl -o $HOME/VoidLinuxInstaller.sh https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/VoidLinuxInstaller.sh
+curl -o $HOME/vli.sh https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/vli.sh
 ```
 
 then make it executable:
 
 ``` bash
-chmod +x $HOME/VoidLinuxInstaller.sh
+chmod +x $HOME/vli.sh
 ```
 
 and finally run it:
 
 ``` bash
-bash $HOME/VoidLinuxInstaller.sh
+bash $HOME/vli.sh
 ```
 
 <br>
