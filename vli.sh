@@ -1205,8 +1205,8 @@ function create_btrfs_subvolumes {
   echo -e -n "Default options:\n"
   echo -e -n "- rw\n"
   echo -e -n "- noatime\n"
-  echo -e -n "- ssd\n"
-  echo -e -n "- compress=zstd\n"
+  echo -e -n "- discard=async\n"
+  echo -e -n "- compress-force=zstd\n"
   echo -e -n "- space_cache=v2\n"
   echo -e -n "- commit=120\n"
 
@@ -1232,7 +1232,7 @@ function create_btrfs_subvolumes {
 
   echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
 
-  export BTRFS_OPT=rw,noatime,ssd,compress=zstd,space_cache=v2,commit=120
+  export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
   mount -o "$BTRFS_OPT" /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
   mkdir /mnt/home
   mount -o "$BTRFS_OPT" /dev/mapper/"$vg_name"-"$lv_home_name" /mnt/home
