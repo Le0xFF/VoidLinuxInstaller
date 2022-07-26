@@ -7,7 +7,6 @@
 # Description: My first attempt at creating a bash script, trying to converting my gist into a bash script. Bugs are more than expected.
 #              https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3
 #
-# Version: 1.0.0
 
 # Variables
 
@@ -16,8 +15,6 @@ encrypted_partition=''
 encrypted_name=''
 vg_name=''
 lv_root_name=''
-lv_root_size=''
-lv_home_name=''
 boot_partition=''
 
 # Colours
@@ -101,7 +98,6 @@ function edit_fstab {
   export UEFI_UUID=\$(blkid -s UUID -o value "\$boot_partition")
   export LUKS_UUID=\$(blkid -s UUID -o value "\$encrypted_partition")
   export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$vg_name"-"\$lv_root_name")
-  export HOME_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$vg_name"-"\$lv_home_name")
   
   echo -e -n "\nWriting fstab...\n\n"
   sed -i '/tmpfs/d' /etc/fstab
@@ -111,10 +107,10 @@ cat << EOF >> /etc/fstab
 UUID=\$ROOT_UUID / btrfs \$BTRFS_OPT,subvol=@ 0 1
 
 # home partition
-UUID=\$HOME_UUID /home btrfs \$BTRFS_OPT,subvol=@home 0 2
+UUID=\$ROOT_UUID /home btrfs \$BTRFS_OPT,subvol=@home 0 2
 
-# root snapshots
-UUID=\$ROOT_UUID /.snapshots btrfs \$BTRFS_OPT,subvol=@snapshots 0 2
+# root snapshots, uncomment the following line after creating a config for root in snapper
+#UUID=\$ROOT_UUID /.snapshots btrfs \$BTRFS_OPT,subvol=@snapshots 0 2
 
 # EFI partition
 UUID=\$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
@@ -170,7 +166,7 @@ EOF
 
   echo -e -n "\nAdding other needed dracut configuration files...\n"
   echo -e "hostonly=yes\nhostonly_cmdline=yes" >> /etc/dracut.conf.d/00-hostonly.conf
-  echo -e "add_dracutmodules+=\" crypt btrfs lvm resume \"" >> /etc/dracut.conf.d/20-addmodules.conf
+  echo -e "add_dracutmodules+=\" crypt btrfs lvm \"" >> /etc/dracut.conf.d/20-addmodules.conf
   echo -e "tmpdir=/tmp" >> /etc/dracut.conf.d/30-tmpfs.conf
 
   echo -e -n "\nGenerating new dracut initramfs...\n\n"
@@ -210,7 +206,7 @@ EOF
   fi
 
   echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}VoidLinux\${NORMAL} as bootloader-id...\n\n"
-  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VoidLinux --boot-directory=/boot --recheck
+  grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id=VoidLinux --recheck
 
   echo -e -n "\nEnabling SSD trim...\n\n"
   sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
@@ -273,7 +269,7 @@ function intro {
   echo -e -n "${GREEN_DARK}{   {${NORMAL}   ${GREEN_LIGHT}p       p   p   Q${NORMAL}       This script try to automate what my gist describes.\n"
   echo -e -n "${GREEN_DARK}{   {${NORMAL}   ${GREEN_LIGHT}p       Q   p   Q${NORMAL}       Link to the gist: ${BLUE_LIGHT}https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3${NORMAL}\n"
   echo -e -n "${GREEN_DARK}{   {${NORMAL}   ${GREEN_LIGHT}p       Q   p   Q${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}{    {${NORMAL}   ${GREEN_LIGHT}ppppppQ   p    Q${NORMAL}       This script will install Void Linux, with LVM, BTRFS, with separated /home partition,\n"
+  echo -e -n "${GREEN_DARK}{    {${NORMAL}   ${GREEN_LIGHT}ppppppQ   p    Q${NORMAL}       This script will install Void Linux, with LVM and BTRFS as filesystem,\n"
   echo -e -n " ${GREEN_DARK}{    {${NORMAL}            ${GREEN_LIGHT}ppppQ${NORMAL}        with Full Disk Encryption using LUKS1/2 and it will enable trim on SSD. So please don't use this script on old HDD.\n"
   echo -e -n "  ${GREEN_DARK}{    {{{{{{{{{{{{${NORMAL}             To understand better what the script does, please look at the README: ${BLUE_LIGHT}https://github.com/Le0xFF/VoidLinuxInstaller${NORMAL}\n"
   echo -e -n "   ${GREEN_DARK}{               {${NORMAL}     \n"
@@ -646,7 +642,7 @@ function disk_partitioning {
             echo -e -n "\n- GPT as disk label type for UEFI systems;"
             echo -e -n "\n- Less than 1 GB for /boot/efi as first partition [EFI System];"
             echo -e -n "\n- Rest of the disk for the partition that will be logically partitioned with LVM (/ and /home) [Linux filesystem]."
-            echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because it will be created later as a logical one.\n"
+            echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because btrfs subvolumes will take care of that.\n"
           
             echo -e -n "\nDrive selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}\n\n"
           
@@ -938,58 +934,21 @@ function lvm_creation {
 
     header_lc
 
-    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical root Volume${NORMAL} without any spaces and its size.\nBe sure to make no errors (i.e. MyLogicLinuxRootPartition 100G): "
-    read -r lv_root_name lv_root_size
+    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical Volume${NORMAL} without any spaces (i.e. MyLinuxLogicVolume).\nIts size will be the entire partition previosly selected: "
+    read -r lv_root_name
     
-    if [[ -z "$lv_root_name" ]] || [[ -z "$lv_root_size" ]] ; then
-      echo -e -n "\nPlease enter valid values.\n\n"
+    if [[ -z "$lv_root_name" ]] ; then
+      echo -e -n "\nPlease enter a valid name.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
     else
       while true ; do
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_root_name${NORMAL} and ${BLUE_LIGHT}$lv_root_size${NORMAL}.\n\n"
-        read -n 1 -r -p "Are these correct? (y/n): " yn
+        echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_root_name${NORMAL}.\n\n"
+        read -n 1 -r -p "Is this correct? (y/n): " yn
           
         if [[ "$yn" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-          echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} of size ${BLUE_LIGHT}$lv_root_size${NORMAL} will now be created.\n\n"
-          lvcreate --name "$lv_root_name" -L "$lv_root_size" "$vg_name"
-          echo
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break 2
-        elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select other values.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-        fi
-      done
-    fi
-
-  done
-
-  while true ; do
-
-    header_lc
-
-    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical home Volume${NORMAL} without any spaces.\nIts size will be the remaining free space (i.e. MyLogicLinuxHomePartition): "
-    read -r lv_home_name
-    
-    if [[ -z "$lv_home_name" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear      
-    else
-      while true ; do
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_home_name${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired name? (y/n): " yn
-          
-        if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_home_name${NORMAL} will now be created.\n\n"
-          lvcreate --name "$lv_home_name" -l +100%FREE "$vg_name"
+          echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} will now be created.\n\n"
+          lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"
           echo
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
@@ -1024,7 +983,7 @@ function create_filesystems {
 
     header_cf
 
-    echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as ${BLUE_LIGHT}FAT32${NORMAL}.\nRoot and home partition will be formatted as ${BLUE_LIGHT}BTRFS${NORMAL}.\n"
+    echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as ${BLUE_LIGHT}FAT32${NORMAL}.\nRoot partition will be formatted as ${BLUE_LIGHT}BTRFS${NORMAL}.\n"
 
     echo
     lsblk -p
@@ -1149,44 +1108,6 @@ function create_filesystems {
 
   done
 
-  while true ; do
-
-    header_cf
-
-    echo -e -n "\nEnter a ${BLUE_LIGHT}label${NORMAL} for the ${BLUE_LIGHT}home${NORMAL} partition without any spaces (i.e. MyHomePartition): "
-    read -r home_name
-    
-    if [[ -z "$home_name" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-    else
-      while true ; do
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$home_name${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired name? (y/n): " yn
-          
-        if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\n${BLUE_LIGHT}Home${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$vg_name-$lv_home_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$home_name${NORMAL} label.\n\n"
-          mkfs.btrfs -L "$home_name" /dev/mapper/"$vg_name"-"$lv_home_name"
-          sync
-          echo -e -n "\nPartition successfully formatted.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break 2
-        elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-        fi
-      done
-    fi
-
-  done
-
 }
 
 function header_cbs {
@@ -1212,8 +1133,8 @@ function create_btrfs_subvolumes {
 
   echo -e -n "\nSubvolumes that will be created:\n"
   echo -e -n "- /@\n"
+  echo -e -n "- /@home\n"
   echo -e -n "- /@snapshots\n"
-  echo -e -n "- /home/@home\n"
   echo -e -n "- /var/cache/xbps\n"
   echo -e -n "- /var/tmp\n"
   echo -e -n "- /var/log\n"
@@ -1234,18 +1155,13 @@ function create_btrfs_subvolumes {
 
   export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
   mount -o "$BTRFS_OPT" /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
-  mkdir /mnt/home
-  mount -o "$BTRFS_OPT" /dev/mapper/"$vg_name"-"$lv_home_name" /mnt/home
   btrfs subvolume create /mnt/@
+  btrfs subvolume create /mnt/@home
   btrfs subvolume create /mnt/@snapshots
-  btrfs subvolume create /mnt/home/@home
-  umount /mnt/home
   umount /mnt
   mount -o "$BTRFS_OPT",subvol=@ /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
   mkdir /mnt/home
-  mkdir /mnt/.snapshots
-  mount -o "$BTRFS_OPT",subvol=@home /dev/mapper/"$vg_name"-"$lv_home_name" /mnt/home/
-  mount -o "$BTRFS_OPT",subvol=@snapshots /dev/mapper/"$vg_name"-"$lv_root_name" /mnt/.snapshots/
+  mount -o "$BTRFS_OPT",subvol=@home /dev/mapper/"$vg_name"-"$lv_root_name" /mnt/home/
   mkdir -p /mnt/boot/efi
   mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
   mkdir -p /mnt/var/cache
@@ -1316,12 +1232,15 @@ function install_base_system_and_chroot {
   if [[ ! -L /var/services/NetworkManager ]] ; then
     echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
     cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
+  else
+    echo -e -n "\nCopying /etc/NetworkManager/system-connections/...\n"
+    cp -L /etc/NetworkManager/system-connections/* /mnt/etc/NetworkManager/system-connections/
   fi
   
   echo -e -n "\nChrooting...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   cp "$HOME"/chroot.sh /mnt/root/
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" vg_name="$vg_name" lv_root_name="$lv_root_name" lv_home_name="$lv_home_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
   header_ibsac
   
@@ -1329,11 +1248,9 @@ function install_base_system_and_chroot {
   rm -f /mnt/home/root/chroot.sh
 
   echo -e -n "\nUnmounting partitions...\n\n"
-  umount /dev/mapper/"$vg_name"-"$lv_home_name"
-  umount /dev/mapper/"$vg_name"-"$lv_root_name"
   umount -l /dev/mapper/"$vg_name"-"$lv_root_name"
-  lvchange -an /dev/mapper/"$vg_name"-"$lv_home_name"
   lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
+  vgchange -an /dev/mapper/"$vg_name"
   cryptsetup close /dev/mapper/"$encrypted_name"
 
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -1355,7 +1272,8 @@ function outro {
   echo -e -n "- Add the same uncommented line in /etc/locale.conf\n"
   echo -e -n "- Run \"xbps-reconfigure -fa\"\n"
   echo -e -n "- Reboot\n"
-  echo -e -n "\nEverything's done, goodbye.\n\n"
+  echo -e -n "- If you plan yo use snapper, after creating a configuration for\n  / [root], uncomment the line relative to /.snapshots folder"
+  echo -e -n "\n${BLUE_LIGHT}Everything's done, goodbye.${NORMAL}\n\n"
 
   read -n 1 -r -p "[Press any key to exit...]" key
   clear
