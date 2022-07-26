@@ -132,7 +132,7 @@ Following the script, at the very end your drive will end up being like the foll
                                                                            /
 ```
 
-> Note: `/.snapshots` will be available after creating a snapper configuration for `/`, after following the [Follow up for '@snapshots` subvolume](#follow-up-for-snapshots-subvolume) section and finally after uncommenting the relative line from `/etc/fstab`.
+> Note: `/.snapshots` will be available after creating a snapper configuration for `/`, after following the [Follow up for `@snapshots` subvolume](#follow-up-for-snapshots-subvolume) section and finally after uncommenting the relative line from `/etc/fstab`.
 
 <br>
 
