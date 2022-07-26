@@ -79,9 +79,9 @@ Here is documented how the script works in details and what will ask to the user
     `/dev/mapper/<encrypted_name>`;
 6. apply Logical Volume Management to the previous encrypted partition, to have the flexibility to resize `/` and to add more space in the future without reformatting the whole system:
     - it will ask for a Volume Group name, so that will be mounted as  
-    `/dev/mapper/<volume_group>`;
+    `/dev/mapper/<vg_name>`;
     - it will ask for a Logical Volume name for **root** partition and its size will be the previously selected partition, so that will be mounted as  
-    `/dev/mapper/<volume_group>-<lv_root_name>`;
+    `/dev/mapper/<vg_name>-<lv_root_name>`;
     - check the [Final partitioning result](#final-partitioning-result) to get an overview of what the outcome will be;
 7. Formatting partitions to proper filesystems:
     - it will prompt user to select which partition to use as **boot** partition and to choose its label; it will be formatted as FAT32 and mounted as  
@@ -123,13 +123,13 @@ You don't need to create a `/home` partition because BTRFS subvolumes will take 
 Following the script, at the very end your drive will end up being like the following:
 
 ``` bash
-/dev/nvme0n1                                    259:0    0 953,9G  0 disk  
-├─/dev/nvme0n1p1                                259:1    0     1G  0 part  /boot/efi
-└─/dev/nvme0n1p2                                259:2    0 942,9G  0 part  
-  └─/dev/mapper/<encrypted_name>                254:0    0 942,9G  0 crypt 
-    └─/dev/mapper/<volume_group>-<lv_root_name> 254:1    0 942,9G  0 lvm   /.snapshots
-                                                                           /home
-                                                                           /
+/dev/nvme0n1                               259:0    0 953,9G  0 disk  
+├─/dev/nvme0n1p1                           259:1    0     1G  0 part  /boot/efi
+└─/dev/nvme0n1p2                           259:2    0 942,9G  0 part  
+  └─/dev/mapper/<encrypted_name>           254:0    0 942,9G  0 crypt 
+    └─/dev/mapper/<vg_name>-<lv_root_name> 254:1    0 942,9G  0 lvm   /.snapshots
+                                                                      /home
+                                                                      /
 ```
 
 > Note: `/.snapshots` will be available after following the [Follow up for `@snapshots` subvolume](#follow-up-for-snapshots-subvolume) section.
@@ -162,24 +162,24 @@ In case anything will break, you will just have to delete the `@` subvolume, cre
 In details, after booting a LiveCD, mount the encrypted partition:
 
 ``` bash
-cryptsetup open /dev/nvme0n1p2 LinuxCrypt
+cryptsetup open /dev/nvme0n1p2 <encrypted_name>
 ```
 
 Scan for Volume Groups and then enable the one you need:
 
 ``` bash
 vgscan
-vgchange -ay LinuxGroup
+vgchange -ay <vg_name>
 ```
 
 Mount the true btrfs root by its subvol or by its subvolid:
 
 ``` bash
 # by subvol
-mount -o subvol=/ /dev/mapper/LinuxGroup-LinuxSystem /mnt
+mount -o subvol=/ /dev/mapper/<vg_name>-<lv_root_name> /mnt
 
 # or by subvolid
-mount -o subvolid=0 /dev/mapper/LinuxGroup-LinuxSystem /mnt
+mount -o subvolid=0 /dev/mapper/<vg_name>-<lv_root_name> /mnt
 ```
 
 After that if you do an `ls /mnt/` you will see all the subvolume previously created.
