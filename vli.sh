@@ -230,6 +230,7 @@ function finish_chroot {
 
   echo -e -n "\nReconfiguring every package...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
+  echo
   xbps-reconfigure -fa
 
   echo -e -n "\nEverything's done, exiting chroot...\n\n"
@@ -1248,9 +1249,9 @@ function install_base_system_and_chroot {
   rm -f /mnt/home/root/chroot.sh
 
   echo -e -n "\nUnmounting partitions...\n\n"
-  umount -l /dev/mapper/"$vg_name"-"$lv_root_name"
+  umount -l /mnt/home
+  umount -l /mnt
   lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
-  vgchange -an /dev/mapper/"$vg_name"
   cryptsetup close /dev/mapper/"$encrypted_name"
 
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -1272,7 +1273,7 @@ function outro {
   echo -e -n "- Add the same uncommented line in /etc/locale.conf\n"
   echo -e -n "- Run \"xbps-reconfigure -fa\"\n"
   echo -e -n "- Reboot\n"
-  echo -e -n "- If you plan yo use snapper, after creating a configuration for\n  / [root], uncomment the line relative to /.snapshots folder"
+  echo -e -n "- If you plan yo use snapper, after creating a configuration for\n  / [root], uncomment the line relative to /.snapshots folder\n"
   echo -e -n "\n${BLUE_LIGHT}Everything's done, goodbye.${NORMAL}\n\n"
 
   read -n 1 -r -p "[Press any key to exit...]" key
