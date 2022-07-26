@@ -5,7 +5,6 @@ The **VoidLinuxInstaller script** is an attempt to make [my gist](https://gist.g
 As stated in the gist, this script provides:
 - Full Disk Encryption (including `/boot`) with LUKS;
 - Logic Volume Management (LVM);
-- Separated `/home` partition;
 - BTRFS as filesystem.
 - Trim on SSD;
 
@@ -78,26 +77,23 @@ Here is documented how the script works in details and what will ask to the user
 5. encrypt a user choosen partition for Full Disk Encryption:
     - it will ask for a mountpoint name, so that the encrypted partition will be mounted as  
     `/dev/mapper/<encrypted_name>`;
-6. apply Logical Volume Management to the previous encrypted partition, to have the flexibility to resize `/` and `/home` partitions without too much hassle:
+6. apply Logical Volume Management to the previous encrypted partition, to have the flexibility to resize `/` and to add more space in the future without reformatting the whole system:
     - it will ask for a Volume Group name, so that will be mounted as  
     `/dev/mapper/<volume_group>`;
-    - it will ask for a Logical Volume name for **root** partition, and also for its size, so that will be mounted as  
-    `/dev/mapper/<volume_group>-<root_name>`;
-    - it will ask for a Logical Volume name for **home** partition; the remaining free space will be used for it and it will be mounted as  
-    `/dev/mapper/<volume_group>-<home_name>`
+    - it will ask for a Logical Volume name for **root** partition and its size will be the previously selected partition, so that will be mounted as  
+    `/dev/mapper/<volume_group>-<lv_root_name>`;
     - check the [Final partitioning result](#final-partitioning-result) to get an overview of what the outcome will be;
 7. Formatting partitions to proper filesystems:
     - it will prompt user to select which partition to use as **boot** partition and to choose its label; it will be formatted as FAT32 and mounted as  
     `/boot/efi`;
-    - it will prompt user to select a label for the **root** logical partition, that will be formatted as BTRFS;
-    - it will prompt user to select a label for the **home** logical partition, that will be formatted as BTRFS;
+    - it will prompt user to select a label for the **root** logical volume, that will be formatted as BTRFS;
 8. create BTRFS subvolumes with specific fstab mount options; if user wants to change them, please edit the script looking for `create_btrfs_subvolumes` function ([BTRFS mount options official documentation](https://btrfs.readthedocs.io/en/latest/btrfs-man5.html#mount-options)):
     - **BTRFS mounting options**:
-        * `rw,noatime,ssd,compress=zstd,space_cache=v2,commit=120`
+        * `rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120`
     - **BTRFS subvolumes that will be created**:
         * `/@`
+        * `/@home`
         * `/@snapshots`
-        * `/home/@home`
         * `/var/cache/xbps`
         * `/var/tmp`
         * `/var/log`
@@ -117,23 +113,97 @@ To have a smooth script workflow, the following is the suggested disk layout:
 
 - GPT as disk label type for UEFI systems, also because this script will only works on UEFI systems;
 - Less than 1 GB for `/boot/efi` as first partition, as EFI System type;
-- Rest of the disk for the Volume Group, that will be logically partitioned with LVM (`/` and `/home`), as second partition as Linux filesystem.
+- Rest of the disk for the Volume Group, where LVM will be applied, as second partition as Linux filesystem.
 
 Those two will be physical partition.  
-You don't need to create a `/home` partition now because it will be created later as a logical one with LVM.
+You don't need to create a `/home` partition because BTRFS subvolumes will take care of that.
 
 ### Final partitioning result
 
 Following the script, at the very end your drive will end up being like the following:
 
 ``` bash
-/dev/nvme0n1                                 259:0    0 953,9G  0 disk  
-├─/dev/nvme0n1p1                             259:1    0     1G  0 part  /boot/efi
-├─/dev/nvme0n1p2                             259:2    0 942,9G  0 part  
-│ └─/dev/mapper/<encrypted_name>             254:0    0 942,9G  0 crypt 
-│   └─/dev/mapper/<volume_group>-<root_name> 254:1    0 942,9G  0 lvm   /.snapshots
-|   |                                                                   /
-│   └─/dev/mapper/<volume_group>-<home_name> 254:1    0 942,9G  0 lvm   /home
+/dev/nvme0n1                                    259:0    0 953,9G  0 disk  
+├─/dev/nvme0n1p1                                259:1    0     1G  0 part  /boot/efi
+└─/dev/nvme0n1p2                                259:2    0 942,9G  0 part  
+  └─/dev/mapper/<encrypted_name>                254:0    0 942,9G  0 crypt 
+    └─/dev/mapper/<volume_group>-<lv_root_name> 254:1    0 942,9G  0 lvm   /.snapshots
+                                                                           /home
+                                                                           /
+```
+
+> Note: `/.snapshots` will be available after creating a snapper configuration for `/`, after following the [Follow up for '@snapshots` subvolume](#follow-up-for-snapshots-subvolume) section and finally after uncommenting the relative line from `/etc/fstab`.
+
+<br>
+
+## Follow up for `@snapshots` subvolume
+
+With this script, the `@snapshots` subvolume will be created, but not the `/.snapshots` folder. This is done to avoid stupid snapper issues when trying to create a configuration for `/`.
+
+So after installing `snapper` from Void Linux's repositories, you have to delete the subvolume that it will automatically create, then create the `/.snapshots` folder and then uncomment the relative line from `/etc/fstab`:
+
+``` bash
+# run these commands as root
+
+btrfs subvolume delete /.snapshots
+mkdir /.snapshots
+## edit /etc/fstab uncommenting the line relative to @snapshots subvolume ##
+reboot
+```
+
+> Source: [Arch Wiki](https://wiki.archlinux.org/title/Snapper#Configuration_of_snapper_and_mount_point)
+
+<br>
+
+# What to do if system breaks?
+
+In case anything will break, you will just have to delete the `@` subvolume, create it again and reinstall your distro. `/home` folder won't be affected in any way.
+
+In details, after booting a LiveCD, mount the encrypted partition:
+
+``` bash
+cryptsetup open /dev/nvme0n1p2 LinuxCrypt
+```
+
+Scan for Volume Groups and then enable the one you need:
+
+``` bash
+vgscan
+vgchange -ay LinuxGroup
+```
+
+Mount the true btrfs root by its subvol or by its subvolid:
+
+``` bash
+# by subvol
+mount -o subvol=/ /dev/mapper/LinuxGroup-LinuxSystem /mnt
+
+# or by subvolid
+mount -o subvolid=0 /dev/mapper/LinuxGroup-LinuxSystem /mnt
+```
+
+After that if you do an `ls /mnt/` you will see all the subvolume previously created.
+Now you must delete **ONLY** the `@ `subvolume and finally unmount `/mnt`:
+
+``` bash
+btrfs subvolume delete /mnt/@
+umount /mnt
+```
+
+You now have to reinstall Void Linux manually (the script is not programmed to help you this time). For this you can follow the [original gist](https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3) and start again from *Mount partitions and create btrfs subvolumes* instruction, without creating the `@home` subvolume.
+
+When the package reconfiguration is finished, you have to create a user with the same name of the one you created before, possibly adding it to the same groups as before, but you can do it later too.  
+**Don't add the `-m` flag or your original home folder will be destroyed:
+
+``` bash
+useradd -G wheel <same_user>
+passwd <same_user>
+```
+
+This is not necessary because adding the same user will automatically change the home folder permission, but just in case:
+
+``` bash
+chown -R <same_user>:<same_user> /home/<same_user>
 ```
 
 <br>
