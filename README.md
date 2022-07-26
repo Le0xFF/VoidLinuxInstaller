@@ -140,7 +140,7 @@ Following the script, at the very end your drive will end up being like the foll
 
 With this script, the `@snapshots` subvolume will be created, but not the `/.snapshots` folder. This is done to avoid stupid snapper issues when trying to create a configuration for `/`.
 
-So after installing `snapper` from Void Linux's repositories, you have to delete the subvolume that it will automatically create, then create the `/.snapshots` folder and then uncomment the relative line from `/etc/fstab`:
+So after installing `snapper` from Void Linux's repositories and after [creating a configuration for `/`](https://wiki.archlinux.org/title/Snapper#Creating_a_new_configuration), you have to delete the subvolume that snapper will automatically create. After that create the `/.snapshots` folder and then uncomment the relative line from `/etc/fstab`:
 
 ``` bash
 # run these commands as root
