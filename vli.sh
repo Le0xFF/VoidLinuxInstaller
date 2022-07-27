@@ -8,6 +8,10 @@
 #              https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3
 #
 
+# Catch kill signals
+
+trap "kill_script" INT TERM QUIT
+
 # Variables
 
 user_drive=''
@@ -27,6 +31,28 @@ NORMAL="\e[0m"
 RED_LIGHT="\e[1;31m"
 
 # Functions
+
+function kill_script {
+
+  echo -e -n "\n\nKill signal captured, unmonting, cleaning and closing everything.\n\n"
+
+  for dir in sys dev proc ; do
+    umount /mnt/$dir
+  done
+  umount -l /mnt/home
+  umount -l /mnt
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+    lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
+  fi
+  cryptsetup close /dev/mapper/"$encrypted_name"
+
+  if [[ -f "$HOME"/chroot.sh ]] ; then
+    rm -f "$HOME"/chroot.sh
+  fi
+
+  echo -e -n "\n\nEverything's done, quitting.\n\n"
+
+}
 
 function check_if_bash {
 
@@ -1321,6 +1347,9 @@ function install_base_system_and_chroot {
   rm -f /mnt/home/root/chroot.sh
 
   echo -e -n "\nUnmounting partitions...\n\n"
+  for dir in sys dev proc ; do
+    umount /mnt/$dir
+  done
   umount -l /mnt/home
   umount -l /mnt
   if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
