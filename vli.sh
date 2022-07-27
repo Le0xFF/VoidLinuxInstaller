@@ -34,7 +34,7 @@ RED_LIGHT="\e[1;31m"
 
 function kill_script {
 
-  echo -e -n "\n\nKill signal captured, unmonting, cleaning and closing everything.\n\n"
+  echo -e -n "\n\n${RED_LIGHT}Kill signal captured, unmonting, cleaning and closing everything...${NORMAL}\n"
 
   if grep -q /dev/mapper /proc/mounts ; then
     if grep -q /mnt /proc/mounts ; then
@@ -54,15 +54,15 @@ function kill_script {
             lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
         fi
       fi
-      cryptsetup close /dev/mapper/"$encrypted_name"
     fi
+    cryptsetup close /dev/mapper/"$encrypted_name"
   fi
 
   if [[ -f "$HOME"/chroot.sh ]] ; then
     rm -f "$HOME"/chroot.sh
   fi
 
-  echo -e -n "\n\nEverything's done, quitting.\n\n"
+  echo -e -n "\n${BLUE_LIGHT}Everything's done, quitting.${NORMAL}\n\n"
   exit 1
 
 }
