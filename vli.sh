@@ -13,6 +13,7 @@
 user_drive=''
 encrypted_partition=''
 encrypted_name=''
+lvm_yn=''
 vg_name=''
 lv_root_name=''
 boot_partition=''
@@ -97,10 +98,14 @@ function edit_fstab {
   echo -e -n "\nExporting variables that will be used for fstab...\n"
   export UEFI_UUID=\$(blkid -s UUID -o value "\$boot_partition")
   export LUKS_UUID=\$(blkid -s UUID -o value "\$encrypted_partition")
-  export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$vg_name"-"\$lv_root_name")
+  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]]
+    export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$vg_name"-"\$lv_root_name")
+  fi
   
   echo -e -n "\nWriting fstab...\n\n"
   sed -i '/tmpfs/d' /etc/fstab
+
+  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]]
 cat << EOF >> /etc/fstab
 
 # root partition
@@ -118,6 +123,27 @@ UUID=\$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
+
+  elif [[ "\$lvm_yn" == "n" ]] || [[ "\$lvm_yn" == "N" ]]
+cat << EOF >> /etc/fstab
+
+# root partition
+UUID=\$LUKS_UUID / btrfs \$BTRFS_OPT,subvol=@ 0 1
+
+# home partition
+UUID=\$LUKS_UUID /home btrfs \$BTRFS_OPT,subvol=@home 0 2
+
+# root snapshots, uncomment the following line after creating a config for root in snapper
+#UUID=\$LUKS_UUID /.snapshots btrfs \$BTRFS_OPT,subvol=@snapshots 0 2
+
+# EFI partition
+UUID=\$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
+
+# TMPfs
+tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
+EOF
+
+  fi
 
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
@@ -208,7 +234,8 @@ EOF
   echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}VoidLinux\${NORMAL} as bootloader-id...\n\n"
   grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id=VoidLinux --recheck
 
-  echo -e -n "\nEnabling SSD trim...\n\n"
+  
+  echo -e -n "\nEnabling SSD trim for LVM...\n\n"
   sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
 
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -892,78 +919,102 @@ function header_lc {
 
 function lvm_creation {
 
-  while true ; do
+  while true; do
 
     header_lc
 
-    echo -e -n "\nCreating logical partitions wih LVM.\n"
+    echo -e -n "\nWith LVM will be easier in the future\nto add more space to the root partition without formatting the whole system\n"
+    echo -e -n "\nDo you want to use ${BLUE_LIGHT}LVM${NORMAL}? (y/n): "
+    read -r lvm_yn
 
-    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Volume Group${NORMAL} without any spaces (i.e. MyLinuxVolumeGroup): "
-    read -r vg_name
+    if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     
-    if [[ -z "$vg_name" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-    else
       while true ; do
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$vg_name${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired name? (y/n): " yn
+
+        header_lc
+
+        echo -e -n "\nCreating logical partitions wih LVM.\n"
+
+        echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Volume Group${NORMAL} without any spaces (i.e. MyLinuxVolumeGroup): "
+        read -r vg_name
+    
+        if [[ -z "$vg_name" ]] ; then
+          echo -e -n "\nPlease enter a valid name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+        else
+          while true ; do
+            echo -e -n "\nYou entered: ${BLUE_LIGHT}$vg_name${NORMAL}.\n\n"
+            read -n 1 -r -p "Is this the desired name? (y/n): " yn
         
-        if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
-          vgcreate "$vg_name" /dev/mapper/"$encrypted_name"
-          echo
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break 2
-        elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+            if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+              echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
+              vgcreate "$vg_name" /dev/mapper/"$encrypted_name"
+              echo
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+              break 2
+            elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+              echo -e -n "\n\nPlease select another name.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+              break
+            else
+              echo -e -n "\nPlease answer y or n.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+            fi
+          done
         fi
+
       done
-    fi
 
-  done
+      while true ; do
 
-  while true ; do
+        header_lc
 
-    header_lc
-
-    echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical Volume${NORMAL} without any spaces (i.e. MyLinuxLogicVolume).\nIts size will be the entire partition previosly selected: "
-    read -r lv_root_name
+        echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical Volume${NORMAL} without any spaces (i.e. MyLinuxLogicVolume).\nIts size will be the entire partition previosly selected: "
+        read -r lv_root_name
     
-    if [[ -z "$lv_root_name" ]] ; then
-      echo -e -n "\nPlease enter a valid name.\n\n"
+        if [[ -z "$lv_root_name" ]] ; then
+          echo -e -n "\nPlease enter a valid name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+        else
+          while true ; do
+            echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_root_name${NORMAL}.\n\n"
+            read -n 1 -r -p "Is this correct? (y/n): " yn
+          
+            if [[ "$yn" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
+              echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} will now be created.\n\n"
+              lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"
+              echo
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+              break 3
+            elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+              echo -e -n "\n\nPlease select another name.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+              break
+            else
+              echo -e -n "\nPlease answer y or n.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+            fi
+          done
+        fi
+
+      done
+
+    elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
+      echo -e -n "\n\nLVM won't be used.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
+      break
+
     else
-      while true ; do
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_root_name${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this correct? (y/n): " yn
-          
-        if [[ "$yn" == "y" ]] || [[ "${yn}" == "Y" ]] ; then
-          echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} will now be created.\n\n"
-          lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"
-          echo
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break 2
-        elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-        fi
-      done
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     fi
 
   done
@@ -1088,8 +1139,13 @@ function create_filesystems {
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$vg_name-$lv_root_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
-          mkfs.btrfs -L "$root_name" /dev/mapper/"$vg_name"-"$lv_root_name"
+          if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+            echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$vg_name-$lv_root_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
+            mkfs.btrfs -L "$root_name" /dev/mapper/"$vg_name"-"$lv_root_name"
+          elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+            echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
+            mkfs.btrfs -L "$root_name" /dev/mapper/"$encrypted_name"
+          fi
           sync
           echo -e -n "\nPartition successfully formatted.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -1143,6 +1199,12 @@ function create_btrfs_subvolumes {
   echo -e -n "\n${BLUE_LIGHT}If you prefer to change any option, please quit this script NOW and modify it according to you tastes.${NORMAL}\n\n"
   read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." key
 
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+    echo -e -n "\n\nThe root partition you selected (/dev/mapper/$vg_name-$lv_root_name) will now be mounted to /mnt.\n"
+  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+    echo -e -n "\n\nThe root partition you selected (/dev/mapper/$encrypted_name) will now be mounted to /mnt.\n"
+  fi
+
   echo -e -n "\n\nThe root partition you selected (/dev/mapper/$vg_name-$lv_root_name) will now be mounted to /mnt.\n"
   if grep -q /mnt /proc/mounts ; then
     echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
@@ -1154,21 +1216,39 @@ function create_btrfs_subvolumes {
 
   echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
 
-  export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
-  mount -o "$BTRFS_OPT" /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
-  btrfs subvolume create /mnt/@
-  btrfs subvolume create /mnt/@home
-  btrfs subvolume create /mnt/@snapshots
-  umount /mnt
-  mount -o "$BTRFS_OPT",subvol=@ /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
-  mkdir /mnt/home
-  mount -o "$BTRFS_OPT",subvol=@home /dev/mapper/"$vg_name"-"$lv_root_name" /mnt/home/
-  mkdir -p /mnt/boot/efi
-  mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
-  mkdir -p /mnt/var/cache
-  btrfs subvolume create /mnt/var/cache/xbps
-  btrfs subvolume create /mnt/var/tmp
-  btrfs subvolume create /mnt/var/log
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+    export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
+    mount -o "$BTRFS_OPT" /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
+    btrfs subvolume create /mnt/@
+    btrfs subvolume create /mnt/@home
+    btrfs subvolume create /mnt/@snapshots
+    umount /mnt
+    mount -o "$BTRFS_OPT",subvol=@ /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
+    mkdir /mnt/home
+    mount -o "$BTRFS_OPT",subvol=@home /dev/mapper/"$vg_name"-"$lv_root_name" /mnt/home/
+    mkdir -p /mnt/boot/efi
+    mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
+    mkdir -p /mnt/var/cache
+    btrfs subvolume create /mnt/var/cache/xbps
+    btrfs subvolume create /mnt/var/tmp
+    btrfs subvolume create /mnt/var/log
+  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+    export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
+    mount -o "$BTRFS_OPT" /dev/mapper/"$encrypted_name" /mnt
+    btrfs subvolume create /mnt/@
+    btrfs subvolume create /mnt/@home
+    btrfs subvolume create /mnt/@snapshots
+    umount /mnt
+    mount -o "$BTRFS_OPT",subvol=@ /dev/mapper/"$encrypted_name" /mnt
+    mkdir /mnt/home
+    mount -o "$BTRFS_OPT",subvol=@home /dev/mapper/"$encrypted_name" /mnt/home/
+    mkdir -p /mnt/boot/efi
+    mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
+    mkdir -p /mnt/var/cache
+    btrfs subvolume create /mnt/var/cache/xbps
+    btrfs subvolume create /mnt/var/tmp
+    btrfs subvolume create /mnt/var/log
+  fi
 
   echo -e -n "\nDone.\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -1241,7 +1321,12 @@ function install_base_system_and_chroot {
   echo -e -n "\nChrooting...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   cp "$HOME"/chroot.sh /mnt/root/
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]
+    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" user_drive="$user_drive" lvm_yn="$lvm_yn" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  fi
 
   header_ibsac
   
@@ -1251,7 +1336,9 @@ function install_base_system_and_chroot {
   echo -e -n "\nUnmounting partitions...\n\n"
   umount -l /mnt/home
   umount -l /mnt
-  lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]
+    lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
+  fi
   cryptsetup close /dev/mapper/"$encrypted_name"
 
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -1269,7 +1356,7 @@ function outro {
   echo -e -n "- Change your default shell\n"
   echo -e -n "- Change your hostname in /etc/hostname\n"
   echo -e -n "- Modify /etc/rc.conf according to the official documentation\n"
-  echo -e -n "- Uncomment the right line in /etc/default/libc-locales\n"
+  echo -e -n "- If you choose the glibc system version, uncomment the right line in /etc/default/libc-locales\n"
   echo -e -n "- Add the same uncommented line in /etc/locale.conf\n"
   echo -e -n "- Run \"xbps-reconfigure -fa\"\n"
   echo -e -n "- Reboot\n"
