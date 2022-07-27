@@ -106,7 +106,7 @@ function edit_fstab {
   
   echo -e -n "\nWriting fstab...\n\n"
   sed -i '/tmpfs/d' /etc/fstab
-  
+
 cat << EOF >> /etc/fstab
 
 # root partition
@@ -992,7 +992,7 @@ function lvm_creation {
       done
 
     elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
-      echo -e -n "\nLVM won't be used.\n\n"
+      echo -e -n "\n\nLVM won't be used.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
