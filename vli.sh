@@ -109,13 +109,13 @@ function edit_fstab {
 
 cat << EOF >> /etc/fstab
 
-# root partition
+# root subvolume
 UUID=\$ROOT_UUID / btrfs \$BTRFS_OPT,subvol=@ 0 1
 
-# home partition
+# home subvolume
 UUID=\$ROOT_UUID /home btrfs \$BTRFS_OPT,subvol=@home 0 2
 
-# root snapshots, uncomment the following line after creating a config for root in snapper
+# root snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
 #UUID=\$ROOT_UUID /.snapshots btrfs \$BTRFS_OPT,subvol=@snapshots 0 2
 
 # EFI partition
@@ -176,6 +176,7 @@ EOF
   echo -e "tmpdir=/tmp" >> /etc/dracut.conf.d/30-tmpfs.conf
 
   echo -e -n "\nGenerating new dracut initramfs...\n\n"
+  read -n 1 -r -p "[Press any key to continue...]" key
   dracut --force --hostonly --kver \$(ls /usr/lib/modules/)
 
   echo
@@ -215,10 +216,11 @@ EOF
   grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id=VoidLinux --recheck
 
   if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
-    echo -e -n "\nEnabling SSD trim for LVM...\n\n"
+    echo -e -n "\nEnabling SSD trim for LVM...\n"
     sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
   fi
 
+  echo
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
 
