@@ -184,7 +184,7 @@ mount -o subvolid=0 /dev/mapper/<vg_name>-<lv_root_name> /mnt
 ```
 
 After that if you do an `ls /mnt/` you will see all the subvolume previously created.
-Now you must delete **ONLY** the `@`subvolume and finally unmount `/mnt`:
+Now you must delete **ONLY** the `@` subvolume and finally unmount `/mnt`:
 
 ``` bash
 btrfs subvolume delete /mnt/@
