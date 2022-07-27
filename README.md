@@ -38,15 +38,13 @@ xbps-install -Sy wget
 xbps-install -Sy curl
 ```
 
-then use `wget` to download the needed file:
+then download the needed file:
 
 ``` bash
+# For wget
 wget https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/vli.sh -O $HOME/vli.sh
-```
 
-or `curl` if you prefer:
-
-``` bash
+# For curl
 curl -o $HOME/vli.sh https://raw.githubusercontent.com/Le0xFF/VoidLinuxInstaller/main/vli.sh
 ```
 
