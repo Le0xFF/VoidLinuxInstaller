@@ -156,7 +156,7 @@ reboot
 
 <br>
 
-# What to do if system breaks?
+## What to do if system breaks?
 
 In case anything will break, you will just have to delete the `@` subvolume, create it again and reinstall your distro. `/home` folder won't be affected in any way.
 
@@ -205,6 +205,59 @@ This is not necessary because adding the same user will automatically change the
 
 ``` bash
 chown -R <same_user>:<same_user> /home/<same_user>
+```
+
+<br>
+
+## How to add more space with a new drive with LVM
+
+> Probably the following could also be done from a running system, but maybe it's better to boot a LiveCD just in case.
+
+First a new physical drive must be added to the system. This drive in the following example will be called `/dev/sda`.
+
+After booting a LiveCD, mount the encrypted partition:
+
+``` bash
+cryptsetup open /dev/nvme0n1p2 <encrypted_name>
+```
+
+Scan for Volume Groups and then enable the one you need:
+
+``` bash
+vgscan
+vgchange -ay <vg_name>
+```
+
+Scan for Logical Volumes and then enable the one you need:
+
+``` bash
+lvscan
+lvchange -ay <vg_name>/<lv_root_name>
+```
+
+Then a new Physical Volume for the new drive must be created:
+
+``` bash
+pvcreate /dev/sda
+```
+
+After that it must be added to the existing Logical Volume:
+
+``` bash
+vgextend <lv_root_name> /dev/sda
+```
+
+Then the Logical Volume must be extended to cover the new free space:
+
+``` bash
+lvm lvextend -l +100%FREE <vg_name>/<lv_root_name>
+```
+
+Finally also the BTRFS filesystem must be extended to cover all the free space; to do that, the BTRFS partition must be mounted:
+
+``` bash
+mount -t btrfs /dev/mapper/<vg_name>-<lv_root_name> /mnt/
+btrfs filesystem resize max /mnt/
 ```
 
 <br>
