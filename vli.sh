@@ -100,12 +100,13 @@ function edit_fstab {
   export LUKS_UUID=\$(blkid -s UUID -o value "\$encrypted_partition")
   if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
     export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$vg_name"-"\$lv_root_name")
+  elif [[ "\$lvm_yn" == "n" ]] || [[ "\$lvm_yn" == "N" ]] ; then
+    export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$encrypted_name")
   fi
   
   echo -e -n "\nWriting fstab...\n\n"
   sed -i '/tmpfs/d' /etc/fstab
-
-  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
+  
 cat << EOF >> /etc/fstab
 
 # root partition
@@ -123,27 +124,6 @@ UUID=\$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
-
-  elif [[ "\$lvm_yn" == "n" ]] || [[ "\$lvm_yn" == "N" ]] ; then
-cat << EOF >> /etc/fstab
-
-# root partition
-UUID=\$LUKS_UUID / btrfs \$BTRFS_OPT,subvol=@ 0 1
-
-# home partition
-UUID=\$LUKS_UUID /home btrfs \$BTRFS_OPT,subvol=@home 0 2
-
-# root snapshots, uncomment the following line after creating a config for root in snapper
-#UUID=\$LUKS_UUID /.snapshots btrfs \$BTRFS_OPT,subvol=@snapshots 0 2
-
-# EFI partition
-UUID=\$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
-
-# TMPfs
-tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
-EOF
-
-  fi
 
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
@@ -234,9 +214,10 @@ EOF
   echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}VoidLinux\${NORMAL} as bootloader-id...\n\n"
   grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id=VoidLinux --recheck
 
-  
-  echo -e -n "\nEnabling SSD trim for LVM...\n\n"
-  sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
+  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
+    echo -e -n "\nEnabling SSD trim for LVM...\n\n"
+    sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
+  fi
 
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
@@ -924,12 +905,14 @@ function lvm_creation {
 
     header_lc
 
-    echo -e -n "\nWith LVM will be easier in the future\nto add more space to the root partition without formatting the whole system\n"
+    echo -e -n "\nWith LVM will be easier in the future to add more space\nto the root partition without formatting the whole system\n"
     echo -e -n "\nDo you want to use ${BLUE_LIGHT}LVM${NORMAL}? (y/n): "
-    read -r lvm_yn
+    read -n 1 -r lvm_yn
 
     if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-    
+
+      clear
+
       while true ; do
 
         header_lc
@@ -1009,7 +992,7 @@ function lvm_creation {
       done
 
     elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
-      echo -e -n "\n\nLVM won't be used.\n\n"
+      echo -e -n "\nLVM won't be used.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
@@ -1208,7 +1191,6 @@ function create_btrfs_subvolumes {
     echo -e -n "\n\nThe root partition you selected (/dev/mapper/$encrypted_name) will now be mounted to /mnt.\n"
   fi
 
-  echo -e -n "\n\nThe root partition you selected (/dev/mapper/$vg_name-$lv_root_name) will now be mounted to /mnt.\n"
   if grep -q /mnt /proc/mounts ; then
     echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
     cd "$HOME"
