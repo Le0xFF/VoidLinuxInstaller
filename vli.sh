@@ -98,14 +98,14 @@ function edit_fstab {
   echo -e -n "\nExporting variables that will be used for fstab...\n"
   export UEFI_UUID=\$(blkid -s UUID -o value "\$boot_partition")
   export LUKS_UUID=\$(blkid -s UUID -o value "\$encrypted_partition")
-  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]]
+  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
     export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$vg_name"-"\$lv_root_name")
   fi
   
   echo -e -n "\nWriting fstab...\n\n"
   sed -i '/tmpfs/d' /etc/fstab
 
-  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]]
+  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
 cat << EOF >> /etc/fstab
 
 # root partition
@@ -124,7 +124,7 @@ UUID=\$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
 
-  elif [[ "\$lvm_yn" == "n" ]] || [[ "\$lvm_yn" == "N" ]]
+  elif [[ "\$lvm_yn" == "n" ]] || [[ "\$lvm_yn" == "N" ]] ; then
 cat << EOF >> /etc/fstab
 
 # root partition
@@ -1142,7 +1142,7 @@ function create_filesystems {
           if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
             echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$vg_name-$lv_root_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
             mkfs.btrfs -L "$root_name" /dev/mapper/"$vg_name"-"$lv_root_name"
-          elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+          elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]; then
             echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
             mkfs.btrfs -L "$root_name" /dev/mapper/"$encrypted_name"
           fi
@@ -1201,7 +1201,7 @@ function create_btrfs_subvolumes {
 
   if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     echo -e -n "\n\nThe root partition you selected (/dev/mapper/$vg_name-$lv_root_name) will now be mounted to /mnt.\n"
-  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
     echo -e -n "\n\nThe root partition you selected (/dev/mapper/$encrypted_name) will now be mounted to /mnt.\n"
   fi
 
@@ -1232,7 +1232,7 @@ function create_btrfs_subvolumes {
     btrfs subvolume create /mnt/var/cache/xbps
     btrfs subvolume create /mnt/var/tmp
     btrfs subvolume create /mnt/var/log
-  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
     export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
     mount -o "$BTRFS_OPT" /dev/mapper/"$encrypted_name" /mnt
     btrfs subvolume create /mnt/@
@@ -1322,9 +1322,9 @@ function install_base_system_and_chroot {
   read -n 1 -r -p "[Press any key to continue...]" key
   cp "$HOME"/chroot.sh /mnt/root/
 
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
-  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]
+  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
     BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" user_drive="$user_drive" lvm_yn="$lvm_yn" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
   fi
 
@@ -1336,7 +1336,7 @@ function install_base_system_and_chroot {
   echo -e -n "\nUnmounting partitions...\n\n"
   umount -l /mnt/home
   umount -l /mnt
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
   fi
   cryptsetup close /dev/mapper/"$encrypted_name"
