@@ -184,7 +184,7 @@ mount -o subvolid=0 /dev/mapper/<vg_name>-<lv_root_name> /mnt
 ```
 
 After that if you do an `ls /mnt/` you will see all the subvolume previously created.
-Now you must delete **ONLY** the `@ `subvolume and finally unmount `/mnt`:
+Now you must delete **ONLY** the `@`subvolume and finally unmount `/mnt`:
 
 ``` bash
 btrfs subvolume delete /mnt/@
@@ -194,7 +194,7 @@ umount /mnt
 You now have to reinstall Void Linux manually (the script is not programmed to help you this time). For this you can follow the [original gist](https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3) and start again from *Mount partitions and create btrfs subvolumes* instruction, without creating the `@home` subvolume.
 
 When the package reconfiguration is finished, you have to create a user with the same name of the one you created before, possibly adding it to the same groups as before, but you can do it later too.  
-**Don't add the `-m` flag or your original home folder will be destroyed:
+**Don't add the `-m` flag or your original home folder will be destroyed**:
 
 ``` bash
 useradd -G wheel <same_user>
