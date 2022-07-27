@@ -75,7 +75,7 @@ Here is documented how the script works in details and what will ask to the user
 5. encrypt a user choosen partition for Full Disk Encryption:
     - it will ask for a mountpoint name, so that the encrypted partition will be mounted as  
     `/dev/mapper/<encrypted_name>`;
-6. apply Logical Volume Management to the previous encrypted partition, to have the flexibility to resize `/` and to add more space in the future without reformatting the whole system:
+6. ask the user if they want to apply Logical Volume Management to the previous encrypted partition, to have the flexibility to resize `/` and to add more space in the future without reformatting the whole system:
     - it will ask for a Volume Group name, so that will be mounted as  
     `/dev/mapper/<vg_name>`;
     - it will ask for a Logical Volume name for **root** partition and its size will be the previously selected partition, so that will be mounted as  
