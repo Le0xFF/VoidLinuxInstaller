@@ -34,24 +34,19 @@ RED_LIGHT="\e[1;31m"
 
 function kill_script {
 
-  echo -e -n "\n\n${RED_LIGHT}Kill signal captured, unmonting, cleaning and closing everything...${NORMAL}\n"
+  echo -e -n "\n\n${RED_LIGHT}Kill signal captured.\nUnmonting what should have been mounted, cleaning and closing everything...${NORMAL}\n"
 
-  if [[ -b /dev/mapper/"$encrypted_name" ]] ; then
-    if [[ -b /dev/mapper/"$vg_name" ]] ; then
-      if grep -q /mnt /proc/mounts ; then
-        for dir in sys dev proc ; do
-          umount /mnt/$dir
-        done
-        umount /mnt/home
-        umount /mnt
-        if [[ -b /dev/mapper/"$vg_name"-"$lv_root_name" ]] ; then
-          lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
-        fi
-      fi
+  for dir in sys dev proc ; do
+    umount /mnt/$dir
+  done
+  umount /mnt/boot/efi
+  umount /mnt/home
+  umount /mnt
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+    lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
     vgchange -an /dev/mapper/"$vg_name"
-    fi
-    cryptsetup close /dev/mapper/"$encrypted_name"
   fi
+  cryptsetup close /dev/mapper/"$encrypted_name"
 
   if [[ -f "$HOME"/chroot.sh ]] ; then
     rm -f "$HOME"/chroot.sh
