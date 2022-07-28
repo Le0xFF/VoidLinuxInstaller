@@ -37,25 +37,18 @@ function kill_script {
   echo -e -n "\n\n${RED_LIGHT}Kill signal captured, unmonting, cleaning and closing everything...${NORMAL}\n"
 
   if [[ -b /dev/mapper/"$encrypted_name" ]] ; then
-    if grep -q /mnt /proc/mounts ; then
-      for dir in sys dev proc ; do
-        umount /mnt/$dir
-      done
-      umount -l /mnt/home
-      umount -l /mnt
-      if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-        if [[ -n "$lv_root_name" ]] ; then
+    if [[ -b /dev/mapper/"$vg_name" ]] ; then
+      if grep -q /mnt /proc/mounts ; then
+        for dir in sys dev proc ; do
+          umount /mnt/$dir
+        done
+        umount /mnt/home
+        umount /mnt
+        if [[ -b /dev/mapper/"$vg_name"-"$lv_root_name" ]] ; then
           lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
-        else
-          vgchange -an /dev/mapper/"$vg_name"
         fi
       fi
-    else
-      if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-        if [[ -n "$lv_root_name" ]] ; then
-            lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
-        fi
-      fi
+    vgchange -an /dev/mapper/"$vg_name"
     fi
     cryptsetup close /dev/mapper/"$encrypted_name"
   fi
