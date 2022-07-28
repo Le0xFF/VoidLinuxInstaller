@@ -34,18 +34,15 @@ RED_LIGHT="\e[1;31m"
 
 function kill_script {
 
-  echo -e -n "\n\n${RED_LIGHT}Kill signal captured.\nUnmonting what should have been mounted, cleaning and closing everything...${NORMAL}\n"
-
-  for dir in sys dev proc ; do
-    umount /mnt/$dir
-  done
-  umount /mnt/boot/efi
-  umount /mnt/home
-  umount /mnt
+  echo -e -n "\n\n${RED_LIGHT}Kill signal captured.\nUnmonting what should have been mounted, cleaning and closing everything...${NORMAL}\n\n"
+  
+  umount --recursive /mnt
+  
   if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
     vgchange -an /dev/mapper/"$vg_name"
   fi
+
   cryptsetup close /dev/mapper/"$encrypted_name"
 
   if [[ -f "$HOME"/chroot.sh ]] ; then
@@ -1350,13 +1347,10 @@ function install_base_system_and_chroot {
   rm -f /mnt/home/root/chroot.sh
 
   echo -e -n "\nUnmounting partitions...\n\n"
-  for dir in sys dev proc ; do
-    umount /mnt/$dir
-  done
-  umount -l /mnt/home
-  umount -l /mnt
+  umount --recursive /mnt
   if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
+    vgchange -an /dev/mapper/"$vg_name"
   fi
   cryptsetup close /dev/mapper/"$encrypted_name"
 
