@@ -203,6 +203,7 @@ EOF
 
   echo -e -n "\nGenerating new dracut initramfs...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
+  echo
   dracut --force --hostonly --kver \$(ls /usr/lib/modules/)
 
   echo
@@ -1354,6 +1355,7 @@ function install_base_system_and_chroot {
   fi
   cryptsetup close /dev/mapper/"$encrypted_name"
 
+  echo
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
 
