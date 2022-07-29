@@ -1311,6 +1311,10 @@ function install_base_system_and_chroot {
 
   done
 
+  echo -e -n "\nCopying RSA keys...\n\n"
+  mkdir -p /mnt/var/db/xbps/keys
+  cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
+
   echo -e -n "\nInstalling base system...\n\n"
   XBPS_ARCH="$ARCH" xbps-install -Suy xbps
   XBPS_ARCH="$ARCH" xbps-install -Sy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
