@@ -292,7 +292,7 @@ function finish_chroot {
 
   while true ; do
     header_fc
-    if [[ -n "\$user_keyboard_layout" ]]
+    if [[ -n "\$user_keyboard_layout" ]] ; then
       echo -e -n "\nSetting \&{BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n"
       sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
       break
@@ -1436,6 +1436,8 @@ function install_base_system_and_chroot {
   cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
 
   echo -e -n "\nInstalling base system...\n\n"
+  read -n 1 -r -p "[Press any key to continue...]" key
+  echo
   XBPS_ARCH="$ARCH" xbps-install -Suy xbps
   XBPS_ARCH="$ARCH" xbps-install -Svy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
   
