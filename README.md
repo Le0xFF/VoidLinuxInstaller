@@ -146,7 +146,7 @@ So after installing `snapper` from Void Linux's repositories and after creating 
 snapper -c root create-config /
 btrfs subvolume delete /.snapshots
 mkdir /.snapshots
-## edit /etc/fstab uncommenting the line relative to @snapshots subvolume ##
+sed -i '/@snapshots/s/^#//' /etc/fstab
 reboot
 ```
 
