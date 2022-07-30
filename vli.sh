@@ -293,8 +293,9 @@ function finish_chroot {
   while true ; do
     header_fc
     if [[ -n "\$user_keyboard_layout" ]] ; then
-      echo -e -n "\nSetting \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n"
+      echo -e -n "\nSetting \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n\n"
       sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+      read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
     else
@@ -322,12 +323,12 @@ function finish_chroot {
   if [[ "\$ARCH" == "x86_64" ]] ; then
     while true ; do
       header_fc
-      echo -e -n "\nSetting the \${BLUE_LIGHT}locale\${NORMAL} in /etc/default/libc-locales.\n\nPress any key to print all the available locales\nKeep in mind the one line number you need because that line will be uncommented.\nMove with arrow keys and press \"q\" to exit the list."
+      echo -e -n "\nSetting the \${BLUE_LIGHT}locale\${NORMAL} in /etc/default/libc-locales.\n\nPress any key to print all the available locales.\n\nKeep in mind the \${BLUE_LIGHT}one line number\${NORMAL} you need because that line will be uncommented.\n\nMove with arrow keys and press \"q\" to exit the list."
       read -n 1 -r key
       echo
       less --LINE-NUMBERS --RAW-CONTROL-CHARS --no-init /etc/default/libc-locales
       while true ; do
-        echo -e -n "\nType only one line number you want to uncomment to set your locale and and press [ENTER]: "
+        echo -e -n "\nType only \${BLUE_LIGHT}one line number\${NORMAL} you want to uncomment to set your locale and and press [ENTER]: "
         read -r user_locale_line_number
         if [[ -z "\$user_locale_line_number" ]] ; then
           echo -e "\nEnter a valid line-number.\n"
@@ -337,8 +338,8 @@ function finish_chroot {
           user_locale_uncommented=\$(echo \${user_locale_pre//#})
           user_locale=\$(echo \${user_locale_uncommented%%[[:space:]]*})
           echo -e -n "\nUncommenting line \${BLUE_LIGHT}\$user_locale_line_number\${NORMAL} that contains locale \${BLUE_LIGHT}\$user_locale\${NORMAL}...\n"
-          sed -i '\$user_locale_line_number s/^#//' /etc/default/libc-locales
-          echo -e -n "\nWriting locale \${BLUE_LIGHT}\$user_locale\${NORMAL} to /etc/locale.conf...\n"
+          sed -i "\$user_locale_line_number s/^#//" /etc/default/libc-locales
+          echo -e -n "\nWriting locale \${BLUE_LIGHT}\$user_locale\${NORMAL} to /etc/locale.conf...\n\n"
           sed -i "/LANG=/s/.*/LANG=\"\$user_locale\"/" /etc/locale.conf
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
