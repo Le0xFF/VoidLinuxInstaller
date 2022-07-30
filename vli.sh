@@ -1497,13 +1497,8 @@ function outro {
 
   echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
   echo -e -n "- Change your default shell\n"
-  echo -e -n "- Change your hostname in /etc/hostname\n"
-  echo -e -n "- Modify /etc/rc.conf according to the official documentation\n"
-  echo -e -n "- If you choose the glibc system version, uncomment the right line in /etc/default/libc-locales\n"
-  echo -e -n "- Add the same uncommented line in /etc/locale.conf\n"
-  echo -e -n "- Run \"xbps-reconfigure -fa\"\n"
-  echo -e -n "- Reboot\n"
-  echo -e -n "- If you plan yo use snapper, after creating a configuration for\n  / [root], uncomment the line relative to /.snapshots folder\n"
+  echo -e -n "- Create a new user and set its password\n"
+  echo -e -n "- If you plan yo use snapper, after installing it and creating a configuration for / [root],\n  uncomment the line relative to /.snapshots folder\n"
   echo -e -n "\n${BLUE_LIGHT}Everything's done, goodbye.${NORMAL}\n\n"
 
   read -n 1 -r -p "[Press any key to exit...]" key
