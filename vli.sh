@@ -279,7 +279,6 @@ function finish_chroot {
       if [[ ! -f /usr/share/zoneinfo/"\$user_timezone" ]] ; then
         echo -e "\nEnter a valid timezone.\n"
         read -n 1 -r -p "[Press any key to continue...]" key
-        break
       else
         sed -i "/#TIMEZONE=/s|.*|TIMEZONE=\"\$user_timezone\"|" /etc/rc.conf
         echo -e -n "\nTimezone set to: \${BLUE_LIGHT}\$user_timezone\${NORMAL}.\n\n"
@@ -311,7 +310,7 @@ function finish_chroot {
           read -n 1 -r -p "[Press any key to continue...]" key
         else
           sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
-          echo -e -n "\nKeyboard layout set to: \${BLUE_LIGHT}\$user_timezone\${NORMAL}.\n\n"
+          echo -e -n "\nKeyboard layout set to: \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL}.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
@@ -386,9 +385,9 @@ function finish_chroot {
     header_fc
     echo -e -n "\nListing all the available shells:\n\n"
     chsh --list-shells
-    echo -e -n "\nWhich \${BLUE_LIGHT}shell\${NORMAL} do you want to set for \${BLUE_LIGHT}root\${NORMAL} user?\nPlease enter the full path (i.e. /bin/sh)"
+    echo -e -n "\nWhich \${BLUE_LIGHT}shell\${NORMAL} do you want to set for \${BLUE_LIGHT}root\${NORMAL} user?\nPlease enter the full path (i.e. /bin/sh): "
     read -r set_shell
-    if ! chsh --shell "\$set_shell" 2> /dev/null ; then
+    if ! chsh --shell "\$set_shell" &> /dev/null ; then
       echo -e -n "\nPlease enter a valid shell.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
@@ -398,6 +397,7 @@ function finish_chroot {
         read -n 1 -r -p "Is this the desired shell? (y/n): " yn
         if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
           echo -e -n "\n\nDefault shell successfully changed.\n\n"
+          chsh --shell "\$set_shell"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
