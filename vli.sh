@@ -1437,7 +1437,7 @@ function install_base_system_and_chroot {
 
   echo -e -n "\nInstalling base system...\n\n"
   XBPS_ARCH="$ARCH" xbps-install -Suy xbps
-  XBPS_ARCH="$ARCH" xbps-install -Sy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
+  XBPS_ARCH="$ARCH" xbps-install -Svy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano
   
   echo -e -n "\nMounting folders for chroot...\n"
   for dir in sys dev proc ; do
