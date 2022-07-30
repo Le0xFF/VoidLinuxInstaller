@@ -318,6 +318,35 @@ function finish_chroot {
     fi
   done
 
+  if [[ "\$ARCH" == "x86_64" ]] ; then
+    while true ; do
+      header_fc
+      echo -e -n "\nSetting the \${BLUE_LIGHT}locale\${NORMAL} in /etc/default/libc-locales.\n\nPress any key to print all the available locales\nKeep in mind the one line number you need because that line will be uncommented.\nMove with arrow keys and press \"q\" to exit the list."
+      read -n 1 -r key
+      echo
+      less --LINE-NUMBERS --RAW-CONTROL-CHARS --no-init /etc/default/libc-locales
+      while true ; do
+        echo -e -n "\nType only one line number you want to uncomment to set your locale and and press [ENTER]: "
+        read -r user_locale_line_number
+        if [[ -z "\$user_locale_line_number" ]] ; then
+          echo -e "\nEnter a valid line-number.\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        else
+          user_locale_pre=\$(sed -n \${user_locale_line_number}p /etc/default/libc-locales)
+          user_locale_uncommented=\$(echo \${user_locale_pre//#})
+          user_locale=\$(echo \${user_locale_uncommented%%[[:space:]]*})
+          echo -e -n "\nUncommenting line \${BLUE_LIGHT}\$user_locale_line_number\${NORMAL} that contains locale \${BLUE_LIGHT}\$user_locale\${NORMAL}...\n"
+          sed -i '\$user_locale_line_number s/^#//' /etc/default/libc-locales
+          echo -e -n "\nWriting locale \${BLUE_LIGHT}\$user_locale\${NORMAL} to /etc/locale.conf...\n"
+          sed -i "/LANG=/s/.*/LANG=\"\$user_locale\"/" /etc/locale.conf
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break 2
+        fi
+      done
+    done
+  fi
+
   while true ; do
     header_fc
     echo -e -n "\nSelect a \${BLUE_LIGHT}hostname\${NORMAL} for your system: "
@@ -1432,9 +1461,9 @@ function install_base_system_and_chroot {
   cp "$HOME"/chroot.sh /mnt/root/
 
   if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" user_keyboard_layout="$user_keyboard_layout" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" user_keyboard_layout="$user_keyboard_layout" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
   elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
-    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" user_drive="$user_drive" lvm_yn="$lvm_yn" user_keyboard_layout="$user_keyboard_layout" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" user_drive="$user_drive" lvm_yn="$lvm_yn" user_keyboard_layout="$user_keyboard_layout" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
   fi
 
   header_ibsac
