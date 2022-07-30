@@ -387,7 +387,7 @@ function finish_chroot {
     chsh --list-shells
     echo -e -n "\nWhich \${BLUE_LIGHT}shell\${NORMAL} do you want to set for \${BLUE_LIGHT}root\${NORMAL} user?\nPlease enter the full path (i.e. /bin/sh): "
     read -r set_shell
-    if ! chsh --shell "\$set_shell" &> /dev/null ; then
+    if [[ ! -x "\$set_shell" ]] ; then
       echo -e -n "\nPlease enter a valid shell.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
@@ -396,8 +396,8 @@ function finish_chroot {
         echo -e -n "\nYou entered: \${BLUE_LIGHT}\$set_shell\${NORMAL}.\n\n"
         read -n 1 -r -p "Is this the desired shell? (y/n): " yn
         if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
-          echo -e -n "\n\nDefault shell successfully changed.\n\n"
           chsh --shell "\$set_shell"
+          echo -e -n "\n\nDefault shell successfully changed.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
