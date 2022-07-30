@@ -276,7 +276,7 @@ function finish_chroot {
     while true ; do
       echo -e -n "\nType the timezone you want to set and press [ENTER] (i.e. America/New_York): "
       read -r user_timezone
-      if [[ ! -e /usr/share/zoneinfo/"\$user_timezone" ]] ; then
+      if [[ ! -f /usr/share/zoneinfo/"\$user_timezone" ]] ; then
         echo -e "\nEnter a valid timezone.\n"
         read -n 1 -r -p "[Press any key to continue...]" key
         break
@@ -1445,13 +1445,13 @@ function install_base_system_and_chroot {
     select user_arch in x86_64 x86_64-musl ; do
       case "$user_arch" in
         x86_64)
-          echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n\n"
+          echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n"
           ARCH="$user_arch"
           export REPO=https://repo-default.voidlinux.org/current
           break 2
           ;;
         x86_64-musl)
-          echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n\n"
+          echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n"
           ARCH="$user_arch"
           export REPO=https://repo-default.voidlinux.org/current/musl
           break 2
