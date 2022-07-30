@@ -293,8 +293,9 @@ function finish_chroot {
   while true ; do
     header_fc
     if [[ -n "\$user_keyboard_layout" ]] ; then
-      echo -e -n "\nSetting \&{BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n"
+      echo -e -n "\nSetting \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n"
       sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+      clear
       break
     else
       echo -e -n "\nSetting \${BLUE_LIGHT}keyboard layout\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
