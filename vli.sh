@@ -707,7 +707,7 @@ function disk_wiping {
               echo -e -n "\nDrive unmounted successfully.\n"
             fi
 
-            echo -e -n "\nWiping the drive...\n"
+            echo -e -n "\nWiping the drive...\n\n"
             wipefs -a "$user_drive"
             sync
             echo -e -n "\nDrive successfully wiped.\n\n"
