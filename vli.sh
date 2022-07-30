@@ -340,7 +340,7 @@ function finish_chroot {
           echo -e -n "\nUncommenting line \${BLUE_LIGHT}\$user_locale_line_number\${NORMAL} that contains locale \${BLUE_LIGHT}\$user_locale\${NORMAL}...\n"
           sed -i "\$user_locale_line_number s/^#//" /etc/default/libc-locales
           echo -e -n "\nWriting locale \${BLUE_LIGHT}\$user_locale\${NORMAL} to /etc/locale.conf...\n\n"
-          sed -i "/LANG=/s/.*/LANG=\"\$user_locale\"/" /etc/locale.conf
+          sed -i "/LANG=/s/.*/LANG=\$user_locale/" /etc/locale.conf
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
@@ -360,7 +360,7 @@ function finish_chroot {
     else
       while true ; do
         echo -e -n "\nYou entered: \${BLUE_LIGHT}\$hostname\${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired name? (y/n): " yn
+        read -n 1 -r -p "Is this the desired hostname? (y/n): " yn
         if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
           set +o noclobber
           echo "\$hostname" > /etc/hostname
@@ -372,6 +372,7 @@ function finish_chroot {
         elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
           echo -e -n "\n\nPlease select another name.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
+          clear
           break
         else
           echo -e -n "\nPlease answer y or n.\n\n"
@@ -1415,14 +1416,12 @@ function install_base_system_and_chroot {
           echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n\n"
           ARCH="$user_arch"
           export REPO=https://repo-default.voidlinux.org/current
-          read -n 1 -r -p "[Press any key to continue...]" key
           break 2
           ;;
         x86_64-musl)
           echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n\n"
           ARCH="$user_arch"
           export REPO=https://repo-default.voidlinux.org/current/musl
-          read -n 1 -r -p "[Press any key to continue...]" key
           break 2
           ;;
         *)
