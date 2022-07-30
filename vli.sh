@@ -679,7 +679,7 @@ function disk_wiping {
         echo -e -n "\nPrinting all the connected drives:\n\n"
         lsblk -p
     
-        echo -e -n "\nWhich drive do you want to wipe?\nIt will be automatically selected as the drive to be partitioned.\n\nPlease enter the full drive path (i.e. /dev/sda): "
+        echo -e -n "\nWhich ${BLUE_LIGHT}drive${NORMAL} do you want to ${BLUE_LIGHT}wipe${NORMAL}?\nIt will be automatically selected as the drive to be partitioned.\n\nPlease enter the full drive path (i.e. /dev/sda): "
         read -r user_drive
       
         if [[ ! -b "$user_drive" ]] ; then
