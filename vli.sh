@@ -282,7 +282,7 @@ function finish_chroot {
           set +o noclobber
           echo "\$hostname" > /etc/hostname
           set -o noclobber
-          echo -e -n "\nHostname successfully set.\n\n"
+          echo -e -n "\nHostname successfully set.\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           break 2
         elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
@@ -297,7 +297,26 @@ function finish_chroot {
     fi
   done
 
-  
+  while true ; do
+    echo -e -n "\nSetting the \${BLUE_LIGHT}timezone\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the timezones.\nMove with arrow keys and press \"q\" to exit the list."
+    read -n 1 -r key
+    echo
+    awk '/^Z/ { print \$2 }; /^L/ { print \$3 }' /usr/share/zoneinfo/tzdata.zi | less --RAW-CONTROL-CHARS --no-init
+    while true ; do
+      echo -e -n "\nType the timezone you want to set and press [ENTER] (i.e. America/New_York): "
+      read -r user_timezone
+      if [[ ! -e /usr/share/zoneinfo/"\$user_timezone" ]] ; then
+        echo -e "\nEnter a valid timezone.\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        break
+      else
+        sed -i "/#TIMEZONE=/s|.*|TIMEZONE=\"\$user_timezone\"|" /etc/rc.conf
+        echo -e -n "\nTimezone set to: \${BLUE_LIGHT}\$user_timezone\${NORMAL}.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        break 2
+      fi
+    done
+  done
 
   echo -e -n "\nEnabling internet service at first boot...\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -371,7 +390,7 @@ function set_keyboard_layout {
 
     header_skl
 
-    echo -e -n "\nIf you set your keyboard layout here, it will be also configured for your future system.\n"
+    echo -e -n "\nIf you set your keyboard layout now, it will be also configured for your future system.\n"
     echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
     read -n 1 -r yn
   
