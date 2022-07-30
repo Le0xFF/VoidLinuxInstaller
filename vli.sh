@@ -268,6 +268,37 @@ function finish_chroot {
     sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
   fi
 
+  while true ; do
+    echo -e -n "\nSelect a \${BLUE_LIGHT}hostname\${NORMAL} for your system: "
+    read -r hostname
+    if [[ -z "\$hostname" ]] ; then
+      echo -e -n "\nPlease enter a valid hostname.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+    else
+      while true ; do
+        echo -e -n "\nYou entered: \${BLUE_LIGHT}\$hostname\${NORMAL}.\n\n"
+        read -n 1 -r -p "Is this the desired name? (y/n): " yn
+        if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+          set +o noclobber
+          echo "\$hostname" > /etc/hostname
+          set -o noclobber
+          echo -e -n "\nHostname successfully set.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break 2
+        elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+          echo -e -n "\n\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        else
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        fi
+      done
+    fi
+  done
+
+  
+
   echo -e -n "\nEnabling internet service at first boot...\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
   ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
