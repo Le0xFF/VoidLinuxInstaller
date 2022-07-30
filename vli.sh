@@ -255,7 +255,7 @@ EOF
 
 }
 
-function finish_chroot {
+function header_fc {
 
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
@@ -263,41 +263,12 @@ function finish_chroot {
   echo -e -n "\${GREEN_DARK}#######\${NORMAL}         \${GREEN_LIGHT}Final touches\${NORMAL}         \${GREEN_DARK}#\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
 
-  if [[ -n "\$user_keyboard_layout" ]]
-    echo -e -n "\nSetting \&{BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n"
-    sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
-  fi
+}
+
+function finish_chroot {
 
   while true ; do
-    echo -e -n "\nSelect a \${BLUE_LIGHT}hostname\${NORMAL} for your system: "
-    read -r hostname
-    if [[ -z "\$hostname" ]] ; then
-      echo -e -n "\nPlease enter a valid hostname.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-    else
-      while true ; do
-        echo -e -n "\nYou entered: \${BLUE_LIGHT}\$hostname\${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired name? (y/n): " yn
-        if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
-          set +o noclobber
-          echo "\$hostname" > /etc/hostname
-          set -o noclobber
-          echo -e -n "\nHostname successfully set.\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          break 2
-        elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          break
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-        fi
-      done
-    fi
-  done
-
-  while true ; do
+    header_fc
     echo -e -n "\nSetting the \${BLUE_LIGHT}timezone\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the timezones.\nMove with arrow keys and press \"q\" to exit the list."
     read -n 1 -r key
     echo
@@ -313,10 +284,72 @@ function finish_chroot {
         sed -i "/#TIMEZONE=/s|.*|TIMEZONE=\"\$user_timezone\"|" /etc/rc.conf
         echo -e -n "\nTimezone set to: \${BLUE_LIGHT}\$user_timezone\${NORMAL}.\n\n"
         read -n 1 -r -p "[Press any key to continue...]" key
+        clear
         break 2
       fi
     done
   done
+
+  while true ; do
+    header_fc
+    if [[ -n "\$user_keyboard_layout" ]]
+      echo -e -n "\nSetting \&{BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n"
+      sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+      break
+    else
+      echo -e -n "\nSetting \${BLUE_LIGHT}keyboard layout\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
+      read -n 1 -r key
+      echo
+      ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
+      while true ; do
+        echo -e -n "\nType the keyboard layout you want to set and press [ENTER]: "
+        read -r user_keyboard_layout
+        if [[ -z "\$user_keyboard_layout" ]] || ! loadkeys "\$user_keyboard_layout" 2> /dev/null ; then
+          echo -e -n "\nPlease select a valid keyboard layout.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        else
+          sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+          echo -e -n "\nKeyboard layout set to: \${BLUE_LIGHT}\$user_timezone\${NORMAL}.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break 2
+        fi
+      done
+    fi
+  done
+
+  while true ; do
+    header_fc
+    echo -e -n "\nSelect a \${BLUE_LIGHT}hostname\${NORMAL} for your system: "
+    read -r hostname
+    if [[ -z "\$hostname" ]] ; then
+      echo -e -n "\nPlease enter a valid hostname.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+    else
+      while true ; do
+        echo -e -n "\nYou entered: \${BLUE_LIGHT}\$hostname\${NORMAL}.\n\n"
+        read -n 1 -r -p "Is this the desired name? (y/n): " yn
+        if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+          set +o noclobber
+          echo "\$hostname" > /etc/hostname
+          set -o noclobber
+          echo -e -n "\nHostname successfully set.\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break 2
+        elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+          echo -e -n "\n\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        else
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        fi
+      done
+    fi
+  done
+
+  header_fc
 
   echo -e -n "\nEnabling internet service at first boot...\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -404,8 +437,8 @@ function set_keyboard_layout {
   
       while true ; do
   
-        echo
-        read -r -p "Type the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: " user_keyboard_layout
+        echo -e -n "\nType the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: " user_keyboard_layout
+        read -r user_keyboard_layout
   
         if [[ -z "$user_keyboard_layout" ]] ; then
           echo -e -n "\nNo keyboard layout selected, keeping the previous one.\n\n"
