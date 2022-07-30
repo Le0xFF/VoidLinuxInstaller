@@ -382,6 +382,38 @@ function finish_chroot {
     fi
   done
 
+  while true ; do
+    header_fc
+    echo -e -n "\nListing all the available shells:\n\n"
+    chsh --list-shells
+    echo -e -n "\nWhich \${BLUE_LIGHT}shell\${NORMAL} do you want to set for \${BLUE_LIGHT}root\${NORMAL} user?\nPlease enter the full path (i.e. /bin/sh)"
+    read -r set_shell
+    if ! chsh --shell "\$set_shell" 2> /dev/null ; then
+      echo -e -n "\nPlease enter a valid shell.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    else
+      while true ; do
+        echo -e -n "\nYou entered: \${BLUE_LIGHT}\$set_shell\${NORMAL}.\n\n"
+        read -n 1 -r -p "Is this the desired shell? (y/n): " yn
+        if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+          echo -e -n "\n\nDefault shell successfully changed.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break 2
+        elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+          echo -e -n "\n\nPlease select another shell.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        else
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        fi
+      done
+    fi
+  done
+
   header_fc
 
   echo -e -n "\nEnabling internet service at first boot...\n"
@@ -1496,8 +1528,7 @@ function outro {
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
-  echo -e -n "- Change your default shell\n"
-  echo -e -n "- Create a new user and set its password\n"
+  echo -e -n "- Create a new user, set its password and add it to the correct groups\n"
   echo -e -n "- If you plan yo use snapper, after installing it and creating a configuration for / [root],\n  uncomment the line relative to /.snapshots folder\n"
   echo -e -n "\n${BLUE_LIGHT}Everything's done, goodbye.${NORMAL}\n\n"
 
