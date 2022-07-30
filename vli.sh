@@ -22,6 +22,8 @@ vg_name=''
 lv_root_name=''
 boot_partition=''
 
+user_keyboard_layout=''
+
 # Colours
 
 BLUE_LIGHT="\e[1;34m"
@@ -258,8 +260,13 @@ function finish_chroot {
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
-  echo -e -n "\${GREEN_DARK}#######\${NORMAL}       \${GREEN_LIGHT}Enabling services\${NORMAL}       \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}         \${GREEN_LIGHT}Final touches\${NORMAL}         \${GREEN_DARK}#\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+
+  if [[ -n "\$user_keyboard_layout" ]]
+    echo -e -n "\nSetting \&{BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n"
+    sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+  fi
 
   echo -e -n "\nEnabling internet service at first boot...\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -332,7 +339,8 @@ function set_keyboard_layout {
   while true ; do
 
     header_skl
-  
+
+    echo -e -n "\nIf you set your keyboard layout here, it will be also configured for your future system.\n"
     echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
     read -n 1 -r yn
   
@@ -1341,9 +1349,9 @@ function install_base_system_and_chroot {
   cp "$HOME"/chroot.sh /mnt/root/
 
   if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" user_keyboard_layout="$user_keyboard_layout" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
   elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
-    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" user_drive="$user_drive" lvm_yn="$lvm_yn" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" user_drive="$user_drive" lvm_yn="$lvm_yn" user_keyboard_layout="$user_keyboard_layout" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
   fi
 
   header_ibsac
