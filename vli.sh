@@ -1431,7 +1431,7 @@ function install_base_system_and_chroot {
 
   done
 
-  echo -e -n "\nCopying RSA keys...\n\n"
+  echo -e -n "\nCopying RSA keys...\n"
   mkdir -p /mnt/var/db/xbps/keys
   cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
 
