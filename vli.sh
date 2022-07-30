@@ -356,6 +356,7 @@ function finish_chroot {
     if [[ -z "\$hostname" ]] ; then
       echo -e -n "\nPlease enter a valid hostname.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     else
       while true ; do
         echo -e -n "\nYou entered: \${BLUE_LIGHT}\$hostname\${NORMAL}.\n\n"
@@ -364,7 +365,7 @@ function finish_chroot {
           set +o noclobber
           echo "\$hostname" > /etc/hostname
           set -o noclobber
-          echo -e -n "\nHostname successfully set.\n"
+          echo -e -n "\n\nHostname successfully set.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
