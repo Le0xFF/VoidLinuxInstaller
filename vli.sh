@@ -466,7 +466,7 @@ function set_keyboard_layout {
   
       while true ; do
   
-        echo -e -n "\nType the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: " user_keyboard_layout
+        echo -e -n "\nType the keyboard layout you want to set and press [ENTER] or just press [ENTER] to keep the one currently set: "
         read -r user_keyboard_layout
   
         if [[ -z "$user_keyboard_layout" ]] ; then
