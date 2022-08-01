@@ -320,31 +320,42 @@ function finish_chroot {
   done
 
   if [[ "\$ARCH" == "x86_64" ]] ; then
+    header_fc
+    echo -e -n "\nSetting the \${BLUE_LIGHT}locale\${NORMAL} in /etc/default/libc-locales.\n\nPress any key to print all the available locales.\n\nKeep in mind the \${BLUE_LIGHT}one line number\${NORMAL} you need because that line will be uncommented.\n\nMove with arrow keys and press \"q\" to exit the list."
+    read -n 1 -r key
+    echo
+    less --LINE-NUMBERS --RAW-CONTROL-CHARS --no-init /etc/default/libc-locales
     while true ; do
-      header_fc
-      echo -e -n "\nSetting the \${BLUE_LIGHT}locale\${NORMAL} in /etc/default/libc-locales.\n\nPress any key to print all the available locales.\n\nKeep in mind the \${BLUE_LIGHT}one line number\${NORMAL} you need because that line will be uncommented.\n\nMove with arrow keys and press \"q\" to exit the list."
-      read -n 1 -r key
-      echo
-      less --LINE-NUMBERS --RAW-CONTROL-CHARS --no-init /etc/default/libc-locales
-      while true ; do
-        echo -e -n "\nType only \${BLUE_LIGHT}one line number\${NORMAL} you want to uncomment to set your locale and and press [ENTER]: "
-        read -r user_locale_line_number
-        if [[ -z "\$user_locale_line_number" ]] ; then
-          echo -e "\nEnter a valid line-number.\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-        else
+      echo -e -n "\nType only \${BLUE_LIGHT}one line number\${NORMAL} you want to uncomment to set your locale and and press [ENTER]: "
+      read -r user_locale_line_number
+      if [[ -z "\$user_locale_line_number" ]] ; then
+        echo -e "\nEnter a valid line-number.\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+      else
+        while true ; do
           user_locale_pre=\$(sed -n \${user_locale_line_number}p /etc/default/libc-locales)
           user_locale_uncommented=\$(echo \${user_locale_pre//#})
           user_locale=\$(echo \${user_locale_uncommented%%[[:space:]]*})
-          echo -e -n "\nUncommenting line \${BLUE_LIGHT}\$user_locale_line_number\${NORMAL} that contains locale \${BLUE_LIGHT}\$user_locale\${NORMAL}...\n"
-          sed -i "\$user_locale_line_number s/^#//" /etc/default/libc-locales
-          echo -e -n "\nWriting locale \${BLUE_LIGHT}\$user_locale\${NORMAL} to /etc/locale.conf...\n\n"
-          sed -i "/LANG=/s/.*/LANG=\$user_locale/" /etc/locale.conf
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break 2
-        fi
-      done
+          echo -e -n "\nYou choose line \${BLUE_LIGHT}\$user_locale_line_number\${NORMAL} that cointains locale \${BLUE_LIGHT}\$user_locale\${NORMAL}.\n\n"
+          read -n 1 -r -p "Is this correct? (y/n): " yn
+          if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+            echo -e -n "\n\nUncommenting line \${BLUE_LIGHT}\$user_locale_line_number\${NORMAL} that contains locale \${BLUE_LIGHT}\$user_locale\${NORMAL}...\n"
+            sed -i "\$user_locale_line_number s/^#//" /etc/default/libc-locales
+            echo -e -n "\nWriting locale \${BLUE_LIGHT}\$user_locale\${NORMAL} to /etc/locale.conf...\n\n"
+            sed -i "/LANG=/s/.*/LANG=\$user_locale/" /etc/locale.conf
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break 2
+          elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+            echo -e -n "\n\nPlease select another locale.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            break
+          else
+            echo -e -n "\nPlease answer y or n.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+          fi
+        done
+      fi
     done
   fi
 
