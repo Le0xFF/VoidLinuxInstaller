@@ -267,57 +267,52 @@ function header_fc {
 
 function finish_chroot {
 
+  header_fc
+  echo -e -n "\nSetting the \${BLUE_LIGHT}timezone\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the timezones.\nMove with arrow keys and press \"q\" to exit the list."
+  read -n 1 -r key
+  echo
+  awk '/^Z/ { print \$2 }; /^L/ { print \$3 }' /usr/share/zoneinfo/tzdata.zi | less --RAW-CONTROL-CHARS --no-init
   while true ; do
-    header_fc
-    echo -e -n "\nSetting the \${BLUE_LIGHT}timezone\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the timezones.\nMove with arrow keys and press \"q\" to exit the list."
-    read -n 1 -r key
-    echo
-    awk '/^Z/ { print \$2 }; /^L/ { print \$3 }' /usr/share/zoneinfo/tzdata.zi | less --RAW-CONTROL-CHARS --no-init
-    while true ; do
-      echo -e -n "\nType the timezone you want to set and press [ENTER] (i.e. America/New_York): "
-      read -r user_timezone
-      if [[ ! -f /usr/share/zoneinfo/"\$user_timezone" ]] ; then
-        echo -e "\nEnter a valid timezone.\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
-      else
-        sed -i "/#TIMEZONE=/s|.*|TIMEZONE=\"\$user_timezone\"|" /etc/rc.conf
-        echo -e -n "\nTimezone set to: \${BLUE_LIGHT}\$user_timezone\${NORMAL}.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
-        clear
-        break 2
-      fi
-    done
-  done
-
-  while true ; do
-    header_fc
-    if [[ -n "\$user_keyboard_layout" ]] ; then
-      echo -e -n "\nSetting \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n\n"
-      sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+    echo -e -n "\nType the timezone you want to set and press [ENTER] (i.e. America/New_York): "
+    read -r user_timezone
+    if [[ ! -f /usr/share/zoneinfo/"\$user_timezone" ]] ; then
+      echo -e "\nEnter a valid timezone.\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+    else
+      sed -i "/#TIMEZONE=/s|.*|TIMEZONE=\"\$user_timezone\"|" /etc/rc.conf
+      echo -e -n "\nTimezone set to: \${BLUE_LIGHT}\$user_timezone\${NORMAL}.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
-    else
-      echo -e -n "\nSetting \${BLUE_LIGHT}keyboard layout\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
-      read -n 1 -r key
-      echo
-      ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
-      while true ; do
-        echo -e -n "\nType the keyboard layout you want to set and press [ENTER]: "
-        read -r user_keyboard_layout
-        if [[ -z "\$user_keyboard_layout" ]] || ! loadkeys "\$user_keyboard_layout" 2> /dev/null ; then
-          echo -e -n "\nPlease select a valid keyboard layout.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-        else
-          sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
-          echo -e -n "\nKeyboard layout set to: \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL}.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break 2
-        fi
-      done
     fi
   done
+
+  header_fc
+  if [[ -n "\$user_keyboard_layout" ]] ; then
+    echo -e -n "\nSetting \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL} keyboard layout in /etc/rc.conf...\n\n"
+    sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+    read -n 1 -r -p "[Press any key to continue...]" key
+    clear
+  else
+    echo -e -n "\nSetting \${BLUE_LIGHT}keyboard layout\${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
+    read -n 1 -r key
+    echo
+    ls --color=always -R /usr/share/kbd/keymaps/ | grep "\.map.gz" | sed -e 's/\..*$//' | less --RAW-CONTROL-CHARS --no-init
+    while true ; do
+      echo -e -n "\nType the keyboard layout you want to set and press [ENTER]: "
+      read -r user_keyboard_layout
+      if [[ -z "\$user_keyboard_layout" ]] || ! loadkeys "\$user_keyboard_layout" 2> /dev/null ; then
+        echo -e -n "\nPlease select a valid keyboard layout.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+      else
+        sed -i "/#KEYMAP=/s/.*/KEYMAP=\"\$user_keyboard_layout\"/" /etc/rc.conf
+        echo -e -n "\nKeyboard layout set to: \${BLUE_LIGHT}\$user_keyboard_layout\${NORMAL}.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+        break
+      fi
+    done
+  fi
 
   if [[ "\$ARCH" == "x86_64" ]] ; then
     header_fc
