@@ -1065,7 +1065,6 @@ function disk_encryption {
                 else
                   echo -e -n "\nPlease answer y or n.\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
-                  clear
                 fi
               done
             fi
