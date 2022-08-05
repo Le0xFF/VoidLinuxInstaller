@@ -241,8 +241,31 @@ EOF
     mount -t efivarfs efivarfs /sys/firmware/efi/efivars/
   fi
 
-  echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}VoidLinux\${NORMAL} as bootloader-id...\n\n"
-  grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id=VoidLinux --recheck
+  while true ; do
+    echo -e -n "\nSelect a \${BLUE_LIGHT}bootloader-id\${NORMAL} that will be used for grub install: "
+    read -r bootloader_id
+    if [[ -z "\$bootloader_id" ]] ; then
+      echo -e -n "\nPlease enter a valid bootloader-id.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+    else
+      while true ; do
+        echo -e -n "\nYou entered: \${BLUE_LIGHT}\$bootloader_id\${NORMAL}.\n\n"
+        read -n 1 -r -p "Is this the desired one? (y/n): " yn
+        if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+          echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}\$bootloader_id\${NORMAL} as bootloader-id...\n\n"
+  grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id="\$bootloader_id" --recheck
+          break 2
+        elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+          echo -e -n "\n\nPlease select another bootloader-id.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        else
+          echo -e -n "\nPlease answer y or n.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        fi
+      done
+    fi
+  done
 
   if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
     echo -e -n "\nEnabling SSD trim for LVM...\n"
@@ -375,7 +398,7 @@ function finish_chroot {
           clear
           break 2
         elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another name.\n\n"
+          echo -e -n "\n\nPlease select another hostname.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break
