@@ -102,7 +102,8 @@ Here is documented how the script works in details and what will ask to the user
     * create proper `/etc/fstab` file;
     * generate random key to avoid typing password two times at boot;
     * create proper dracut configuration and initramfs;
-    * install grub;
+    * install grub choosing a bootloader-id;
+    * choose timezone, keyboard layout, locale, hostname and default shell;
     * enable internet at first boot with NetworkManager.
 
 ### Suggested partition layout
@@ -118,7 +119,7 @@ You don't need to create a `/home` partition because BTRFS subvolumes will take 
 
 ### Final partitioning result
 
-Following the script, at the very end your drive will end up being like the following:
+Following the script, at the very end your drive will end up being like the following, if you choose LVM:
 
 ``` bash
 /dev/nvme0n1                               259:0    0 953,9G  0 disk  
