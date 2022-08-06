@@ -250,9 +250,9 @@ EOF
     else
       while true ; do
         echo -e -n "\nYou entered: \${BLUE_LIGHT}\$bootloader_id\${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired one? (y/n): " yn
+        read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
         if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
-          echo -e -n "\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}\$bootloader_id\${NORMAL} as bootloader-id...\n\n"
+          echo -e -n "\n\nInstalling GRUB on \${BLUE_LIGHT}/boot/efi\${NORMAL} partition with \${BLUE_LIGHT}\$bootloader_id\${NORMAL} as bootloader-id...\n\n"
   grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id="\$bootloader_id" --recheck
           break 2
         elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
