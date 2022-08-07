@@ -526,6 +526,7 @@ edit_fstab
 generate_random_key
 generate_dracut_conf
 install_grub
+create_swapfile
 finish_chroot
 exit 0
 EOD
