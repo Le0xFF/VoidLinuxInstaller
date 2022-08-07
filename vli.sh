@@ -297,7 +297,7 @@ function create_swapfile {
   
     if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
 
-      echo -e -n "\n\nCreating \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/swapfile\${NORMAL} btrfs subvolume...\n\n"
+      echo -e -n "\n\nCreating \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume...\n\n"
       btrfs subvolume create /var/swap
       truncate -s 0 /var/swap/swapfile
       chattr +C /var/swap/swapfile
@@ -2149,7 +2149,7 @@ function install_base_system_and_chroot {
   echo -e -n "\nChrooting...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   cp "$HOME"/chroot.sh /mnt/root/
-  cp "$HOME"/bash_physical_map.c /mnt/root/
+  cp "$HOME"/btrfs_map_physical.c /mnt/root/
 
   if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" user_keyboard_layout="$user_keyboard_layout" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
@@ -2161,8 +2161,8 @@ function install_base_system_and_chroot {
   
   echo -e -n "\nCleaning...\n"
   rm -f /mnt/root/chroot.sh
-  rm -f /mnt/root/bash_physical_map.c
-  rm -f /mnt/root/bash_physical_map
+  rm -f /mnt/root/btrfs_map_physical.c
+  rm -f /mnt/root/btrfs_map_physical
 
   echo -e -n "\nUnmounting partitions...\n\n"
   umount --recursive /mnt
