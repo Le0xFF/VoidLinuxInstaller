@@ -315,7 +315,8 @@ cat << EOF >> /etc/fstab
 /var/swap/swapfile none swap defaults 0 0
 EOF
 
-      echo -e -n "\n\nSwapfile successfully created.\n\n"
+      swapoff --all
+      echo -e -n "\nSwapfile successfully created.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
