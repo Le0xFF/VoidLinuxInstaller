@@ -51,6 +51,10 @@ function kill_script {
     rm -f "$HOME"/chroot.sh
   fi
 
+  if [[ -f "$HOME"/btrfs_map_physical.c ]] ; then
+    rm -f "$HOME"/btrfs_map_physical.c
+  fi
+
   echo -e -n "\n${BLUE_LIGHT}Everything's done, quitting.${NORMAL}\n\n"
   exit 1
 
