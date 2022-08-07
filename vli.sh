@@ -2200,6 +2200,7 @@ check_if_bash
 check_if_run_as_root
 check_if_uefi
 create_chroot_script
+create_btrfs_map_physical_c
 intro
 set_keyboard_layout
 check_and_connect_to_internet
