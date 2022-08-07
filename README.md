@@ -4,9 +4,10 @@ The **VoidLinuxInstaller script** is an attempt to make [my gist](https://gist.g
 
 As stated in the gist, this script provides:
 - Full Disk Encryption (including `/boot`) with LUKS;
-- Logic Volume Management (LVM);
-- BTRFS as filesystem.
-- Trim on SSD;
+- Optional Logic Volume Management (LVM);
+- BTRFS as filesystem;
+- Optional swapfile;
+- Trim on SSD.
 
 To know how the script works in details, please jump to the [How does it work?](#how-does-it-work) section!
 
@@ -102,6 +103,7 @@ Here is documented how the script works in details and what will ask to the user
     * create proper `/etc/fstab` file;
     * generate random key to avoid typing password two times at boot;
     * create proper dracut configuration and initramfs;
+    * optionally create a swapfile;
     * install grub choosing a bootloader-id;
     * choose timezone, keyboard layout, locale, hostname and default shell;
     * enable internet at first boot with NetworkManager.
