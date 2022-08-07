@@ -546,7 +546,7 @@ function create_btrfs_map_physical_c {
     rm -f "$HOME"/btrfs_map_physical.c
   fi
 
-cat << 'EOF' >> "$HOME"/btrfs_map_physical.c
+cat >> "$HOME"/btrfs_map_physical.c << 'EOF'
 // SPDX-FileCopyrightText: Omar Sandoval <osandov@osandov.com>
 // SPDX-License-Identifier: MIT
 
