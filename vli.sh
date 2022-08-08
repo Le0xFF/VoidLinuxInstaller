@@ -312,7 +312,7 @@ function create_swapfile {
         echo -e -n "\nPress [ENTER] to create a swapfile of the same dimension or choose the desired size: "
         read -r swap_size
 
-        if [[ "\$swap_size" == "" ]] || [[ "\$swap_size -gt "0" ]] ; then
+        if [[ "\$swap_size" == "" ]] || [[ "\$swap_size" -gt "0" ]] ; then
           if [[ "\$swap_size" == "" ]] ; then
             swap_size=\$ram_size
           fi
