@@ -301,15 +301,13 @@ function create_swapfile {
   
     if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
 
-      ram_size_number=\$(free -g --si | awk -F " " 'FNR == 2 {print \$2}')
-      ram_size_no_unit=\$(echo \${\$ram_size_number%%G*})
-      ram_size=\$(echo \${\$ram_size_no_unit%%.*})
+      ram_size=\$(free -g --si | awk -F " " 'FNR == 2 {print \$2}')
 
       while true ; do
         clear
         header_cs
-        echo -e -n "\nYour system has \${BLUE_LIGHT}\${ram_size}GB of RAM\${NORMAL}.\n"
-        echo -e -n "\nPress [ENTER] to create a swapfile of the same dimension or choose the desired size: "
+        echo -e -n "\nYour system has \${BLUE_LIGHT}\${ram_size}GB\${NORMAL} of RAM.\n"
+        echo -e -n "\nPress [ENTER] to create a swapfile of the same dimensions or choose the desired size: "
         read -r swap_size
 
         if [[ "\$swap_size" == "" ]] || [[ "\$swap_size" -gt "0" ]] ; then
