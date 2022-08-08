@@ -282,32 +282,51 @@ EOF
 
 }
 
-function create_swapfile {
-
-  while true ; do
-
+function header_cs {
     echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
     echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
     echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
     echo -e -n "\${GREEN_DARK}#######\${NORMAL}       \${GREEN_LIGHT}SwapFile creation\${NORMAL}       \${GREEN_DARK}#\${NORMAL}\n"
     echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+}
 
-    echo -e -n "\nDo you want to create a \${BLUE_LIGHT}swapfile\${NORMAL}? (y/n): "
+function create_swapfile {
+
+  while true ; do
+
+    header_cs
+
+    echo -e -n "\nDo you want to create a \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume? (y/n): "
     read -n 1 -r yn
   
     if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
 
-      echo -e -n "\n\nCreating \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume...\n\n"
-      btrfs subvolume create /var/swap
-      truncate -s 0 /var/swap/swapfile
-      chattr +C /var/swap/swapfile
-      chmod 600 /var/swap/swapfile
-      dd if=/dev/zero of=/var/swap/swapfile bs=1G count=16 status=progress
-      mkswap /var/swap/swapfile
-      swapon /var/swap/swapfile
-      gcc -O2 "\$HOME"/btrfs_map_physical.c -o "\$HOME"/btrfs_map_physical
-      RESUME_OFFSET=\$((\$("\$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print \$NF}')/\$(getconf PAGESIZE)))
-      sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"\$/ resume=UUID=\$ROOT_UUID resume_offset=\$RESUME_OFFSET&/" /etc/default/grub
+      ram_size_number=\$(free -g --si | awk -F " " 'FNR == 2 {print \$2}')
+      ram_size_no_unit=\$(echo \${\$ram_size_number%%G*})
+      ram_size=\$(echo \${\$ram_size_no_unit%%.*})
+
+      while true ; do
+        clear
+        header_cs
+        echo -e -n "\nYour system has \${BLUE_LIGHT}\${ram_size}GB of RAM\${NORMAL}.\n"
+        echo -e -n "\nPress [ENTER] to create a swapfile of the same dimension or choose the desired size: "
+        read -r swap_size
+
+        if [[ "\$swap_size" == "" ]] || [[ "\$swap_size -gt "0" ]] ; then
+          if [[ "\$swap_size" == "" ]] ; then
+            swap_size=\$ram_size
+          fi
+          echo -e -n "\nA swapfile of \${BLUE_LIGHT}\${swap_size}GB\${NORMAL} will be created in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume...\n\n"
+          btrfs subvolume create /var/swap
+          truncate -s 0 /var/swap/swapfile
+          chattr +C /var/swap/swapfile
+          chmod 600 /var/swap/swapfile
+          dd if=/dev/zero of=/var/swap/swapfile bs=1G count="\$swap_size" status=progress
+          mkswap /var/swap/swapfile
+          swapon /var/swap/swapfile
+          gcc -O2 "\$HOME"/btrfs_map_physical.c -o "\$HOME"/btrfs_map_physical
+          RESUME_OFFSET=\$((\$("\$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print \$NF}')/\$(getconf PAGESIZE)))
+          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"\$/ resume=UUID=\$ROOT_UUID resume_offset=\$RESUME_OFFSET&/" /etc/default/grub
 
 cat << EOF >> /etc/fstab
 
@@ -315,11 +334,18 @@ cat << EOF >> /etc/fstab
 /var/swap/swapfile none swap defaults 0 0
 EOF
 
-      swapoff --all
-      echo -e -n "\nSwapfile successfully created.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-      break
+          swapoff --all
+          echo -e -n "\nSwapfile successfully created.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break 2
+
+        else
+          echo -e -n "\nPlease enter a valid value.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        fi
+
+      done
 
     elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
       echo -e -n "\n\nNo swapfile created.\n\n"
