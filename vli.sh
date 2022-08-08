@@ -307,7 +307,7 @@ function create_swapfile {
         clear
         header_cs
         echo -e -n "\nYour system has \${BLUE_LIGHT}\${ram_size}GB\${NORMAL} of RAM.\n"
-        echo -e -n "\nPress [ENTER] to create a swapfile of the same dimensions or choose the desired size: "
+        echo -e -n "\nPress [ENTER] to create a swapfile of the same dimensions or choose the desired size (only numbers): "
         read -r swap_size
 
         if [[ "\$swap_size" == "" ]] || [[ "\$swap_size" -gt "0" ]] ; then
