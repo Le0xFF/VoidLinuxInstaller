@@ -63,7 +63,7 @@ function kill_script {
 function check_if_bash {
 
   if [[ "$(ps -p $$ | tail -1 | awk '{print $NF}')" != "bash" ]] ; then
-    echo -e -n "Please run this script with bash shell: \"bash VoidLinuxInstaller.sh\".\n"
+    echo -e -n "Please run this script with bash shell: \"bash vli.sh\".\n"
     exit 1
   fi
 
