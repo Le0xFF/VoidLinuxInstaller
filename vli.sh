@@ -296,7 +296,7 @@ function create_swapfile {
 
     header_cs
 
-    echo -e -n "\nDo you want to create a \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume?\nThis will also enable zswap, a cache in RAM for swap (y/n): "
+    echo -e -n "\nDo you want to create a \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume?\nThis will also enable \${BLUE_LIGHT}zswap\${NORMAL}, a cache in RAM for swap (y/n): "
     read -n 1 -r yn
   
     if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
