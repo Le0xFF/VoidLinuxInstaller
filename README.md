@@ -6,7 +6,7 @@ As stated in the gist, this script provides:
 - Full Disk Encryption (including `/boot`) with LUKS;
 - Optional Logic Volume Management (LVM);
 - BTRFS as filesystem;
-- Optional swapfile enabling also [zswap](https://fedoraproject.org/wiki/Zswap);
+- Optional swapfile enabling also [zswap](https://fedoraproject.org/wiki/Zswap) (swap is needed if you plan to use hibernation);
 - Trim on SSD.
 
 To know how the script works in details, please jump to the [How does it work?](#how-does-it-work) section!
