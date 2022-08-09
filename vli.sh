@@ -534,6 +534,9 @@ function finish_chroot {
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
   ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 
+  echo -e -n "\nEnabling grub snapshot service at first boot...\n"
+  ln -s /etc/sv/grub-btrfs /etc/runit/runsvdir/default/
+
   echo -e -n "\nReconfiguring every package...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
