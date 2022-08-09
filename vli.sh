@@ -210,7 +210,7 @@ EOF
   echo -e -n "\nGenerating new dracut initramfs...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
-  dracut --force --hostonly --kver \$(ls /usr/lib/modules/)
+  dracut --regenerate-all --force --hostonly
 
   echo
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -296,7 +296,7 @@ function create_swapfile {
 
     header_cs
 
-    echo -e -n "\nDo you want to create a \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume? (y/n): "
+    echo -e -n "\nDo you want to create a \${BLUE_LIGHT}swapfile\${NORMAL} in \${BLUE_LIGHT}/var/swap/\${NORMAL} btrfs subvolume?\nThis will also enable zswap, a cache in RAM for swap (y/n): "
     read -n 1 -r yn
   
     if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
@@ -332,8 +332,17 @@ cat << EOF >> /etc/fstab
 /var/swap/swapfile none swap defaults 0 0
 EOF
 
+          echo -e -n "\nEnabling zswap...\n"
+          echo "add_drivers+=\" lz4hc lz4hc_compress \"" >> /etc/dracut.conf.d/40-add_lz4hc_drivers.conf
+          echo -e -n "\nRegenerating dracut initramfs...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          echo
+          dracut --regenerate-all --force --hostonly
+          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc&/" /etc/default/grub
+          echo -e -n "\nUpdating grub...\n\n"
+          update-grub
           swapoff --all
-          echo -e -n "\nSwapfile successfully created.\n\n"
+          echo -e -n "\nSwapfile successfully created and zswap successfully enabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
