@@ -20,6 +20,7 @@ encrypted_name=''
 lvm_yn=''
 vg_name=''
 lv_root_name=''
+final_drive=''
 boot_partition=''
 
 user_keyboard_layout=''
@@ -130,11 +131,7 @@ function edit_fstab {
   echo -e -n "\nExporting variables that will be used for fstab...\n"
   export UEFI_UUID=\$(blkid -s UUID -o value "\$boot_partition")
   export LUKS_UUID=\$(blkid -s UUID -o value "\$encrypted_partition")
-  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
-    export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$vg_name"-"\$lv_root_name")
-  elif [[ "\$lvm_yn" == "n" ]] || [[ "\$lvm_yn" == "N" ]] ; then
-    export ROOT_UUID=\$(blkid -s UUID -o value /dev/mapper/"\$encrypted_name")
-  fi
+  export ROOT_UUID=\$(blkid -s UUID -o value "\$final_drive")
   
   echo -e -n "\nWriting fstab...\n\n"
   sed -i '/tmpfs/d' /etc/fstab
@@ -1739,6 +1736,7 @@ function disk_encryption {
                   cryptsetup open "$encrypted_partition" "$encrypted_name"
                   echo -e -n "\nEncrypted partition successfully mounted.\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
+                  final_drive=/dev/mapper/"$encrypted_name"
                   clear
                   break 2
                 elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
@@ -1851,6 +1849,7 @@ function lvm_creation {
               lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"
               echo
               read -n 1 -r -p "[Press any key to continue...]" key
+              final_drive=/dev/mapper/"$vg_name"-"$lv_root_name"
               clear
               break 3
             elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
@@ -2001,13 +2000,8 @@ function create_filesystems {
         read -n 1 -r -p "Is this the desired name? (y/n): " yn
           
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-            echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$vg_name-$lv_root_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
-            mkfs.btrfs -L "$root_name" /dev/mapper/"$vg_name"-"$lv_root_name"
-          elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]; then
-            echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
-            mkfs.btrfs -L "$root_name" /dev/mapper/"$encrypted_name"
-          fi
+          echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}$final_drive${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
+          mkfs.btrfs -L "$root_name" "$final_drive"
           sync
           echo -e -n "\nPartition successfully formatted.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -2061,11 +2055,7 @@ function create_btrfs_subvolumes {
   echo -e -n "\n${BLUE_LIGHT}If you prefer to change any option, please quit this script NOW and modify it according to you tastes.${NORMAL}\n\n"
   read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." key
 
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-    echo -e -n "\n\nThe root partition you selected (/dev/mapper/$vg_name-$lv_root_name) will now be mounted to /mnt.\n"
-  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
-    echo -e -n "\n\nThe root partition you selected (/dev/mapper/$encrypted_name) will now be mounted to /mnt.\n"
-  fi
+  echo -e -n "\n\nThe root partition ${BLUE_LIGHT}$final_drive${NORMAL} will now be mounted to /mnt.\n"
 
   if grep -q /mnt /proc/mounts ; then
     echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
@@ -2077,39 +2067,21 @@ function create_btrfs_subvolumes {
 
   echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
 
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-    export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
-    mount -o "$BTRFS_OPT" /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
-    btrfs subvolume create /mnt/@
-    btrfs subvolume create /mnt/@home
-    btrfs subvolume create /mnt/@snapshots
-    umount /mnt
-    mount -o "$BTRFS_OPT",subvol=@ /dev/mapper/"$vg_name"-"$lv_root_name" /mnt
-    mkdir /mnt/home
-    mount -o "$BTRFS_OPT",subvol=@home /dev/mapper/"$vg_name"-"$lv_root_name" /mnt/home/
-    mkdir -p /mnt/boot/efi
-    mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
-    mkdir -p /mnt/var/cache
-    btrfs subvolume create /mnt/var/cache/xbps
-    btrfs subvolume create /mnt/var/tmp
-    btrfs subvolume create /mnt/var/log
-  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
-    export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
-    mount -o "$BTRFS_OPT" /dev/mapper/"$encrypted_name" /mnt
-    btrfs subvolume create /mnt/@
-    btrfs subvolume create /mnt/@home
-    btrfs subvolume create /mnt/@snapshots
-    umount /mnt
-    mount -o "$BTRFS_OPT",subvol=@ /dev/mapper/"$encrypted_name" /mnt
-    mkdir /mnt/home
-    mount -o "$BTRFS_OPT",subvol=@home /dev/mapper/"$encrypted_name" /mnt/home/
-    mkdir -p /mnt/boot/efi
-    mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
-    mkdir -p /mnt/var/cache
-    btrfs subvolume create /mnt/var/cache/xbps
-    btrfs subvolume create /mnt/var/tmp
-    btrfs subvolume create /mnt/var/log
-  fi
+  export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
+  mount -o "$BTRFS_OPT" "$final_drive" /mnt
+  btrfs subvolume create /mnt/@
+  btrfs subvolume create /mnt/@home
+  btrfs subvolume create /mnt/@snapshots
+  umount /mnt
+  mount -o "$BTRFS_OPT",subvol=@ "$final_drive" /mnt
+  mkdir /mnt/home
+  mount -o "$BTRFS_OPT",subvol=@home "$final_drive" /mnt/home/
+  mkdir -p /mnt/boot/efi
+  mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
+  mkdir -p /mnt/var/cache
+  btrfs subvolume create /mnt/var/cache/xbps
+  btrfs subvolume create /mnt/var/tmp
+  btrfs subvolume create /mnt/var/log
 
   echo -e -n "\nDone.\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -2188,11 +2160,7 @@ function install_base_system_and_chroot {
   cp "$HOME"/chroot.sh /mnt/root/
   cp "$HOME"/btrfs_map_physical.c /mnt/root/
 
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
-    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" user_keyboard_layout="$user_keyboard_layout" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
-  elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]] ; then
-    BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" user_drive="$user_drive" lvm_yn="$lvm_yn" user_keyboard_layout="$user_keyboard_layout" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
-  fi
+  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
   header_ibsac
   
