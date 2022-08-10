@@ -1602,7 +1602,7 @@ function disk_partitioning {
             else
           
               while true; do
-              echo -e -n "\nYou selected "$user_drive".\n"
+              echo -e -n "\nYou selected: $user_drive.\n"
               echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
               echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
               read -r yn
@@ -1702,7 +1702,7 @@ function disk_encryption {
 
           while true ; do
             echo -e -n "\nWhich LUKS version do you want to use? (1/2 and [ENTER]): "
-            read ot
+            read -r ot
             if [[ "$ot" == "1" ]] || [[ "$ot" == "2" ]] ; then
               echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$ot${NORMAL}.\n\n"
               cryptsetup luksFormat --type=luks"$ot" "$encrypted_partition"
