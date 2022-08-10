@@ -335,7 +335,7 @@ EOF
           read -n 1 -r -p "[Press any key to continue...]" key
           echo
           dracut --regenerate-all --force --hostonly
-          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc&/" /etc/default/grub
+          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/grub
           echo -e -n "\nUpdating grub...\n\n"
           update-grub
           swapoff --all
