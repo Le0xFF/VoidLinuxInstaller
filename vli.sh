@@ -442,9 +442,9 @@ function finish_chroot {
         read -n 1 -r -p "[Press any key to continue...]" key
       else
         while true ; do
-          user_locale_pre=\$(sed -n \${user_locale_line_number}p /etc/default/libc-locales)
-          user_locale_uncommented=\$(echo \${user_locale_pre//#})
-          user_locale=\$(echo \${user_locale_uncommented%%[[:space:]]*})
+          user_locale_pre=\$(sed -n "\${user_locale_line_number}"p /etc/default/libc-locales)
+          user_locale_uncommented=\$(echo "\${user_locale_pre//#}")
+          user_locale=\$(echo "\${user_locale_uncommented%%[[:space:]]*}")
           echo -e -n "\nYou choose line \${BLUE_LIGHT}\$user_locale_line_number\${NORMAL} that cointains locale \${BLUE_LIGHT}\$user_locale\${NORMAL}.\n\n"
           read -n 1 -r -p "Is this correct? (y/n): " yn
           if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
