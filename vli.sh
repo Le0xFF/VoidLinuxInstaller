@@ -2044,7 +2044,7 @@ function header_cbs {
 
 function create_btrfs_subvolumes {
 
-  if [[ -n $(lsblk /dev/nvme0n1p2 --discard | awk -F " " 'FNR == 2 {print $3}') ]] && [[ -n $(lsblk /dev/nvme0n1p2 --discard | awk -F " " 'FNR == 2 {print $4}') ]] ; then
+  if [[ -n $(lsblk "$final_drive" --discard | awk -F " " 'FNR == 2 {print $3}') ]] && [[ -n $(lsblk "$final_drive" --discard | awk -F " " 'FNR == 2 {print $4}') ]] ; then
     hdd_ssd=ssd
   else
     hdd_ssd=hdd
