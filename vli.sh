@@ -544,6 +544,8 @@ function finish_chroot {
   echo -e -n "\nConfiguring AppArmor and setting it to enforce...\n"
   sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
   sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
+  sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
+  sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
   echo -e -n "\nUpdating grub...\n\n"
   update-grub
 
