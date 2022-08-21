@@ -2144,7 +2144,7 @@ function install_base_system_and_chroot {
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
   XBPS_ARCH="$ARCH" xbps-install -Suy xbps
-  XBPS_ARCH="$ARCH" xbps-install -Svy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor
+  XBPS_ARCH="$ARCH" xbps-install -Svy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor void-repo-multilib void-repo-nonfree void-repo-nonfree-multilib
   
   echo -e -n "\nMounting folders for chroot...\n"
   for dir in sys dev proc ; do
