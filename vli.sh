@@ -538,6 +538,12 @@ function finish_chroot {
 
   header_fc
 
+  echo -e -n "\nConfiguring AppArmor and setting it to enforce...\n"
+  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
+  sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
+  echo -e -n "\nUpdating grub...\n\n"
+  update-grub
+
   echo -e -n "\nEnabling internet service at first boot...\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
   ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
@@ -2138,7 +2144,7 @@ function install_base_system_and_chroot {
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
   XBPS_ARCH="$ARCH" xbps-install -Suy xbps
-  XBPS_ARCH="$ARCH" xbps-install -Svy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc
+  XBPS_ARCH="$ARCH" xbps-install -Svy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor
   
   echo -e -n "\nMounting folders for chroot...\n"
   for dir in sys dev proc ; do

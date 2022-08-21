@@ -106,7 +106,7 @@ Here is documented how the script works in details and what will ask to the user
     * optionally create a swapfile and enable zswap;
     * install grub choosing a bootloader-id;
     * choose timezone, keyboard layout, locale, hostname and default shell;
-    * enable internet at first boot with NetworkManager.
+    * configure AppArmor, enable internet at first boot with NetworkManager.
 
 ### Suggested partition layout
 
