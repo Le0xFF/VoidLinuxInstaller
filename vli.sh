@@ -322,7 +322,7 @@ function create_swapfile {
           chattr +C /var/swap/swapfile
           chmod 600 /var/swap/swapfile
           dd if=/dev/zero of=/var/swap/swapfile bs=1G count="\$swap_size" status=progress
-          mkswap /var/swap/swapfile
+          mkswap --label SwapFile /var/swap/swapfile
           swapon /var/swap/swapfile
           gcc -O2 "\$HOME"/btrfs_map_physical.c -o "\$HOME"/btrfs_map_physical
           RESUME_OFFSET=\$((\$("\$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print \$NF}')/\$(getconf PAGESIZE)))
