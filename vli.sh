@@ -335,7 +335,7 @@ cat << EOF >> /etc/fstab
 EOF
 
           echo -e -n "\nEnabling zswap...\n"
-          echo "add_drivers+=\" lz4hc lz4hc_compress \"" >> /etc/dracut.conf.d/40-add_lz4hc_drivers.conf
+          echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >> /etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           echo
