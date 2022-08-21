@@ -25,6 +25,10 @@ boot_partition=''
 hdd_ssd=''
 user_keyboard_layout=''
 
+# Constants
+
+void_packages_repo="https://github.com/void-linux/void-packages.git"
+
 # Colours
 
 BLUE_LIGHT="\e[1;34m"
@@ -358,6 +362,96 @@ EOF
 
     elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
       echo -e -n "\n\nNo swapfile created.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+      break
+    
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+}
+
+function header_vp {
+
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}    \${GREEN_LIGHT}Configure Void Packages\${NORMAL}    \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+
+}
+
+function void_packages {
+
+  while true; do
+
+    header_vp
+  
+    echo
+    read -n 1 -r -p "Do you want to clone Void Packages repository to a specific folder? (y/n): " yn
+    
+    if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+      
+      while true ; do
+
+        clear
+        header_vp
+
+        echo -e -n "\nPlease enter the \${BLUE_LIGHT}full path\${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
+        read -r void_packages_path
+      
+        if [[ -z "\$void_packages_path" ]] ; then
+          echo -e -n "\nPlease input a valid path.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+        
+        elif [[ ! -w "\$void_packages_path" ]] ; then
+          echo -e -n "\nYou don't have write permission in this directory.\nPlease select another path.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+      
+        else
+          while true; do
+          echo -e -n "\nPath selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
+          echo -e -n "\nIs this correct? (y/n): "
+          read -r yn
+        
+          if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+            echo -e -n "\nAborting, select another path.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break
+          elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+            echo
+            git clone "\$void_packages_repo" "\$void_packages_path"
+            echo
+
+            echo -e -n "\nEnabling restricted packages...\n"
+            echo XBPS_ALLOW_RESTRICTED=yes >> \$void_packages_path/etc/conf
+            
+            echo -e -n "\nBootstrapping...\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            \$void_packages_path/xbps-src binary-bootstrap
+
+            echo -e -n "\nVoid Packages successfully configured.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break 3
+          else
+            echo -e -n "\nPlease answer y or n.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+          fi
+          done
+        fi
+      done
+      
+    elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+      echo -e -n "\n\nVoid Packages were not configured.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
@@ -2162,7 +2256,7 @@ function install_base_system_and_chroot {
   echo
   XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
   XBPS_ARCH="$ARCH" xbps-install -Suvy void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
-  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor
+  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf
   
   echo -e -n "\nMounting folders for chroot...\n"
   for dir in sys dev proc ; do
@@ -2186,7 +2280,7 @@ function install_base_system_and_chroot {
   cp "$HOME"/chroot.sh /mnt/root/
   cp "$HOME"/btrfs_map_physical.c /mnt/root/
 
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" hdd_ssd="$hdd_ssd" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" hdd_ssd="$hdd_ssd" void_packages_repo="$void_packages_repo" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
   header_ibsac
   
