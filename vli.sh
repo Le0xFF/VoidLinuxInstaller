@@ -2043,14 +2043,14 @@ function header_cbs {
 }
 
 function create_btrfs_subvolumes {
+  
+  header_cbs
 
   if [[ -n $(lsblk "$final_drive" --discard | awk -F " " 'FNR == 2 {print $3}') ]] && [[ -n $(lsblk "$final_drive" --discard | awk -F " " 'FNR == 2 {print $4}') ]] ; then
     hdd_ssd=ssd
   else
     hdd_ssd=hdd
   fi
-  
-  header_cbs
 
   echo -e -n "\nBTRFS subvolumes will now be created with default options.\n\n"
   echo -e -n "Default options:\n"
