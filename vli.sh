@@ -22,7 +22,7 @@ vg_name=''
 lv_root_name=''
 final_drive=''
 boot_partition=''
-
+hdd_ssd=''
 user_keyboard_layout=''
 
 # Colours
@@ -237,7 +237,10 @@ cat << EOF >> /etc/default/grub
 GRUB_ENABLE_CRYPTODISK=y
 EOF
 
-  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=\$LUKS_UUID=\$encrypted_name rd.luks.allow-discards=\$LUKS_UUID&/" /etc/default/grub
+  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=\$LUKS_UUID=\$encrypted_name&/" /etc/default/grub
+  if [[ "\$hdd_ssd" == "ssd" ]] ; then
+    sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.luks.allow-discards=\$LUKS_UUID&/" /etc/default/grub
+  fi
 
   if ! grep -q efivar /proc/mounts ; then
     echo -e -n "\nMounting efivarfs...\n"
@@ -270,7 +273,7 @@ EOF
     fi
   done
 
-  if [[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]] ; then
+  if ([[ "\$lvm_yn" == "y" ]] || [[ "\$lvm_yn" == "Y" ]]) && [[ "\$hdd_ssd" == "ssd" ]] ; then
     echo -e -n "\nEnabling SSD trim for LVM...\n"
     sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
   fi
@@ -2040,6 +2043,12 @@ function header_cbs {
 }
 
 function create_btrfs_subvolumes {
+
+  if [[ -n $(lsblk /dev/nvme0n1p2 --discard | awk -F " " 'FNR == 2 {print $3}') ]] && [[ -n $(lsblk /dev/nvme0n1p2 --discard | awk -F " " 'FNR == 2 {print $4}') ]] ; then
+    hdd_ssd=ssd
+  else
+    hdd_ssd=hdd
+  fi
   
   header_cbs
 
@@ -2047,7 +2056,9 @@ function create_btrfs_subvolumes {
   echo -e -n "Default options:\n"
   echo -e -n "- rw\n"
   echo -e -n "- noatime\n"
-  echo -e -n "- discard=async\n"
+  if [[ "$hdd_ssd" == "ssd" ]] ; then
+    echo -e -n "- discard=async\n"
+  fi
   echo -e -n "- compress-force=zstd\n"
   echo -e -n "- space_cache=v2\n"
   echo -e -n "- commit=120\n"
@@ -2075,7 +2086,11 @@ function create_btrfs_subvolumes {
 
   echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
 
-  export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
+  if [[ "$hdd_ssd" == "ssd" ]] ; then
+    export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
+  elif [[ "$hdd_ssd" == "hdd" ]] ; then
+    export BTRFS_OPT=rw,noatime,compress-force=zstd,space_cache=v2,commit=120
+  fi
   mount -o "$BTRFS_OPT" "$final_drive" /mnt
   btrfs subvolume create /mnt/@
   btrfs subvolume create /mnt/@home
@@ -2168,7 +2183,7 @@ function install_base_system_and_chroot {
   cp "$HOME"/chroot.sh /mnt/root/
   cp "$HOME"/btrfs_map_physical.c /mnt/root/
 
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" hdd_ssd="$hdd_ssd" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
   header_ibsac
   
