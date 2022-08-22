@@ -484,7 +484,7 @@ function create_user {
       done
       
     elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
-      echo -e -n "\n\nNo additional users were created.\n\n"
+      echo -e -n "\n\nNo additional user was added.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       if [[ "\$newuser_yn" == "" ]] ; then
         newuser_yn="n"
@@ -549,6 +549,7 @@ function void_packages {
             while true ; do
               clear
               header_vp
+              echo -e -n "\nUser selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
               echo -e -n "\nPlease enter the \${BLUE_LIGHT}full path\${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
               read -r void_packages_path
       
@@ -561,7 +562,7 @@ function void_packages {
                 while true; do
                   
                   if [[ ! -d "\$void_packages_path" ]] ; then
-                    if ! \$(su - \$void_packages_username --command "mkdir -p \$void_packages_path") ; then
+                    if ! \$(su - \$void_packages_username --command "mkdir -p \$void_packages_path 2> /dev/null") ; then
                       echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" key
                       break
@@ -580,20 +581,21 @@ function void_packages {
         
                   if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
                     echo -e -n "\nAborting, select another path.\n\n"
+                    if [[ -z "\$(ls -A \$void_packages_path)" ]]; then
+                      rm -rf \$void_packages_path
+                    fi
                     read -n 1 -r -p "[Press any key to continue...]" key
                     clear
                     break
                   elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
                     echo -e -n "\nSwitching to user \${BLUE_LIGHT}\$void_packages_username\${NORMAL}...\n\n"
 su - "\$void_packages_username" << EOSU
-echo
 git clone "\$void_packages_repo" "\$void_packages_path"
-echo
 echo -e -n "\nEnabling restricted packages...\n"
 echo XBPS_ALLOW_RESTRICTED=yes >> \$void_packages_path/etc/conf
-echo -e -n "\nBootstrapping...\n"
+echo -e -n "\nBootstrapping...\n\n"
 read -n 1 -r -p "[Press any key to continue...]" key
-\$void_packages_path/xbps-src binary-bootstrap
+"\$SHELL" \$void_packages_path/xbps-src binary-bootstrap
 EOSU
                     echo -e -n "\nVoid Packages successfully configured.\n\n"
                     read -n 1 -r -p "[Press any key to continue...]" key
