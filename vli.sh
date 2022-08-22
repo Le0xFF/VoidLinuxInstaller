@@ -421,7 +421,7 @@ function create_user {
       
         else
           while true; do
-          echo -e -n "\nIs user name \${BLUE_LIGHT}\$newuser\${NORMAL} okay? (y/n and [ENTER]): "
+          echo -e -n "\nIs username \${BLUE_LIGHT}\$newuser\${NORMAL} okay? (y/n and [ENTER]): "
           read -r yn
         
           if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
@@ -516,7 +516,7 @@ function void_packages {
 
       header_vp
   
-      echo -e -n "Do you want to clone \${BLUE_LIGHT}Void Packages\${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
+      echo -e -n "\nDo you want to clone \${BLUE_LIGHT}Void Packages\${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
       read -n 1 -r yn
     
       if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
@@ -550,7 +550,7 @@ function void_packages {
               read -n 1 -r -p "[Press any key to continue...]" key
               clear
         
-            elif [[ \$(stat --dereference --format="%U" \$void_packages_path) == "\$void_packages_username" ]] && [[ \$(stat --dereference --format="%a" \$void_packages_path) == "755" ]] ; then
+            elif [[ \$(stat --dereference --format="%U" \$void_packages_path) != "\$void_packages_username" ]] && [[ \$(stat --dereference --format="%a" \$void_packages_path) != "755" ]] ; then
               echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
               read -n 1 -r -p "[Press any key to continue...]" key
               clear
