@@ -516,8 +516,8 @@ function void_packages {
 
       header_vp
   
-      echo
-      read -n 1 -r -p "Do you want to clone \${BLUE_LIGHT}Void Packages\${NORMAL} repository to a specific folder for a specific non-root user? (y/n): " yn
+      echo -e -n "Do you want to clone \${BLUE_LIGHT}Void Packages\${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
+      read -n 1 -r yn
     
       if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
       
@@ -537,7 +537,7 @@ function void_packages {
             echo -e -n "\nRoot user cannot be used to configure Void Packages.\nPlease select another username.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
 
-          elif [[ \$(\$id -u \$void_packages_username 2> /dev/null) == "" ]] ; then
+          elif getent passwd \$void_packages_username &> /dev/null ; then
             echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't exists.\nPlease select another username.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
 
