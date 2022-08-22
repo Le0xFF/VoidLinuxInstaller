@@ -577,7 +577,7 @@ function void_packages {
                   
                   echo -e -n "\nPath selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
                   echo -e -n "\nIs this correct? (y/n): "
-                  read -r yn
+                  read -n 1 -r yn
         
                   if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
                     echo -e -n "\nAborting, select another path.\n\n"
