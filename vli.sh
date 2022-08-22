@@ -458,7 +458,7 @@ function create_user {
                     read -n 1 -r -p "[Press any key to continue...]" key
                     newuser_yn="y"
                     clear
-                    break 2
+                    break 4
                   elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
                     echo -e -n "\n\nPlease select another shell.\n\n"
                     read -n 1 -r -p "[Press any key to continue...]" key
