@@ -547,25 +547,32 @@ function void_packages {
 
           else
             while true ; do
+              clear
+              header_vp
               echo -e -n "\nPlease enter the \${BLUE_LIGHT}full path\${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
               read -r void_packages_path
       
               if [[ -z "\$void_packages_path" ]] ; then
                 echo -e -n "\nPlease input a valid path.\n\n"
                 read -n 1 -r -p "[Press any key to continue...]" key
-              
-              elif [[ ! -d "\$void_packages_path" ]] ; then
-                if ! \$(su - \$void_packages_username --command "mkdir -p \$void_packages_path") ; then
-                  echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                fi
-        
-              elif [[ \$(stat --dereference --format="%U" \$void_packages_path) != "\$void_packages_username" ]] ; then
-                echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
-                read -n 1 -r -p "[Press any key to continue...]" key
+                clear
       
               else
                 while true; do
+                  
+                  if [[ ! -d "\$void_packages_path" ]] ; then
+                    if ! \$(su - \$void_packages_username --command "mkdir -p \$void_packages_path") ; then
+                    echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    break
+                  else
+                    if [[ \$(stat --dereference --format="%U" \$void_packages_path) != "\$void_packages_username" ]] ; then
+                      echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
+                      read -n 1 -r -p "[Press any key to continue...]" key
+                      break
+                    fi
+                  fi
+                  
                   echo -e -n "\nPath selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
                   echo -e -n "\nIs this correct? (y/n): "
                   read -r yn
