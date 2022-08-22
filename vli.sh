@@ -105,6 +105,10 @@ function create_chroot_script {
 cat << EOD >> "$HOME"/chroot.sh
 #! /bin/bash
 
+# Variables
+
+newuser_yn=''
+
 function set_root {
 
   clear
@@ -376,6 +380,123 @@ EOF
 
 }
 
+function header_cu {
+
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}        \${GREEN_LIGHT}Create new users\${NORMAL}       #\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
+
+}
+
+function create_user {
+
+  while true; do
+
+    header_cu
+  
+    read -n 1 -r -p "Do you want to add any new user?\nOnly non-root users can later configure Void Packages (y/n): " yn
+    
+    if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+      
+      while true ; do
+
+        clear
+        header_cu
+
+        echo -e -n "\nPlease select a name for your new user (i.e. MyNewUser): "
+        read -r newuser
+      
+        if [[ -z "\$newuser" ]] ; then
+          echo -e -n "\nPlease select a valid name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+        
+        elif [[ "\$newuser" == "root" ]] ; then
+          echo -e -n "\nYou can't add root again\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+      
+        else
+          while true; do
+          echo -e -n "Is user name \${BLUE_LIGHT}\$newuser\${NORMAL} okay? (y/n and [ENTER]): "
+          read -r yn
+        
+          if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+            echo -e -n "\nAborting, pleasae select another name.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break
+          elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+            echo -e -n "\nAdding new user \${BLUE_LIGHT}\$newuser\${NORMAL} and giving access to groups:\n"
+            echo -e -n "kmem, wheel, tty, tape, daemon, floppy, disk, lp, dialout, audio,\nvideo, utmp, cdrom, optical, mail, storage, scanner, kvm, input, plugdev, users.\n\n"
+            useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "\$newuser"
+            
+            echo -e -n "\nPlease select a new password for user \${BLUE_LIGHT}\$newuser\${NORMAL}:\n"
+            passwd "\$newuser"
+
+            while true ; do
+              echo -e -n "\nListing all the available shells:\n\n"
+              chsh --list-shells
+              echo -e -n "\nWhich \${BLUE_LIGHT}shell\${NORMAL} do you want to set for user \${BLUE_LIGHT}\$newuser\${NORMAL}?\nPlease enter the full path (i.e. /bin/sh): "
+              read -r set_user_shell
+              if [[ ! -x "\$set_user_shell" ]] ; then
+                echo -e -n "\nPlease enter a valid shell.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+              else
+                while true ; do
+                  echo -e -n "\nYou entered: \${BLUE_LIGHT}\$set_user_shell\${NORMAL}.\n\n"
+                  read -n 1 -r -p "Is this the desired shell? (y/n): " yn
+                  if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+                    echo
+                    echo
+                    chsh --shell "\$set_user_shell" "\$newuser"
+                    echo -e -n "\nDefault shell for user \${BLUE_LIGHT}\$newuser\${NORMAL} successfully changed.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    break 2
+                  elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+                    echo -e -n "\n\nPlease select another shell.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    break
+                  else
+                    echo -e -n "\nPlease answer y or n.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                  fi
+                done
+              fi
+            done
+
+            echo -e -n "\nUser successfully created.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            newuser_yn="y"
+            clear
+            break 2
+          else
+            echo -e -n "\nPlease answer y or n.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+          fi
+          done
+        fi
+      done
+      
+    elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional users were created.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      newuser_yn="n"
+      clear
+      break
+    
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+}
+
 function header_vp {
 
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
@@ -388,81 +509,106 @@ function header_vp {
 
 function void_packages {
 
-  while true; do
+  if [[ "\$newuser_yn" == "y" ]] ; then
 
-    header_vp
+    while true; do
+
+      header_vp
   
-    echo
-    read -n 1 -r -p "Do you want to clone Void Packages repository to a specific folder? (y/n): " yn
+      echo
+      read -n 1 -r -p "Do you want to clone \${BLUE_LIGHT}Void Packages\${NORMAL} repository to a specific folder for a specific non-root user? (y/n): " yn
     
-    if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+      if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
       
-      while true ; do
+        while true ; do
 
-        clear
-        header_vp
-
-        echo -e -n "\nPlease enter the \${BLUE_LIGHT}full path\${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
-        read -r void_packages_path
-      
-        if [[ -z "\$void_packages_path" ]] ; then
-          echo -e -n "\nPlease input a valid path.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
           clear
-        
-        elif [[ ! -w "\$void_packages_path" ]] ; then
-          echo -e -n "\nYou don't have write permission in this directory.\nPlease select another path.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-      
-        else
-          while true; do
-          echo -e -n "\nPath selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
-          echo -e -n "\nIs this correct? (y/n): "
-          read -r yn
-        
-          if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
-            echo -e -n "\nAborting, select another path.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-            clear
-            break
-          elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
-            echo
-            git clone "\$void_packages_repo" "\$void_packages_path"
-            echo
+          header_vp
 
-            echo -e -n "\nEnabling restricted packages...\n"
-            echo XBPS_ALLOW_RESTRICTED=yes >> \$void_packages_path/etc/conf
-            
-            echo -e -n "\nBootstrapping...\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-            \$void_packages_path/xbps-src binary-bootstrap
+          echo -e -n "\nPlease enter an existing \${BLUE_LIGHT}username\${NORMAL}: "
+          read -r void_packages_username
 
-            echo -e -n "\nVoid Packages successfully configured.\n\n"
+          if [[ -z "\$void_packages_username" ]] ; then
+            echo -e -n "\nPlease input a valid username.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
-            clear
-            break 3
+
+          elif [[ "\$void_packages_username" == "root" ]] ; then
+            echo -e -n "\nRoot user cannot be used to configure Void Packages.\nPlease select another username.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+
+          elif [[ \$(\$id -u \$void_packages_username 2> /dev/null) == "" ]] ; then
+            echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't exists.\nPlease select another username.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+
           else
-            echo -e -n "\nPlease answer y or n.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-          fi
-          done
-        fi
-      done
+            echo -e -n "\nPlease enter the \${BLUE_LIGHT}full path\${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
+            read -r void_packages_path
       
-    elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
-      echo -e -n "\n\nVoid Packages were not configured.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-      break
+            if [[ -z "\$void_packages_path" ]] ; then
+              echo -e -n "\nPlease input a valid path.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+        
+            elif [[ \$(stat --dereference --format="%U" \$void_packages_path) == "\$void_packages_username" ]] && [[ \$(stat --dereference --format="%a" \$void_packages_path) == "755" ]] ; then
+              echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+      
+            else
+              while true; do
+                echo -e -n "\nPath selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
+                echo -e -n "\nIs this correct? (y/n): "
+                read -r yn
+        
+                if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+                  echo -e -n "\nAborting, select another path.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                  clear
+                  break
+                elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+                  echo -e -n "\nSwitching to user \${BLUE_LIGHT}\$void_packages_username\${NORMAL}...\n\n"
+su - "\$void_packages_username" << EOSU
+echo
+git clone "\$void_packages_repo" "\$void_packages_path"
+echo
+echo -e -n "\nEnabling restricted packages...\n"
+echo XBPS_ALLOW_RESTRICTED=yes >> \$void_packages_path/etc/conf
+echo -e -n "\nBootstrapping...\n"
+read -n 1 -r -p "[Press any key to continue...]" key
+\$void_packages_path/xbps-src binary-bootstrap
+EOSU
+                  echo -e -n "\nVoid Packages successfully configured.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                  clear
+                  break 2
+                else
+                  echo -e -n "\nPlease answer y or n.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                fi
+              done
+            fi
+          fi
+        done
+      
+      elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+        echo -e -n "\n\nVoid Packages were not configured.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+        break
     
-    else
-      echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-    fi
+      else
+        echo -e -n "\nPlease answer y or n.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+      fi
   
-  done
+    done
+
+  elif [[ "\$newuser_yn" == "n" ]] ; then
+    echo -e -n "\nNo non-root user was created.\nVoid Packages cannot be configured for root user.\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" key
+    clear
+  fi
 
 }
 
@@ -668,6 +814,8 @@ generate_random_key
 generate_dracut_conf
 install_grub
 create_swapfile
+create_user
+void_packages
 finish_chroot
 exit 0
 EOD
