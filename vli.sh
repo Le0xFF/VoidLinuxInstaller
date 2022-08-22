@@ -595,7 +595,7 @@ echo -e -n "\nEnabling restricted packages...\n"
 echo XBPS_ALLOW_RESTRICTED=yes >> \$void_packages_path/etc/conf
 echo -e -n "\nBootstrapping...\n\n"
 read -n 1 -r -p "[Press any key to continue...]" key
-"\$SHELL" \$void_packages_path/xbps-src binary-bootstrap
+"\$SHELL" "\$void_packages_path"/xbps-src binary-bootstrap
 EOSU
                     echo -e -n "\nVoid Packages successfully configured.\n\n"
                     read -n 1 -r -p "[Press any key to continue...]" key
