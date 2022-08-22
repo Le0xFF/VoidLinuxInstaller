@@ -556,8 +556,9 @@ function void_packages {
               
               elif [[ ! -d "\$void_packages_path" ]] ; then
                 if ! \$(su - \$void_packages_username --command "mkdir -p \$void_packages_path") ; then
-                  echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
+                  echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
+                fi
         
               elif [[ \$(stat --dereference --format="%U" \$void_packages_path) != "\$void_packages_username" ]] ; then
                 echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
