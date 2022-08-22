@@ -418,8 +418,9 @@ function create_user {
           read -n 1 -r -p "[Press any key to continue...]" key
 
         elif getent passwd \$newuser &> /dev/null ; then
-          echo -e -n "\nUser \${BLUE_LIGHT}\$void_packages_username\${NORMAL} already exists.\nPlease select another username.\n\n"
+          echo -e -n "\nUser \${BLUE_LIGHT}\$newuser\${NORMAL} already exists.\nPlease select another username.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
+          break
       
         else
           while true; do
