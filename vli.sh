@@ -385,7 +385,7 @@ function header_cu {
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}# VLI #\${NORMAL}            \${GREEN_LIGHT}Chroot\${NORMAL}             \${GREEN_DARK}#\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
-  echo -e -n "\${GREEN_DARK}#######\${NORMAL}        \${GREEN_LIGHT}Create new users\${NORMAL}       #\${NORMAL}\n"
+  echo -e -n "\${GREEN_DARK}#######\${NORMAL}        \${GREEN_LIGHT}Create new users\${NORMAL}       \${GREEN_DARK}#\${NORMAL}\n"
   echo -e -n "\${GREEN_DARK}#######################################\${NORMAL}\n"
 
 }
@@ -395,8 +395,9 @@ function create_user {
   while true; do
 
     header_cu
-  
-    read -n 1 -r -p "Do you want to add any new user?\nOnly non-root users can later configure Void Packages (y/n): " yn
+
+    echo -e -n "\nDo you want to add any new user?\nOnly non-root users can later configure Void Packages (y/n): "
+    read -n 1 -r yn
     
     if [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
       
@@ -420,7 +421,7 @@ function create_user {
       
         else
           while true; do
-          echo -e -n "Is user name \${BLUE_LIGHT}\$newuser\${NORMAL} okay? (y/n and [ENTER]): "
+          echo -e -n "\nIs user name \${BLUE_LIGHT}\$newuser\${NORMAL} okay? (y/n and [ENTER]): "
           read -r yn
         
           if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
@@ -430,7 +431,7 @@ function create_user {
             break
           elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
             echo -e -n "\nAdding new user \${BLUE_LIGHT}\$newuser\${NORMAL} and giving access to groups:\n"
-            echo -e -n "kmem, wheel, tty, tape, daemon, floppy, disk, lp, dialout, audio,\nvideo, utmp, cdrom, optical, mail, storage, scanner, kvm, input, plugdev, users.\n\n"
+            echo -e -n "kmem, wheel, tty, tape, daemon, floppy, disk, lp, dialout, audio, video,\nutmp, cdrom, optical, mail, storage, scanner, kvm, input, plugdev, users.\n"
             useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "\$newuser"
             
             echo -e -n "\nPlease select a new password for user \${BLUE_LIGHT}\$newuser\${NORMAL}:\n"
@@ -452,8 +453,11 @@ function create_user {
                     echo
                     echo
                     chsh --shell "\$set_user_shell" "\$newuser"
-                    echo -e -n "\nDefault shell for user \${BLUE_LIGHT}\$newuser\${NORMAL} successfully changed.\n\n"
+                    echo -e -n "\nDefault shell for user \${BLUE_LIGHT}\$newuser\${NORMAL} successfully changed.\n"
+                    echo -e -n "\nUser \${BLUE_LIGHT}\$newuser\${NORMAL} successfully created.\n\n"
                     read -n 1 -r -p "[Press any key to continue...]" key
+                    newuser_yn="y"
+                    clear
                     break 2
                   elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
                     echo -e -n "\n\nPlease select another shell.\n\n"
@@ -467,11 +471,6 @@ function create_user {
               fi
             done
 
-            echo -e -n "\nUser successfully created.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-            newuser_yn="y"
-            clear
-            break 2
           else
             echo -e -n "\nPlease answer y or n.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
@@ -605,6 +604,7 @@ EOSU
     done
 
   elif [[ "\$newuser_yn" == "n" ]] ; then
+    header_vp
     echo -e -n "\nNo non-root user was created.\nVoid Packages cannot be configured for root user.\n\n"
     read -n 1 -r -p "[Press any key to continue...]" key
     clear
