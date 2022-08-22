@@ -537,7 +537,7 @@ function void_packages {
             echo -e -n "\nRoot user cannot be used to configure Void Packages.\nPlease select another username.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
 
-          elif getent passwd \$void_packages_username &> /dev/null ; then
+          elif ! getent passwd \$void_packages_username &> /dev/null ; then
             echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't exists.\nPlease select another username.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
 
