@@ -482,7 +482,9 @@ function create_user {
     elif [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
       echo -e -n "\n\nNo additional users were created.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
-      newuser_yn="n"
+      if [[ "\$newuser_yn" == "" ]] ; then
+        newuser_yn="n"
+      fi
       clear
       break
     
