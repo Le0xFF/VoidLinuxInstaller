@@ -412,12 +412,14 @@ function create_user {
         if [[ -z "\$newuser" ]] ; then
           echo -e -n "\nPlease select a valid name.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-          clear
         
         elif [[ "\$newuser" == "root" ]] ; then
           echo -e -n "\nYou can't add root again\nPlease select another name.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-          clear
+
+        elif getent passwd \$newuser &> /dev/null ; then
+          echo -e -n "\nUser \${BLUE_LIGHT}\$void_packages_username\${NORMAL} already exists.\nPlease select another username.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
       
         else
           while true; do
@@ -542,32 +544,33 @@ function void_packages {
             read -n 1 -r -p "[Press any key to continue...]" key
 
           else
-            echo -e -n "\nPlease enter the \${BLUE_LIGHT}full path\${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
-            read -r void_packages_path
+            while true ; do
+              echo -e -n "\nPlease enter the \${BLUE_LIGHT}full path\${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
+              read -r void_packages_path
       
-            if [[ -z "\$void_packages_path" ]] ; then
-              echo -e -n "\nPlease input a valid path.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              clear
+              if [[ -z "\$void_packages_path" ]] ; then
+                echo -e -n "\nPlease input a valid path.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+                clear
         
-            elif [[ \$(stat --dereference --format="%U" \$void_packages_path) != "\$void_packages_username" ]] && [[ \$(stat --dereference --format="%a" \$void_packages_path) != "755" ]] ; then
-              echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              clear
+              elif [[ \$(stat --dereference --format="%U" \$void_packages_path) != "\$void_packages_username" ]] ; then
+                echo -e -n "\nUser \${RED_LIGHT}\$void_packages_username\${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+                clear
       
-            else
-              while true; do
-                echo -e -n "\nPath selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
-                echo -e -n "\nIs this correct? (y/n): "
-                read -r yn
+              else
+                while true; do
+                  echo -e -n "\nPath selected: \${BLUE_LIGHT}\$void_packages_path\${NORMAL}\n"
+                  echo -e -n "\nIs this correct? (y/n): "
+                  read -r yn
         
-                if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
-                  echo -e -n "\nAborting, select another path.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                  clear
-                  break
-                elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
-                  echo -e -n "\nSwitching to user \${BLUE_LIGHT}\$void_packages_username\${NORMAL}...\n\n"
+                  if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
+                    echo -e -n "\nAborting, select another path.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    clear
+                    break
+                  elif [[ "\$yn" == "y" ]] || [[ "\$yn" == "Y" ]] ; then
+                    echo -e -n "\nSwitching to user \${BLUE_LIGHT}\$void_packages_username\${NORMAL}...\n\n"
 su - "\$void_packages_username" << EOSU
 echo
 git clone "\$void_packages_repo" "\$void_packages_path"
@@ -578,16 +581,17 @@ echo -e -n "\nBootstrapping...\n"
 read -n 1 -r -p "[Press any key to continue...]" key
 \$void_packages_path/xbps-src binary-bootstrap
 EOSU
-                  echo -e -n "\nVoid Packages successfully configured.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                  clear
-                  break 2
-                else
-                  echo -e -n "\nPlease answer y or n.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                fi
-              done
-            fi
+                    echo -e -n "\nVoid Packages successfully configured.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    clear
+                    break 3
+                  else
+                    echo -e -n "\nPlease answer y or n.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                  fi
+                done
+              fi
+            done
           fi
         done
       
