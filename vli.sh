@@ -426,7 +426,7 @@ function create_user {
         else
           while true; do
           echo -e -n "\nIs username \${BLUE_LIGHT}\$newuser\${NORMAL} okay? (y/n and [ENTER]): "
-          read -r yn
+          read -n 1 -r yn
         
           if [[ "\$yn" == "n" ]] || [[ "\$yn" == "N" ]] ; then
             echo -e -n "\nAborting, pleasae select another name.\n\n"
