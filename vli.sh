@@ -587,13 +587,13 @@ function void_packages {
                     break
                   elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                     echo -e -n "\n\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
-su - "$void_packages_username" << EOSU
-git clone "$void_packages_repo" "$void_packages_path"
-echo -e -n "\nEnabling restricted packages...\n"
-echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
-echo -e -n "\nBootstrapping...\n\n"
-read -n 1 -r -p "[Press any key to continue...]" key
-"$SHELL" "$void_packages_path"/xbps-src binary-bootstrap
+su --login --shell=/bin/bash --whitelist-environment=void_packages_repo,void_packages_path "$void_packages_username" << EOSU
+ git clone "$void_packages_repo" "$void_packages_path"
+ echo -e -n "\nEnabling restricted packages...\n"
+ echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
+ echo -e -n "\nBootstrapping...\n\n"
+ read -n 1 -r -p "[Press any key to continue...]" key
+ "$SHELL" "$void_packages_path"/xbps-src binary-bootstrap
 EOSU
                     echo -e -n "\nVoid Packages successfully configured.\n\n"
                     read -n 1 -r -p "[Press any key to continue...]" key
