@@ -548,7 +548,7 @@ function void_packages {
               clear
               header_vp
               echo -e -n "\nUser selected: ${BLUE_LIGHT}$void_packages_username${NORMAL}\n"
-              echo -e -n "\nPlease enter the ${BLUE_LIGHT}full path${NORMAL} where you want to clone Void Packages.\nThe script will automatically clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
+              echo -e -n "\nPlease enter the ${BLUE_LIGHT}full path${NORMAL} where you want to clone Void Packages.\nThe script will just clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
               read -r void_packages_path
       
               if [[ -z "$void_packages_path" ]] ; then
@@ -566,6 +566,11 @@ function void_packages {
                       break
                     fi
                   else
+                    if [[ -n $(ls -A "$void_packages_path") ]] ; then
+                      echo -e -n "\nDirectory ${RED_LIGHT}$void_packages_path${NORMAL} is not empty.\nPlease select another path.\n\n"
+                      read -n 1 -r -p "[Press any key to continue...]" key
+                      break
+                    fi
                     if [[ $(stat --dereference --format="%U" $void_packages_path) != "$void_packages_username" ]] ; then
                       echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" key
@@ -588,14 +593,12 @@ function void_packages {
                   elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                     echo -e -n "\n\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
 su --login --shell=/bin/bash --whitelist-environment=void_packages_repo,void_packages_path "$void_packages_username" << EOSU
- git clone "$void_packages_repo" "$void_packages_path"
- echo -e -n "\nEnabling restricted packages...\n"
- echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
- echo -e -n "\nBootstrapping...\n\n"
- read -n 1 -r -p "[Press any key to continue...]" key
- "$SHELL" "$void_packages_path"/xbps-src binary-bootstrap
+git clone "$void_packages_repo" "$void_packages_path"
+echo -e -n "\nEnabling restricted packages...\n"
+echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
 EOSU
-                    echo -e -n "\nVoid Packages successfully configured.\n\n"
+                    echo -e -n "\nLogging out user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n"
+                    echo -e -n "\nVoid Packages successfully cloned and configured.\n\n"
                     read -n 1 -r -p "[Press any key to continue...]" key
                     clear
                     break 3
