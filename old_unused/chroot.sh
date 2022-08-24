@@ -1,5 +1,11 @@
 #! /bin/bash
 
+# Variables
+
+newuser_yn=''
+
+# Functions
+
 function set_root {
 
   clear
@@ -95,13 +101,9 @@ function generate_dracut_conf {
   echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Dracut configuration${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
-  echo -e -n "\nAdding random key to dracut configuration...\n"
-cat << EOF >> /etc/dracut.conf.d/10-crypt.conf
-install_items+=" /boot/volume.key /etc/crypttab "
-EOF
-
-  echo -e -n "\nAdding other needed dracut configuration files...\n"
+  echo -e -n "\nAdding random key and other needed dracut configuration files...\n"
   echo -e "hostonly=yes\nhostonly_cmdline=yes" >> /etc/dracut.conf.d/00-hostonly.conf
+  echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
   echo -e "add_dracutmodules+=\" crypt btrfs lvm resume \"" >> /etc/dracut.conf.d/20-addmodules.conf
   echo -e "tmpdir=/tmp" >> /etc/dracut.conf.d/30-tmpfs.conf
 
@@ -136,7 +138,10 @@ cat << EOF >> /etc/default/grub
 GRUB_ENABLE_CRYPTODISK=y
 EOF
 
-  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/grub
+  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name&/" /etc/default/grub
+  if [[ "$hdd_ssd" == "ssd" ]] ; then
+    sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/grub
+  fi
 
   if ! grep -q efivar /proc/mounts ; then
     echo -e -n "\nMounting efivarfs...\n"
@@ -169,7 +174,7 @@ EOF
     fi
   done
 
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+  if ([[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]) && [[ "$hdd_ssd" == "ssd" ]] ; then
     echo -e -n "\nEnabling SSD trim for LVM...\n"
     sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
   fi
@@ -218,7 +223,7 @@ function create_swapfile {
           chattr +C /var/swap/swapfile
           chmod 600 /var/swap/swapfile
           dd if=/dev/zero of=/var/swap/swapfile bs=1G count="$swap_size" status=progress
-          mkswap /var/swap/swapfile
+          mkswap --label SwapFile /var/swap/swapfile
           swapon /var/swap/swapfile
           gcc -O2 "$HOME"/btrfs_map_physical.c -o "$HOME"/btrfs_map_physical
           RESUME_OFFSET=$(($("$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}')/$(getconf PAGESIZE)))
@@ -231,7 +236,7 @@ cat << EOF >> /etc/fstab
 EOF
 
           echo -e -n "\nEnabling zswap...\n"
-          echo "add_drivers+=\" lz4hc lz4hc_compress \"" >> /etc/dracut.conf.d/40-add_lz4hc_drivers.conf
+          echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >> /etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           echo
@@ -265,6 +270,263 @@ EOF
     fi
   
   done
+
+}
+
+function header_cu {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}        ${GREEN_LIGHT}Create new users${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function create_user {
+
+  while true; do
+
+    header_cu
+
+    echo -e -n "\nDo you want to add any new user?\nOnly non-root users can later configure Void Packages (y/n): "
+    read -n 1 -r yn
+    
+    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+      
+      while true ; do
+
+        clear
+        header_cu
+
+        echo -e -n "\nPlease select a name for your new user (i.e. MyNewUser): "
+        read -r newuser
+      
+        if [[ -z "$newuser" ]] ; then
+          echo -e -n "\nPlease select a valid name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        
+        elif [[ "$newuser" == "root" ]] ; then
+          echo -e -n "\nYou can't add root again\nPlease select another name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+
+        elif getent passwd "$newuser" &> /dev/null ; then
+          echo -e -n "\nUser ${BLUE_LIGHT}$newuser${NORMAL} already exists.\nPlease select another username.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+      
+        else
+          while true; do
+          echo -e -n "\nIs username ${BLUE_LIGHT}$newuser${NORMAL} okay? (y/n and [ENTER]): "
+          read -n 1 -r yn
+        
+          if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+            echo -e -n "\nAborting, pleasae select another name.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break
+          elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+            echo -e -n "\nAdding new user ${BLUE_LIGHT}$newuser${NORMAL} and giving access to groups:\n"
+            echo -e -n "kmem, wheel, tty, tape, daemon, floppy, disk, lp, dialout, audio, video,\nutmp, cdrom, optical, mail, storage, scanner, kvm, input, plugdev, users.\n"
+            useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "$newuser"
+            
+            echo -e -n "\nPlease select a new password for user ${BLUE_LIGHT}$newuser${NORMAL}:\n"
+            passwd "$newuser"
+
+            while true ; do
+              echo -e -n "\nListing all the available shells:\n\n"
+              chsh --list-shells
+              echo -e -n "\nWhich ${BLUE_LIGHT}shell${NORMAL} do you want to set for user ${BLUE_LIGHT}$newuser${NORMAL}?\nPlease enter the full path (i.e. /bin/sh): "
+              read -r set_user_shell
+              if [[ ! -x "$set_user_shell" ]] ; then
+                echo -e -n "\nPlease enter a valid shell.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+              else
+                while true ; do
+                  echo -e -n "\nYou entered: ${BLUE_LIGHT}$set_user_shell${NORMAL}.\n\n"
+                  read -n 1 -r -p "Is this the desired shell? (y/n): " yn
+                  if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+                    echo
+                    echo
+                    chsh --shell "$set_user_shell" "$newuser"
+                    echo -e -n "\nDefault shell for user ${BLUE_LIGHT}$newuser${NORMAL} successfully changed.\n"
+                    echo -e -n "\nUser ${BLUE_LIGHT}$newuser${NORMAL} successfully created.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    newuser_yn="y"
+                    clear
+                    break 4
+                  elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+                    echo -e -n "\n\nPlease select another shell.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    break
+                  else
+                    echo -e -n "\nPlease answer y or n.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                  fi
+                done
+              fi
+            done
+
+          else
+            echo -e -n "\nPlease answer y or n.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+          fi
+          done
+        fi
+      done
+      
+    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional user was added.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      if [[ "$newuser_yn" == "" ]] ; then
+        newuser_yn="n"
+      fi
+      clear
+      break
+    
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+}
+
+function header_vp {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}    ${GREEN_LIGHT}Configure Void Packages${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function void_packages {
+
+  if [[ "$newuser_yn" == "y" ]] ; then
+
+    while true; do
+
+      header_vp
+  
+      echo -e -n "\nDo you want to clone ${BLUE_LIGHT}Void Packages${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
+      read -n 1 -r yn
+    
+      if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+      
+        while true ; do
+
+          clear
+          header_vp
+
+          echo -e -n "\nPlease enter an existing ${BLUE_LIGHT}username${NORMAL}: "
+          read -r void_packages_username
+
+          if [[ -z "$void_packages_username" ]] ; then
+            echo -e -n "\nPlease input a valid username.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+
+          elif [[ "$void_packages_username" == "root" ]] ; then
+            echo -e -n "\nRoot user cannot be used to configure Void Packages.\nPlease select another username.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+
+          elif ! getent passwd "$void_packages_username" &> /dev/null ; then
+            echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} doesn't exists.\nPlease select another username.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+
+          else
+            while true ; do
+              clear
+              header_vp
+              echo -e -n "\nUser selected: ${BLUE_LIGHT}$void_packages_username${NORMAL}\n"
+              echo -e -n "\nPlease enter a ${BLUE_LIGHT}full empty path${NORMAL} where you want to clone Void Packages.\nThe script will create that folder and then clone Void Packages into it (i.e. /opt/MyPath/ToVoidPackages/): "
+              read -r void_packages_path
+      
+              if [[ -z "$void_packages_path" ]] ; then
+                echo -e -n "\nPlease input a valid path.\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+                clear
+      
+              else
+                while true; do
+                  
+                  if [[ ! -d "$void_packages_path" ]] ; then
+                    if ! $(su - $void_packages_username --command "mkdir -p $void_packages_path 2> /dev/null") ; then
+                      echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
+                      read -n 1 -r -p "[Press any key to continue...]" key
+                      break
+                    fi
+                  else
+                    if [[ -n $(ls -A "$void_packages_path") ]] ; then
+                      echo -e -n "\nDirectory ${RED_LIGHT}$void_packages_path${NORMAL} is not empty.\nPlease select another path.\n\n"
+                      read -n 1 -r -p "[Press any key to continue...]" key
+                      break
+                    fi
+                    if [[ $(stat --dereference --format="%U" $void_packages_path) != "$void_packages_username" ]] ; then
+                      echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
+                      read -n 1 -r -p "[Press any key to continue...]" key
+                      break
+                    fi
+                  fi
+                  
+                  echo -e -n "\nPath selected: ${BLUE_LIGHT}$void_packages_path${NORMAL}\n"
+                  echo -e -n "\nIs this correct? (y/n): "
+                  read -n 1 -r yn
+        
+                  if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+                    echo -e -n "\nAborting, select another path.\n\n"
+                    if [[ -z "$(ls -A $void_packages_path)" ]]; then
+                      rm -rf $void_packages_path
+                    fi
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    clear
+                    break
+                  elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+                    echo -e -n "\n\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
+su --login --shell=/bin/bash --whitelist-environment=void_packages_repo,void_packages_path "$void_packages_username" << EOSU
+git clone "$void_packages_repo" "$void_packages_path"
+echo -e -n "\nEnabling restricted packages...\n"
+echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
+EOSU
+                    echo -e -n "\nLogging out user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n"
+                    echo -e -n "\nVoid Packages successfully cloned and configured.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    clear
+                    break 3
+                  else
+                    echo -e -n "\nPlease answer y or n.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                  fi
+                done
+              fi
+            done
+          fi
+        done
+      
+      elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+        echo -e -n "\n\nVoid Packages were not configured.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+        break
+    
+      else
+        echo -e -n "\nPlease answer y or n.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+      fi
+  
+    done
+
+  elif [[ "$newuser_yn" == "n" ]] ; then
+    header_vp
+    echo -e -n "\nNo non-root user was created.\nVoid Packages cannot be configured for root user.\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" key
+    clear
+  fi
 
 }
 
@@ -437,6 +699,14 @@ function finish_chroot {
 
   header_fc
 
+  echo -e -n "\nConfiguring AppArmor and setting it to enforce...\n"
+  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
+  sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
+  sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
+  sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
+  echo -e -n "\nUpdating grub...\n\n"
+  update-grub
+
   echo -e -n "\nEnabling internet service at first boot...\n"
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
   ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
@@ -462,5 +732,7 @@ generate_random_key
 generate_dracut_conf
 install_grub
 create_swapfile
+create_user
+void_packages
 finish_chroot
 exit 0
