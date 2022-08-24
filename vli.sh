@@ -548,7 +548,7 @@ function void_packages {
               clear
               header_vp
               echo -e -n "\nUser selected: ${BLUE_LIGHT}$void_packages_username${NORMAL}\n"
-              echo -e -n "\nPlease enter the ${BLUE_LIGHT}full path${NORMAL} where you want to clone Void Packages.\nThe script will just clone Void Packages into that directory (i.e. /opt/MyPath/ToVoidPackages/): "
+              echo -e -n "\nPlease enter a ${BLUE_LIGHT}full empty path${NORMAL} where you want to clone Void Packages.\nThe script will create that folder and then clone Void Packages into it (i.e. /opt/MyPath/ToVoidPackages/): "
               read -r void_packages_path
       
               if [[ -z "$void_packages_path" ]] ; then
