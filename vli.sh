@@ -399,16 +399,17 @@ while true ; do
 
     header_iap
 
-    echo -e -n "\nDo you want to install additional packages? (y/n): "
+    echo -e -n "\nDo you want to install any additional package in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
 
-      echo -e -n "\n\nPlease mark all the packages you want to install with [TAB] key.\nPress [ENTER] key when you're done to install the selected packages\nor press [ESC] key to abort the operation."
-      read -n 1 -r key
+      echo -e -n "\n\nPlease mark all the packages you want to install with [TAB] key.\nPress [ENTER] key when you're done to install the selected packages\nor press [ESC] key to abort the operation.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
   
       xs
 
+      echo
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
     
