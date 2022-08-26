@@ -56,7 +56,7 @@ function kill_script {
   if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
     cryptsetup close /dev/mapper/"$encrypted_name"
   fi
-  
+
   if [[ -f "$HOME"/chroot.sh ]] ; then
     rm -f "$HOME"/chroot.sh
   fi
@@ -2386,7 +2386,7 @@ function lvm_creation {
         
             if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
               echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
-              vgcreate "$vg_name" /dev/mapper/"$encrypted_name"
+              vgcreate "$vg_name" "$final_drive"
               echo
               read -n 1 -r -p "[Press any key to continue...]" key
               clear
