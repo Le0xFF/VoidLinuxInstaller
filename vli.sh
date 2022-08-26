@@ -111,6 +111,11 @@ newuser_yn=''
 
 # Functions
 
+# Source: https://www.reddit.com/r/voidlinux/comments/jlkv1j/xs_quick_install_tool_for_void_linux/
+function xs {
+  xpkg -a | fzf -m --preview 'xq {1}' --preview-window=right:66%:wrap | xargs -ro xi
+}
+
 function set_root {
 
   clear
@@ -364,6 +369,51 @@ EOF
 
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo swapfile created.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+      break
+    
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+}
+
+function header_iap {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}  ${GREEN_LIGHT}Install additional packages${NORMAL}  ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function install_additional_packages {
+
+while true ; do
+
+    header_iap
+
+    echo -e -n "\nDo you want to install additional packages? (y/n): "
+    read -n 1 -r yn
+  
+    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+
+      echo -e -n "\n\nPlease mark all the packages you want to install with [TAB] key.\nPress [ENTER] key when you're done to install the selected packages\nor press [ESC] key to abort the operation."
+      read -n 1 -r key
+  
+      xs
+
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    
+    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional packages were installed.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
@@ -837,6 +887,7 @@ generate_random_key
 generate_dracut_conf
 install_grub
 create_swapfile
+install_additional_packages
 create_user
 void_packages
 finish_chroot
@@ -2426,7 +2477,7 @@ function install_base_system_and_chroot {
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
   XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
-  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
+  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf plocate ictree void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
   XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"
   
   echo -e -n "\nMounting folders for chroot...\n"
