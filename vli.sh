@@ -2163,7 +2163,7 @@ function disk_encryption {
 
     header_de
 
-    echo -e -n "\nDo you want to enable ${BLUE_LIGHT}Full Disk Encryption${NORMAL}? (y/n)"
+    echo -e -n "\nDo you want to enable ${BLUE_LIGHT}Full Disk Encryption${NORMAL}? (y/n): "
     read -n 1 -r encryption_yn
 
     if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
@@ -2283,48 +2283,52 @@ function disk_encryption {
       fi
 
     elif [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]] ; then
-      echo
-      lsblk -p
-      echo
 
-      echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}unecrypted /${NORMAL} [root] partition?\n"
-      read -r -p "Please enter the full partition path (i.e. /dev/sda1): " root_partition
-
-      if [[ ! -b "$root_partition" ]] ; then
-        echo -e -n "\nPlease select a valid partition.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+      while true ; do
         clear
-      else
-        while true; do
-          echo -e -n "\nYou selected: ${BLUE_LIGHT}$root_partition${NORMAL}.\n"
-          echo -e -n "\n${RED_LIGHT}THIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
-          echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
-          read -r yn
+        header_de
+        echo -e -n "\nPrinting all the connected drives:\n\n"
+        lsblk -p
+
+        echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}unecrypted / [root]${NORMAL} partition?\nPlease enter the full partition path (i.e. /dev/sda1): "
+        read -r root_partition
+
+        if [[ ! -b "$root_partition" ]] ; then
+          echo -e -n "\nPlease select a valid partition.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+        else
+          while true; do
+            echo -e -n "\nYou selected: ${BLUE_LIGHT}$root_partition${NORMAL}.\n"
+            echo -e -n "\n${RED_LIGHT}THIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+            echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
+            read -r yn
           
-          if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
-            echo -e -n "\nAborting, select another partition.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-            clear
-            break
-          elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-            if grep -q "$root_partition" /proc/mounts ; then
-              echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
-              cd "$HOME"
-              umount -l "$root_partition"
-              echo -e -n "\nDrive unmounted successfully.\n"
+            if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+              echo -e -n "\nAborting, select another partition.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+              break
+            elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+              if grep -q "$root_partition" /proc/mounts ; then
+                echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
+                cd "$HOME"
+                umount -l "$root_partition"
+                echo -e -n "\nDrive unmounted successfully.\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+              fi
+              final_drive="$root_partition"
+              echo -e -n "\nCorrect partition selected.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              clear
+              break 3
+            else
+              echo -e -n "\nPlease answer y or n.\n\n"
               read -n 1 -r -p "[Press any key to continue...]" key
             fi
-            final_drive="$root_partition"
-            echo -e -n "\nCorrect partition selected.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-            clear
-            break 2
-          else
-            echo -e -n "\nPlease answer y or n.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
-          fi
-        done
-      fi
+          done
+        fi
+      done
 
     else
       echo -e -n "\nPlease answer y or n.\n\n"
@@ -2477,7 +2481,7 @@ function create_filesystems {
     echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}/boot/efi${NORMAL} partition?\n"
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
 
-    if [[ "$boot_partition" == "$encrypted_partition" ]] ; then
+    if ([[ "$boot_partition" == "$encrypted_partition" ]]) || ([[ "$boot_partition" == "$root_partition" ]]) ; then
       echo -e -n "\nPlease select a partition different from your root partition.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
@@ -2577,7 +2581,7 @@ function create_filesystems {
           
         if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
           echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}$final_drive${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
-          mkfs.btrfs -L "$root_name" "$final_drive"
+          mkfs.btrfs --force -L "$root_name" "$final_drive"
           sync
           echo -e -n "\nPartition successfully formatted.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
