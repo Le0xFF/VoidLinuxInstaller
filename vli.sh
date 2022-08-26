@@ -170,13 +170,13 @@ function edit_fstab {
 
 cat << EOF >> /etc/fstab
 
-# root subvolume
+# Root subvolume
 UUID=$ROOT_UUID / btrfs $BTRFS_OPT,subvol=@ 0 1
 
-# home subvolume
+# Home subvolume
 UUID=$ROOT_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
 
-# root snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
+# Snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
 #UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
 
 # EFI partition
