@@ -2286,8 +2286,11 @@ function disk_encryption {
 
     elif [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]] ; then
 
+      echo -e -n "\nEncryption won't be enabled.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+
       while true ; do
-        clear
         header_de
         echo -e -n "\nPrinting all the connected drives:\n\n"
         lsblk -p
