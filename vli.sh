@@ -2488,6 +2488,7 @@ function install_base_system_and_chroot {
     mount --rbind /$dir /mnt/$dir
     mount --make-rslave /mnt/$dir
   done
+  mount --rbind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars/
   
   echo -e -n "\nCopying /etc/resolv.conf...\n"
   cp -L /etc/resolv.conf /mnt/etc/
