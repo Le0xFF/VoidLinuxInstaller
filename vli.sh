@@ -1926,7 +1926,7 @@ function disk_wiping {
             if grep -q "$user_drive" /proc/mounts ; then
               echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before wiping...\n"
               cd "$HOME"
-              umount -l "$user_drive"?*
+              umount --recursive "$(findmnt $user_drive | awk -F " " 'FNR == 2 {print $1}')"
               echo -e -n "\nDrive unmounted successfully.\n"
             fi
 
@@ -2008,7 +2008,7 @@ function disk_partitioning {
           if grep -q "$user_drive" /proc/mounts ; then
             echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before partitioning...\n"
             cd "$HOME"
-            umount -l "$user_drive"?*
+            umount --recursive "$(findmnt $user_drive | awk -F " " 'FNR == 2 {print $1}')"
             echo -e -n "\nDrive unmounted successfully.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
             clear
@@ -2113,7 +2113,7 @@ function disk_partitioning {
                 if grep -q "$user_drive" /proc/mounts ; then
                   echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before selecting it for partitioning...\n"
                   cd "$HOME"
-                  umount -l "$user_drive"?*
+                  umount --recursive "$(findmnt $user_drive | awk -F " " 'FNR == 2 {print $1}')"
                   echo -e -n "\nDrive unmounted successfully.\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
                 fi
@@ -2318,7 +2318,7 @@ function disk_encryption {
               if grep -q "$root_partition" /proc/mounts ; then
                 echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
                 cd "$HOME"
-                umount -l "$root_partition"
+                umount --recursive "$(findmnt $root_partition | awk -F " " 'FNR == 2 {print $1}')"
                 echo -e -n "\nDrive unmounted successfully.\n\n"
                 read -n 1 -r -p "[Press any key to continue...]" key
               fi
@@ -2510,7 +2510,7 @@ function create_filesystems {
           if grep -q "$boot_partition" /proc/mounts ; then
             echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
             cd "$HOME"
-            umount -l "$boot_partition"
+            umount --recursive "$(findmnt $boot_partition | awk -F " " 'FNR == 2 {print $1}')"
             echo -e -n "\nDrive unmounted successfully.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
           fi
@@ -2653,7 +2653,7 @@ function create_btrfs_subvolumes {
   if grep -q /mnt /proc/mounts ; then
     echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
     cd "$HOME"
-    umount -l /mnt
+    umount --recursive /mnt
     echo -e -n "\nDone.\n\n"
     read -n 1 -r -p "[Press any key to continue...]" key
   fi
