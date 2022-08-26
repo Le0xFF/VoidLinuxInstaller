@@ -431,6 +431,136 @@ while true ; do
 
 }
 
+function header_eds {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}    ${GREEN_LIGHT}Enable/disable services${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function enable_disable_services {
+
+  header_eds
+
+  echo -e -n "\nEnabling internet service at first boot...\n"
+  ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
+  ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
+
+  echo -e -n "\nEnabling grub snapshot service at first boot...\n"
+  ln -s /etc/sv/grub-btrfs /etc/runit/runsvdir/default/
+
+  while true ; do
+
+    echo -e -n "\nDo you want to enable any additional service in your system? (y/n): "
+    read -n 1 -r yn
+  
+    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+
+      while true ; do
+
+        clear
+        header_eds
+        echo -e -n "\nListing all the services that could be enabled...\n"
+        ls --almost-all --color=always /etc/sv/
+
+        echo -e -n "\nListing all the services that are already enabled...\n"
+        ls --almost-all --color=always /etc/runit/runsvdir/default/
+
+        echo -e -n "Which service do you want to enable? (i.e. NetworkManager, "q" to break): "
+        read -r service_enabler
+
+        if [[ ! -d /etc/sv/"$service_enabler" ]] ; then
+          echo -e -n "Service ${RED_LIGHT}$service_enabler${NORMAL} does not exist.\nPlease select another service to be enabled.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        elif [[ -L /etc/runit/runsvdir/default/"$service_enabler" ]] ; then
+          echo -e -n "Service ${RED_LIGHT}$service_enabler${NORMAL} already enabled.\nPlease select another service to be enabled.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        elif [[ "$service_enabler" == "" ]] ; then
+          echo -e -n "\nPlease enter a valid service name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        elif [[ "$service_enabler" == "q" ]] ; then
+          echo -e -n "\nAborting the operation...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        else
+          echo -e -n "Enabling service ${BLUE_LIGHT}$service_enabler${NORMAL}...\n\n"
+          ln -s /etc/sv/"$service_enabler" /etc/runit/runsvdir/default/
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        fi
+
+      done
+    
+    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional services were enabled.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      break
+      clear
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+    fi
+  
+  done
+
+  while true ; do
+
+    header_eds
+    echo -e -n "\nDo you want to disable any service in your system? (y/n): "
+    read -n 1 -r yn
+  
+    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+
+      while true ; do
+
+        clear
+        header_eds
+        echo -e -n "\nListing all the services that could be disabled...\n"
+        ls --almost-all --color=always /etc/runit/runsvdir/default/
+
+        echo -e -n "Which service do you want to disable? (i.e. NetworkManager, "q" to break): "
+        read -r service_disabler
+
+        if [[ ! -L /etc/runit/runsvdir/default/"$service_disabler" ]] ; then
+          echo -e -n "Service ${RED_LIGHT}$service_disabler${NORMAL} does not exist.\nPlease select another service to be disabled.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        elif [[ "$service_disabler" == "" ]] ; then
+          echo -e -n "\nPlease enter a valid service name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        elif [[ "$service_disabler" == "q" ]] ; then
+          echo -e -n "\nAborting the operation...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        else
+          echo -e -n "Disabling service ${BLUE_LIGHT}$service_disabler${NORMAL}...\n\n"
+          rm -f /etc/runit/runsvdir/default/"$service_disabler"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        fi
+
+      done
+    
+    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional services were disabled.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      break
+    
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+}
+
 function header_cu {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
@@ -865,13 +995,6 @@ function finish_chroot {
   echo -e -n "\nUpdating grub...\n\n"
   update-grub
 
-  echo -e -n "\nEnabling internet service at first boot...\n"
-  ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
-  ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
-
-  echo -e -n "\nEnabling grub snapshot service at first boot...\n"
-  ln -s /etc/sv/grub-btrfs /etc/runit/runsvdir/default/
-
   echo -e -n "\nReconfiguring every package...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
@@ -891,6 +1014,7 @@ generate_dracut_conf
 install_grub
 create_swapfile
 install_additional_packages
+enable_disable_services
 create_user
 void_packages
 finish_chroot
