@@ -473,10 +473,14 @@ function enable_disable_services {
         echo -e -n "\nListing all the services that are already enabled...\n"
         ls --almost-all --color=always /etc/runit/runsvdir/default/
 
-        echo -e -n "\nWhich service do you want to enable? (i.e. NetworkManager, "q" to break): "
+        echo -e -n "\nWhich service do you want to enable? (i.e. NetworkManager, \"q\" to break): "
         read -r service_enabler
 
-        if [[ ! -d /etc/sv/"$service_enabler" ]] ; then
+        if [[ "$service_enabler" == "q" ]] ; then
+          echo -e -n "\nAborting the operation...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        elif [[ ! -d /etc/sv/"$service_enabler" ]] ; then
           echo -e -n "\nService ${RED_LIGHT}$service_enabler${NORMAL} does not exist.\nPlease select another service to be enabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
         elif [[ -L /etc/runit/runsvdir/default/"$service_enabler" ]] ; then
@@ -484,10 +488,6 @@ function enable_disable_services {
           read -n 1 -r -p "[Press any key to continue...]" key
         elif [[ "$service_enabler" == "" ]] ; then
           echo -e -n "\nPlease enter a valid service name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          break
-        elif [[ "$service_enabler" == "q" ]] ; then
-          echo -e -n "\nAborting the operation...\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           break
         else
@@ -508,6 +508,7 @@ function enable_disable_services {
     else
       echo -e -n "\nPlease answer y or n.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     fi
   
   done
@@ -527,19 +528,19 @@ function enable_disable_services {
         echo -e -n "\nListing all the services that could be disabled...\n"
         ls --almost-all --color=always /etc/runit/runsvdir/default/
 
-        echo -e -n "\nWhich service do you want to disable? (i.e. NetworkManager, "q" to break): "
+        echo -e -n "\nWhich service do you want to disable? (i.e. NetworkManager, \"q\" to break): "
         read -r service_disabler
 
-        if [[ ! -L /etc/runit/runsvdir/default/"$service_disabler" ]] ; then
+        if [[ "$service_disabler" == "q" ]] ; then
+          echo -e -n "\nAborting the operation...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        elif [[ ! -L /etc/runit/runsvdir/default/"$service_disabler" ]] ; then
           echo -e -n "\nService ${RED_LIGHT}$service_disabler${NORMAL} does not exist.\nPlease select another service to be disabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
         elif [[ "$service_disabler" == "" ]] ; then
           echo -e -n "\nPlease enter a valid service name.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-        elif [[ "$service_disabler" == "q" ]] ; then
-          echo -e -n "\nAborting the operation...\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          break
         else
           echo -e -n "\nDisabling service ${BLUE_LIGHT}$service_disabler${NORMAL}...\n\n"
           rm -f /etc/runit/runsvdir/default/"$service_disabler"
