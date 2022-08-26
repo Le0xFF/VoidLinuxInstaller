@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Author: Le0xFF
-# Script name: VoidLinuxInstaller.sh
+# Script name: vli.sh
 # Github repo: https://github.com/Le0xFF/VoidLinuxInstaller
 #
 # Description: My first attempt at creating a bash script, trying to converting my gist into a bash script. Bugs are more than expected.
@@ -113,7 +113,9 @@ newuser_yn=''
 
 # Source: https://www.reddit.com/r/voidlinux/comments/jlkv1j/xs_quick_install_tool_for_void_linux/
 function xs {
+
   xpkg -a | fzf -m --preview 'xq {1}' --preview-window=right:66%:wrap | xargs -ro xi
+
 }
 
 function set_root {
