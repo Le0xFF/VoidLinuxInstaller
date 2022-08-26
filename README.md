@@ -104,8 +104,10 @@ Here is documented how the script works in details and what will ask to the user
     * generate random key to avoid typing password two times at boot;
     * create proper dracut configuration and initramfs;
     * optionally create a swapfile and enable zswap;
+    * install any additional package;
     * install grub choosing a bootloader-id;
-    * create new users and git clone [void-packages](https://github.com/void-linux/void-packages) for selected users (it's not possible to `binary-bootstrap` because `xbps-src` can't do that while being already in a chrooted environment; see related issues: [#30496](https://github.com/void-linux/void-packages/issues/30496#issuecomment-826537866), [#35018](https://github.com/void-linux/void-packages/issues/35018), [#35410](https://github.com/void-linux/void-packages/issues/35410))
+    * create new users and configure them;
+    * git clone [void-packages](https://github.com/void-linux/void-packages) for selected users (it's not possible to `binary-bootstrap` because `xbps-src` can't do that while being already in a chrooted environment; see related issues: [#30496](https://github.com/void-linux/void-packages/issues/30496#issuecomment-826537866), [#35018](https://github.com/void-linux/void-packages/issues/35018), [#35410](https://github.com/void-linux/void-packages/issues/35410))
     * choose timezone, keyboard layout, locale, hostname and default shell;
     * configure AppArmor, enable internet at first boot with NetworkManager.
 
