@@ -126,9 +126,17 @@ function set_root {
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Setting root password${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  
+
   echo -e -n "\nSetting root password:\n\n"
-  passwd root
+  while true ; do
+    passwd root
+    if [[ "$?" == "0" ]] ; then
+      break
+    else
+      echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+    fi
+  done
   
   echo -e -n "\nSetting root permissions...\n\n"
   chown root:root /
@@ -190,7 +198,15 @@ function generate_random_key {
   dd bs=512 count=4 if=/dev/random of=/boot/volume.key
   
   echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
-  cryptsetup luksAddKey "$encrypted_partition" /boot/volume.key
+  while true ; do
+    cryptsetup luksAddKey "$encrypted_partition" /boot/volume.key
+    if [[ "$?" == "0" ]] ; then
+      break
+    else
+      echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+    fi
+  done
   chmod 000 /boot/volume.key
   chmod -R g-rwx,o-rwx /boot
 
@@ -625,7 +641,15 @@ function create_user {
             useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "$newuser"
             
             echo -e -n "\nPlease select a new password for user ${BLUE_LIGHT}$newuser${NORMAL}:\n"
-            passwd "$newuser"
+            while true ; do
+              passwd root
+              if [[ "$?" == "0" ]] ; then
+                break
+              else
+                echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+              fi
+            done
 
             while true ; do
               echo -e -n "\nListing all the available shells:\n\n"
@@ -2164,7 +2188,15 @@ function disk_encryption {
             read -r ot
             if [[ "$ot" == "1" ]] || [[ "$ot" == "2" ]] ; then
               echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$ot${NORMAL}.\n\n"
-              cryptsetup luksFormat --type=luks"$ot" "$encrypted_partition"
+              while true ; do
+                cryptsetup luksFormat --type=luks"$ot" "$encrypted_partition"
+                if [[ "$?" == "0" ]] ; then
+                  break
+                else
+                  echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" key
+                fi
+              done
               echo -e -n "\nPartition successfully encrypted.\n\n"
               read -n 1 -r -p "[Press any key to continue...]" key
               clear
@@ -2192,7 +2224,15 @@ function disk_encryption {
           
                 if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                   echo -e -n "\n\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n\n"
-                  cryptsetup open "$encrypted_partition" "$encrypted_name"
+                  while true ; do
+                    cryptsetup open "$encrypted_partition" "$encrypted_name"
+                    if [[ "$?" == "0" ]] ; then
+                      break
+                    else
+                      echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+                      read -n 1 -r -p "[Press any key to continue...]" key
+                    fi
+                  done
                   echo -e -n "\nEncrypted partition successfully mounted.\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
                   final_drive=/dev/mapper/"$encrypted_name"
