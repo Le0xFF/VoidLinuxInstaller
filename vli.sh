@@ -2314,7 +2314,7 @@ function disk_encryption {
                 echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
                 cd "$HOME"
                 umount -l "$root_partition"
-                echo -e -n "\nDrive unmounted successfully.\n"
+                echo -e -n "\nDrive unmounted successfully.\n\n"
                 read -n 1 -r -p "[Press any key to continue...]" key
               fi
               final_drive="$root_partition"
@@ -2506,7 +2506,7 @@ function create_filesystems {
             echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
             cd "$HOME"
             umount -l "$boot_partition"
-            echo -e -n "\nDrive unmounted successfully.\n"
+            echo -e -n "\nDrive unmounted successfully.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
           fi
 
