@@ -449,11 +449,15 @@ function enable_disable_services {
   ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
   ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 
-  echo -e -n "\nEnabling grub snapshot service at first boot...\n"
+  echo -e -n "\nEnabling grub snapshot service at first boot...\n\n"
   ln -s /etc/sv/grub-btrfs /etc/runit/runsvdir/default/
+
+  read -n 1 -r -p "[Press any key to continue...]" key
+  clear
 
   while true ; do
 
+    header_eds
     echo -e -n "\nDo you want to enable any additional service in your system? (y/n): "
     read -n 1 -r yn
   
@@ -469,14 +473,14 @@ function enable_disable_services {
         echo -e -n "\nListing all the services that are already enabled...\n"
         ls --almost-all --color=always /etc/runit/runsvdir/default/
 
-        echo -e -n "Which service do you want to enable? (i.e. NetworkManager, "q" to break): "
+        echo -e -n "\nWhich service do you want to enable? (i.e. NetworkManager, "q" to break): "
         read -r service_enabler
 
         if [[ ! -d /etc/sv/"$service_enabler" ]] ; then
-          echo -e -n "Service ${RED_LIGHT}$service_enabler${NORMAL} does not exist.\nPlease select another service to be enabled.\n\n"
+          echo -e -n "\nService ${RED_LIGHT}$service_enabler${NORMAL} does not exist.\nPlease select another service to be enabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
         elif [[ -L /etc/runit/runsvdir/default/"$service_enabler" ]] ; then
-          echo -e -n "Service ${RED_LIGHT}$service_enabler${NORMAL} already enabled.\nPlease select another service to be enabled.\n\n"
+          echo -e -n "\nService ${RED_LIGHT}$service_enabler${NORMAL} already enabled.\nPlease select another service to be enabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
         elif [[ "$service_enabler" == "" ]] ; then
           echo -e -n "\nPlease enter a valid service name.\n\n"
@@ -487,7 +491,7 @@ function enable_disable_services {
           read -n 1 -r -p "[Press any key to continue...]" key
           break
         else
-          echo -e -n "Enabling service ${BLUE_LIGHT}$service_enabler${NORMAL}...\n\n"
+          echo -e -n "\nEnabling service ${BLUE_LIGHT}$service_enabler${NORMAL}...\n\n"
           ln -s /etc/sv/"$service_enabler" /etc/runit/runsvdir/default/
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
@@ -499,8 +503,8 @@ function enable_disable_services {
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo additional services were enabled.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
-      break
       clear
+      break
     else
       echo -e -n "\nPlease answer y or n.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
@@ -523,11 +527,11 @@ function enable_disable_services {
         echo -e -n "\nListing all the services that could be disabled...\n"
         ls --almost-all --color=always /etc/runit/runsvdir/default/
 
-        echo -e -n "Which service do you want to disable? (i.e. NetworkManager, "q" to break): "
+        echo -e -n "\nWhich service do you want to disable? (i.e. NetworkManager, "q" to break): "
         read -r service_disabler
 
         if [[ ! -L /etc/runit/runsvdir/default/"$service_disabler" ]] ; then
-          echo -e -n "Service ${RED_LIGHT}$service_disabler${NORMAL} does not exist.\nPlease select another service to be disabled.\n\n"
+          echo -e -n "\nService ${RED_LIGHT}$service_disabler${NORMAL} does not exist.\nPlease select another service to be disabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
         elif [[ "$service_disabler" == "" ]] ; then
           echo -e -n "\nPlease enter a valid service name.\n\n"
@@ -537,7 +541,7 @@ function enable_disable_services {
           read -n 1 -r -p "[Press any key to continue...]" key
           break
         else
-          echo -e -n "Disabling service ${BLUE_LIGHT}$service_disabler${NORMAL}...\n\n"
+          echo -e -n "\nDisabling service ${BLUE_LIGHT}$service_disabler${NORMAL}...\n\n"
           rm -f /etc/runit/runsvdir/default/"$service_disabler"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
@@ -549,8 +553,8 @@ function enable_disable_services {
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo additional services were disabled.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
+      clear
       break
-    
     else
       echo -e -n "\nPlease answer y or n.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
@@ -970,7 +974,6 @@ function finish_chroot {
           chsh --shell "$set_shell"
           echo -e -n "\nDefault shell successfully changed.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-          clear
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\n\nPlease select another shell.\n\n"
@@ -985,14 +988,13 @@ function finish_chroot {
     fi
   done
 
-  header_fc
-
   echo -e -n "\nConfiguring AppArmor and setting it to enforce...\n"
   sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
   sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
   sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
   sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
   echo -e -n "\nUpdating grub...\n\n"
+  read -n 1 -r -p "[Press any key to continue...]" key
   update-grub
 
   echo -e -n "\nReconfiguring every package...\n\n"
