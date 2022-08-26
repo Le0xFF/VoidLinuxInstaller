@@ -129,12 +129,14 @@ function set_root {
 
   echo -e -n "\nSetting root password:\n\n"
   while true ; do
+    echo
     passwd root
     if [[ "$?" == "0" ]] ; then
       break
     else
       echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
+      echo
     fi
   done
   
@@ -199,12 +201,14 @@ function generate_random_key {
   
   echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
   while true ; do
+    echo
     cryptsetup luksAddKey "$encrypted_partition" /boot/volume.key
     if [[ "$?" == "0" ]] ; then
       break
     else
       echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
+      echo
     fi
   done
   chmod 000 /boot/volume.key
@@ -642,12 +646,14 @@ function create_user {
             
             echo -e -n "\nPlease select a new password for user ${BLUE_LIGHT}$newuser${NORMAL}:\n"
             while true ; do
+              echo
               passwd root
               if [[ "$?" == "0" ]] ; then
                 break
               else
                 echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
                 read -n 1 -r -p "[Press any key to continue...]" key
+                echo
               fi
             done
 
@@ -1013,13 +1019,14 @@ function finish_chroot {
     fi
   done
 
-  echo -e -n "\nConfiguring AppArmor and setting it to enforce...\n"
+  echo -e -n "\n\nConfiguring AppArmor and setting it to enforce...\n"
   sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
   sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
   sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
   sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
   echo -e -n "\nUpdating grub...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
+  echo
   update-grub
 
   echo -e -n "\nReconfiguring every package...\n\n"
@@ -2189,12 +2196,14 @@ function disk_encryption {
             if [[ "$ot" == "1" ]] || [[ "$ot" == "2" ]] ; then
               echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$ot${NORMAL}.\n\n"
               while true ; do
+                echo
                 cryptsetup luksFormat --type=luks"$ot" "$encrypted_partition"
                 if [[ "$?" == "0" ]] ; then
                   break
                 else
                   echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
                   read -n 1 -r -p "[Press any key to continue...]" key
+                  echo
                 fi
               done
               echo -e -n "\nPartition successfully encrypted.\n\n"
@@ -2225,12 +2234,14 @@ function disk_encryption {
                 if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                   echo -e -n "\n\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n\n"
                   while true ; do
+                    echo
                     cryptsetup open "$encrypted_partition" "$encrypted_name"
                     if [[ "$?" == "0" ]] ; then
                       break
                     else
                       echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" key
+                      echo
                     fi
                   done
                   echo -e -n "\nEncrypted partition successfully mounted.\n\n"
@@ -2403,9 +2414,13 @@ function create_filesystems {
 
     echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}/boot/efi${NORMAL} partition?\n"
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
-    
-    if [[ ! -b "$boot_partition" ]] ; then
-      echo -e -n "\nPlease select a valid drive.\n\n"
+
+    if [[ "$boot_partition" == "$encrypted_partition" ]] ; then
+      echo -e -n "\nPlease select a partition different from your root partition.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    elif [[ ! -b "$boot_partition" ]] ; then
+      echo -e -n "\nPlease select a valid partition.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
     else
