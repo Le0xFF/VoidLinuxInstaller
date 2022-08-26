@@ -53,8 +53,10 @@ function kill_script {
     vgchange -an /dev/mapper/"$vg_name"
   fi
 
-  cryptsetup close /dev/mapper/"$encrypted_name"
-
+  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+    cryptsetup close /dev/mapper/"$encrypted_name"
+  fi
+  
   if [[ -f "$HOME"/chroot.sh ]] ; then
     rm -f "$HOME"/chroot.sh
   fi
@@ -128,7 +130,7 @@ function set_root {
   echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Setting root password${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
-  echo -e -n "\nSetting root password:\n\n"
+  echo -e -n "\nSetting root password:\n"
   while true ; do
     echo
     passwd root
@@ -1010,7 +1012,6 @@ function finish_chroot {
           echo
           chsh --shell "$set_shell"
           echo -e -n "\nDefault shell successfully changed.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\n\nPlease select another shell.\n\n"
@@ -1025,11 +1026,12 @@ function finish_chroot {
     fi
   done
 
-  echo -e -n "\n\nConfiguring AppArmor and setting it to enforce...\n"
+  echo -e -n "Configuring AppArmor and setting it to enforce...\n"
   sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
   sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
   sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
   sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
+  
   echo -e -n "\nUpdating grub...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
@@ -2769,7 +2771,10 @@ function install_base_system_and_chroot {
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
     vgchange -an /dev/mapper/"$vg_name"
   fi
-  cryptsetup close /dev/mapper/"$encrypted_name"
+
+  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+    cryptsetup close /dev/mapper/"$encrypted_name"
+  fi
 
   echo
   read -n 1 -r -p "[Press any key to continue...]" key
