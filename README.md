@@ -3,7 +3,7 @@
 The **VoidLinuxInstaller script** is an attempt to make [my gist](https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3) an interactive bash script.
 
 As stated in the gist, this script provides:
-- Full Disk Encryption (including `/boot`) with LUKS;
+- Optional Full Disk Encryption (including `/boot`) with LUKS;
 - Optional Logic Volume Management (LVM);
 - BTRFS as filesystem;
 - Optional swapfile enabling also [zswap](https://fedoraproject.org/wiki/Zswap) (swap is needed if you plan to use hibernation);
@@ -73,10 +73,10 @@ Here is documented how the script works in details and what will ask to the user
 4. partition a user choosen drive:
     - if the previous drive was not the right one, it will ask the user if they want to change it eventually;
     - check the [Suggested partition layout](#suggested-partition-layout) to follow the script workflow;
-5. encrypt a user choosen partition for Full Disk Encryption:
+5. ask user if they want to encrypt a partition for Full Disk Encryption:
     - it will ask for a mountpoint name, so that the encrypted partition will be mounted as  
     `/dev/mapper/<encrypted_name>`;
-6. ask the user if they want to apply Logical Volume Management to the previous encrypted partition, to have the flexibility to resize `/` and to add more space in the future without reformatting the whole system:
+6. ask user if they want to apply Logical Volume Management to the previous encrypted partition, to have the flexibility to resize `/` and to add more space in the future without reformatting the whole system:
     - it will ask for a Volume Group name, so that will be mounted as  
     `/dev/mapper/<vg_name>`;
     - it will ask for a Logical Volume name for **root** partition and its size will be the previously selected partition, so that will be mounted as  
@@ -101,7 +101,7 @@ Here is documented how the script works in details and what will ask to the user
 10. chroot:
     * set *root* password and `/` permissions;
     * create proper `/etc/fstab` file;
-    * generate random key to avoid typing password two times at boot;
+    * if encryption was choosen, generate random key to avoid typing password two times at boot;
     * create proper dracut configuration and initramfs;
     * optionally create a swapfile and enable zswap;
     * install any additional package;
@@ -125,7 +125,7 @@ You don't need to create a `/home` partition because BTRFS subvolumes will take 
 
 ### Final partitioning result
 
-Following the script, at the very end your drive will end up being like the following, if you choose LVM:
+Following the script, at the very end your drive will end up being like the following, if you choosed LUKS and LVM:
 
 ``` bash
 /dev/nvme0n1                               259:0    0 953,9G  0 disk  
