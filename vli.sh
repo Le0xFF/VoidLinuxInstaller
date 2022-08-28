@@ -205,7 +205,7 @@ function install_bootloader {
       echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n\n"
       bootloader="EFISTUB"
       read -n 1 -r -p "[Press any key to continue...]" key
-    elif [[ "$luks_ot" == "1" ]] ; then
+    else
       header_ib
       echo -e -n "\nSelect which ${BLUE_LIGHT}bootloader${NORMAL} do you want to use (EFISTUB, GRUB2): "
       read -r -p $bootloader
