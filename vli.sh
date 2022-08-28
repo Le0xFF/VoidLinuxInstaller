@@ -2761,6 +2761,9 @@ function install_base_system_and_chroot {
   XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
   XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf plocate ictree void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
   XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"
+  if grep -m 1 "model name" /proc/cpuinfo | grep --ignore-case "intel" &> /dev/null ; then
+    XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" intel-ucode
+  fi
   
   echo -e -n "\nMounting folders for chroot...\n"
   for dir in sys dev proc ; do
