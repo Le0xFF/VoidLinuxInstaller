@@ -121,7 +121,7 @@ To have a smooth script workflow, the following is the suggested disk layout:
 - Less than 1 GB for bootable EFI partition, as first partition and as EFI System type;
 - Rest of the disk for the Volume Group, where encryption and LVM will eventually be applied, as second partition as Linux filesystem.
 
-Those two will be physical partition.  
+These two will be physical partition.  
 You don't need to create a `/home` partition because BTRFS subvolumes will take care of that.
 
 ### Final partitioning result
