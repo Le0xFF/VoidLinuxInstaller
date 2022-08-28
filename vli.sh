@@ -213,7 +213,7 @@ function generate_dracut_conf {
     done
     chmod 000 /boot/volume.key
     chmod -R g-rwx,o-rwx /boot
-    echo -e -n "\nAdding random key to /etc/crypttab...\n\n"
+    echo -e -n "\nAdding random key to /etc/crypttab...\n"
     echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >> /etc/crypttab
     echo -e -n "\nAdding random key and other needed dracut configuration files...\n"
     echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
@@ -251,7 +251,7 @@ function install_bootloader {
 
     if [[ "$luks_ot" == "2" ]] ; then
       header_ib
-      echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n"
+      echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n\n"
       bootloader="EFISTUB"
       read -n 1 -r -p "[Press any key to continue...]" key
     elif [[ "$luks_ot" == "1" ]] ; then
@@ -261,7 +261,7 @@ function install_bootloader {
     fi
 
     if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
-      echo -e -n "\nMounting $boot_partition to /boot...\n"
+      echo -e -n "\n\nMounting $boot_partition to /boot...\n"
       mkdir /TEMPBOOT
       cp -pr /boot/* /TEMPBOOT/
       rm -rf /boot/*
@@ -345,7 +345,7 @@ function install_bootloader {
   done
 
   if { [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } && [[ "$hdd_ssd" == "ssd" ]] ; then
-    echo -e -n "\nEnabling SSD trim for LVM...\n"
+    echo -e -n "\n\nEnabling SSD trim for LVM...\n"
     sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
   fi
 
@@ -1056,6 +1056,7 @@ function finish_chroot {
           echo
           chsh --shell "$set_shell"
           echo -e -n "\nDefault shell successfully changed.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\n\nPlease select another shell.\n\n"
@@ -2254,7 +2255,7 @@ function disk_encryption {
             echo -e -n "- Can be used by both EFISTUB and GRUB2\n"
             echo -e -n "\n${RED_LIGHT}LUKS version 2${NORMAL}\n"
             echo -e -n "- Can be used only by EFISTUB and it will automatically be selected later.\n"
-            echo -e -n "  [GRUB LUKS version 2 support with encrypted /boot is still limited: https://savannah.gnu.org/bugs/?55093].\n"
+            echo -e -n "  [GRUB2 LUKS version 2 support with encrypted /boot is still limited: https://savannah.gnu.org/bugs/?55093].\n"
 
             while true ; do
               echo -e -n "\nWhich LUKS version do you want to use? (1/2 and [ENTER]): "
@@ -2842,7 +2843,6 @@ function outro {
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   echo -e -n "\nAfter rebooting into the new installed system, be sure to:\n"
-  echo -e -n "- Create a new user, set its password and add it to the correct groups\n"
   echo -e -n "- If you plan yo use snapper, after installing it and creating a configuration for / [root],\n  uncomment the line relative to /.snapshots folder\n"
   echo -e -n "\n${BLUE_LIGHT}Everything's done, goodbye.${NORMAL}\n\n"
 
