@@ -3,9 +3,10 @@
 The **VoidLinuxInstaller script** is an attempt to make [my gist](https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3) an interactive bash script.
 
 As stated in the gist, this script provides:
-- Optional Full Disk Encryption (including `/boot`) with LUKS;
+- Optional Full Disk Encryption (including `/boot`) with LUKS1/2;
 - Optional Logic Volume Management (LVM);
 - BTRFS as filesystem;
+- EFISTUB (LUKS1/2) or GRUB2 (LUKS1 only due to [limitations](https://savannah.gnu.org/bugs/?55093) for encrypted `/boot`) as bootloader;
 - Optional swapfile enabling also [zswap](https://fedoraproject.org/wiki/Zswap) (swap is needed if you plan to use hibernation);
 - Enable trim if the selected drive supports it.
 
@@ -106,7 +107,7 @@ Here is documented how the script works in details and what will ask to the user
     * optionally create a swapfile and enable zswap;
     * install any additional package;
     * enable or disable available services;
-    * install grub choosing a bootloader-id;
+    * ask user which bootloader to install: EFISTUB or GRUB2;
     * create new users and configure them;
     * git clone [void-packages](https://github.com/void-linux/void-packages) for selected users (it's not possible to `binary-bootstrap` because `xbps-src` can't do that while being already in a chrooted environment; see related issues: [#30496](https://github.com/void-linux/void-packages/issues/30496#issuecomment-826537866), [#35018](https://github.com/void-linux/void-packages/issues/35018), [#35410](https://github.com/void-linux/void-packages/issues/35410))
     * choose timezone, keyboard layout, locale, hostname and default shell for root user;
@@ -117,15 +118,15 @@ Here is documented how the script works in details and what will ask to the user
 To have a smooth script workflow, the following is the suggested disk layout:
 
 - GPT as disk label type for UEFI systems, also because this script will only works on UEFI systems;
-- Less than 1 GB for `/boot/efi` as first partition, as EFI System type;
-- Rest of the disk for the Volume Group, where LVM will be applied, as second partition as Linux filesystem.
+- Less than 1 GB for bootable EFI partition, as first partition and as EFI System type;
+- Rest of the disk for the Volume Group, where encryption and LVM will eventually be applied, as second partition as Linux filesystem.
 
 Those two will be physical partition.  
 You don't need to create a `/home` partition because BTRFS subvolumes will take care of that.
 
 ### Final partitioning result
 
-Following the script, at the very end your drive will end up being like the following, if you choosed LUKS and LVM:
+Following the script, at the very end your drive will end up being like the following, if you choosed LUKS, LVM and GRUB2 as bootloader:
 
 ``` bash
 /dev/nvme0n1                               259:0    0 953,9G  0 disk  
