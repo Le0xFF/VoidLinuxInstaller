@@ -16,6 +16,7 @@ trap "kill_script" INT TERM QUIT
 
 user_drive=''
 encryption_yn=''
+luks_ot=''
 encrypted_partition=''
 encrypted_name=''
 lvm_yn=''
@@ -161,7 +162,6 @@ function edit_fstab {
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   echo -e -n "\nExporting variables that will be used for fstab...\n"
-  export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
   export LUKS_UUID=$(blkid -s UUID -o value "$encrypted_partition")
   export ROOT_UUID=$(blkid -s UUID -o value "$final_drive")
   
@@ -179,9 +179,6 @@ UUID=$ROOT_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
 # Snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
 #UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
 
-# EFI partition
-UUID=$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
-
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
@@ -191,19 +188,17 @@ EOF
 
 }
 
-function generate_random_key {
+function generate_dracut_conf {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Dracut configuration${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
-
-    echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-    echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
-    echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-    echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Random key generation${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
-    echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-
-    echo -e -n "\nGenerate random key to avoid typing password twice at boot...\n\n"
+    echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
     dd bs=512 count=4 if=/dev/random of=/boot/volume.key
-  
     echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
     while true ; do
       echo
@@ -218,26 +213,8 @@ function generate_random_key {
     done
     chmod 000 /boot/volume.key
     chmod -R g-rwx,o-rwx /boot
-
     echo -e -n "\nAdding random key to /etc/crypttab...\n\n"
     echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >> /etc/crypttab
-
-    read -n 1 -r -p "[Press any key to continue...]" key
-    clear
-
-  fi
-  
-}
-
-function generate_dracut_conf {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Dracut configuration${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-
-  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
     echo -e -n "\nAdding random key and other needed dracut configuration files...\n"
     echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
   elif [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]] ; then
@@ -258,68 +235,129 @@ function generate_dracut_conf {
 
 }
 
-function header_ig {
+function header_ib {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}       ${GREEN_LIGHT}GRUB installation${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}    ${GREEN_LIGHT}Bootloader installation${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
-function install_grub {
-
-  header_ig
-
-  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
-    echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
-    echo -e -n "\nGRUB_ENABLE_CRYPTODISK=y\n" >> /etc/default/grub
-    sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name&/" /etc/default/grub
-    if [[ "$hdd_ssd" == "ssd" ]] ; then
-      sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/grub
-    fi
-  elif ([[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]) && ([[ "$lvm" == "y" ]] || [[ "$lvm_yn" == "Y" ]]) ; then
-    sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1&/" /etc/default/grub
-  fi
-
-  if ! grep -q efivar /proc/mounts ; then
-    echo -e -n "\nMounting efivarfs...\n"
-    mount -t efivarfs efivarfs /sys/firmware/efi/efivars/
-  fi
+function install_bootloader {
 
   while true ; do
-    echo -e -n "\nSelect a ${BLUE_LIGHT}bootloader-id${NORMAL} that will be used for grub install: "
-    read -r bootloader_id
-    if [[ -z "$bootloader_id" ]] ; then
-      echo -e -n "\nPlease enter a valid bootloader-id.\n\n"
+
+    if [[ "$luks_ot" == "2" ]] ; then
+      header_ib
+      echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n"
+      bootloader="EFISTUB"
       read -n 1 -r -p "[Press any key to continue...]" key
-    else
+    elif [[ "$luks_ot" == "1" ]] ; then
+      header_ib
+      echo -e -n "\nSelect which ${BLUE_LIGHT}bootloader${NORMAL} do you want to use (EFISTUB, GRUB2): "
+      read -r -p $bootloader
+    fi
+
+    if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+      echo -e -n "\nMounting $boot_partition to /boot...\n"
+      mkdir /TEMPBOOT
+      cp -pr /boot/* /TEMPBOOT/
+      rm -rf /boot/*
+      mount -o rw,noatime "$boot_partition" /boot
+      cp -pr /TEMPBOOT/* /boot/
+      rm -rf /TEMPBOOT
+      echo -e -n "\nSetting correct options in /etc/default/efibootmgr-kernel-hook...\n"
+      sed -i "/MODIFY_EFI_ENTRIES=0/s/0/1/" /etc/default/efibootmgr-kernel-hook
+      if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name\"/" /etc/default/efibootmgr-kernel-hook
+        if [[ "$hdd_ssd" == "ssd" ]] ; then
+          sed -i "/OPTIONS=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/efibootmgr-kernel-hook
+        fi
+      elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 rd.auto=1\"/" /etc/default/efibootmgr-kernel-hook
+      else
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4\"/" /etc/default/efibootmgr-kernel-hook
+      fi
+      sed -i "/# DISK=/s|.*|DISK=\"\$(lsblk -pd -no pkname \$(findmnt -enr -o SOURCE -M /boot))\"|" /etc/default/efibootmgr-kernel-hook
+      sed -i "/# PART=/s_.*_PART=\"\$(lsblk -pd -no pkname \$(findmnt -enr -o SOURCE -M /boot) | grep --color=never -Eo \\\\\"[0-9]+\$\\\\\")\"_" /etc/default/efibootmgr-kernel-hook
+      echo -e -n "\nModifying /etc/kernel.d/post-install/50-efibootmgr to keep EFI entry after reboot...\n"
+      sed -i "/efibootmgr -qo \$bootorder/s/^/#/" /etc/kernel.d/post-install/50-efibootmgr
+      echo -e -n "\n${RED_LIGHT}Keep in mind that to keep the new EFI entry after each reboot,${NORMAL}\n"
+      echo -e -n "${RED_LIGHT}the last line of /etc/kernel.d/post-install/50-efibootmgr has been commented.${NORMAL}\n"
+      echo -e -n "${RED_LIGHT}Probably you will have to comment the same line after each efibootmgr update.${NORMAL}\n\n"
+
+      read -n 1 -r -p "[Press any key to continue...]" key
+      break
+
+    elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+      if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+        echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
+        echo -e -n "\nGRUB_ENABLE_CRYPTODISK=y\n" >> /etc/default/grub
+        sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name&/" /etc/default/grub
+        if [[ "$hdd_ssd" == "ssd" ]] ; then
+          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/grub
+        fi
+     elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
+        sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1&/" /etc/default/grub
+      fi
+
+      if ! grep -q efivar /proc/mounts ; then
+        echo -e -n "\nMounting efivarfs...\n"
+        mount -t efivarfs efivarfs /sys/firmware/efi/efivars/
+      fi
+
       while true ; do
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$bootloader_id${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
-        if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\nInstalling GRUB on ${BLUE_LIGHT}/boot/efi${NORMAL} partition with ${BLUE_LIGHT}$bootloader_id${NORMAL} as bootloader-id...\n\n"
-          grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id="$bootloader_id" --recheck
-          break 2
-        elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another bootloader-id.\n\n"
+        echo -e -n "\nSelect a ${BLUE_LIGHT}bootloader-id${NORMAL} that will be used for grub install: "
+        read -r bootloader_id
+        if [[ -z "$bootloader_id" ]] ; then
+          echo -e -n "\nPlease enter a valid bootloader-id.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-          break
         else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          while true ; do
+            echo -e -n "\nYou entered: ${BLUE_LIGHT}$bootloader_id${NORMAL}.\n\n"
+            read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
+            if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+              echo -e -n "\n\nInstalling GRUB on ${BLUE_LIGHT}/boot/efi${NORMAL} partition with ${BLUE_LIGHT}$bootloader_id${NORMAL} as bootloader-id...\n\n"
+              mkdir -p /boot/efi
+              mount -o rw,noatime "$boot_partition" /boot/efi/
+              grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id="$bootloader_id" --recheck
+              break 3
+            elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+              echo -e -n "\n\nPlease select another bootloader-id.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              break
+            else
+              echo -e -n "\nPlease answer y or n.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+            fi
+          done
         fi
       done
+
+    else
+      echo -e -n "\nPlease select a valid bootloader.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     fi
+
   done
 
-  if ([[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]) && [[ "$hdd_ssd" == "ssd" ]] ; then
+  if { [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } && [[ "$hdd_ssd" == "ssd" ]] ; then
     echo -e -n "\nEnabling SSD trim for LVM...\n"
     sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
   fi
 
-  echo
+  export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
+  echo -e -n "\nWriting EFI partition to /etc/fstab...\n"
+  if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot vfat defaults,noatime 0 2" >> /etc/fstab
+  elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot/efi vfat defaults,noatime 0 2" >> /etc/fstab
+  fi
+
+  echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
 
@@ -367,23 +405,29 @@ function create_swapfile {
           swapon /var/swap/swapfile
           gcc -O2 "$HOME"/btrfs_map_physical.c -o "$HOME"/btrfs_map_physical
           RESUME_OFFSET=$(($("$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}')/$(getconf PAGESIZE)))
-          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
-
-cat << EOF >> /etc/fstab
-
-# SwapFile
-/var/swap/swapfile none swap defaults 0 0
-EOF
-
+          if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+            sed -i "/# OPTIONS=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
+          elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+            sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
+          fi
+          echo -e "\n# SwapFile\n/var/swap/swapfile none swap defaults 0 0" >> /etc/fstab
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >> /etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           echo
           dracut --regenerate-all --force --hostonly
-          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/grub
-          echo -e -n "\nUpdating grub...\n\n"
-          update-grub
+          if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+            sed -i "/# OPTIONS=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/efibootmgr-kernel-hook
+            echo -e -n "\nReconfiguring kernel...\n\n"
+            kernelver_pre=$(ls /lib/modules/)
+            kernelver=$(echo ${kernelver_pre%.*})
+            xbps-reconfigure -f linux"$kernelver"
+          elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+            sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/grub
+            echo -e -n "\nUpdating grub...\n\n"
+            update-grub
+          fi
           swapoff --all
           echo -e -n "\nSwapfile successfully created and zswap successfully enabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -786,7 +830,7 @@ function void_packages {
                 while true; do
                   
                   if [[ ! -d "$void_packages_path" ]] ; then
-                    if ! $(su - $void_packages_username --command "mkdir -p $void_packages_path 2> /dev/null") ; then
+                    if ! su - "$void_packages_username" --command "mkdir -p $void_packages_path 2> /dev/null" ; then
                       echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" key
                       break
@@ -811,7 +855,7 @@ function void_packages {
                   if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
                     echo -e -n "\nAborting, select another path.\n\n"
                     if [[ -z "$(ls -A $void_packages_path)" ]]; then
-                      rm -rf $void_packages_path
+                      rm -rf "$void_packages_path"
                     fi
                     read -n 1 -r -p "[Press any key to continue...]" key
                     clear
@@ -1027,15 +1071,20 @@ function finish_chroot {
   done
 
   echo -e -n "Configuring AppArmor and setting it to enforce...\n"
-  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
   sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
   sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
   sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
-  
-  echo -e -n "\nUpdating grub...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" key
-  echo
-  update-grub
+  if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+    sed -i "/# OPTIONS=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/efibootmgr-kernel-hook
+    echo -e -n "\nReconfiguring kernel...\n\n"
+    kernelver_pre=$(ls /lib/modules/)
+    kernelver=$(echo ${kernelver_pre%.*})
+    xbps-reconfigure -f linux"$kernelver"
+  elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+    sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
+    echo -e -n "\nUpdating grub...\n\n"
+    update-grub
+  fi
 
   echo -e -n "\nReconfiguring every package...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -1051,9 +1100,8 @@ function finish_chroot {
 
 set_root
 edit_fstab
-generate_random_key
 generate_dracut_conf
-install_grub
+install_bootloader
 create_swapfile
 install_additional_packages
 enable_disable_services
@@ -2201,17 +2249,21 @@ function disk_encryption {
             clear
 
             header_de
-            echo -e -n "\nThe selected partition will now be encrypted with LUKS.\n"
-            echo -e -n "\nKeep in mind that GRUB LUKS version 2 support is still limited (https://savannah.gnu.org/bugs/?55093).\n${RED_LIGHT}Choosing it could result in an unbootable system so it's strongly recommended to use LUKS version 1.${NORMAL}\n"
+            echo -e -n "\nThe selected partition will now be encrypted with LUKS version 1 or 2.\n"
+            echo -e -n "\n${RED_LIGHT}LUKS version 1${NORMAL}\n"
+            echo -e -n "- Can be used by both EFISTUB and GRUB2\n"
+            echo -e -n "\n${RED_LIGHT}LUKS version 2${NORMAL}\n"
+            echo -e -n "- Can be used only by EFISTUB and it will automatically be selected later.\n"
+            echo -e -n "  [GRUB LUKS version 2 support with encrypted /boot is still limited: https://savannah.gnu.org/bugs/?55093].\n"
 
             while true ; do
               echo -e -n "\nWhich LUKS version do you want to use? (1/2 and [ENTER]): "
-              read -r ot
-              if [[ "$ot" == "1" ]] || [[ "$ot" == "2" ]] ; then
-                echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$ot${NORMAL}.\n\n"
+              read -r luks_ot
+              if [[ "$luks_ot" == "1" ]] || [[ "$luks_ot" == "2" ]] ; then
+                echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$luks_ot${NORMAL}.\n\n"
                 while true ; do
                   echo
-                  cryptsetup luksFormat --type=luks"$ot" "$encrypted_partition"
+                  cryptsetup luksFormat --type=luks"$luks_ot" "$encrypted_partition"
                   if [[ "$?" == "0" ]] ; then
                     break
                   else
@@ -2486,7 +2538,7 @@ function create_filesystems {
     echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}/boot/efi${NORMAL} partition?\n"
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
 
-    if ([[ "$boot_partition" == "$encrypted_partition" ]]) || ([[ "$boot_partition" == "$root_partition" ]]) ; then
+    if [[ "$boot_partition" == "$encrypted_partition" ]] || [[ "$boot_partition" == "$root_partition" ]] ; then
       echo -e -n "\nPlease select a partition different from your root partition.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
@@ -2673,8 +2725,6 @@ function create_btrfs_subvolumes {
   mount -o "$BTRFS_OPT",subvol=@ "$final_drive" /mnt
   mkdir /mnt/home
   mount -o "$BTRFS_OPT",subvol=@home "$final_drive" /mnt/home/
-  mkdir -p /mnt/boot/efi
-  mount -o rw,noatime "$boot_partition" /mnt/boot/efi/
   mkdir -p /mnt/var/cache
   btrfs subvolume create /mnt/var/cache/xbps
   btrfs subvolume create /mnt/var/tmp
@@ -2733,7 +2783,7 @@ function install_base_system_and_chroot {
   read -n 1 -r -p "[Press any key to continue...]" key
   echo
   XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
-  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf plocate ictree void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
+  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf plocate ictree void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
   XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"
   
   echo -e -n "\nMounting folders for chroot...\n"
@@ -2759,7 +2809,7 @@ function install_base_system_and_chroot {
   cp "$HOME"/chroot.sh /mnt/root/
   cp "$HOME"/btrfs_map_physical.c /mnt/root/
 
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encryption_yn="$encryption_yn" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" hdd_ssd="$hdd_ssd" void_packages_repo="$void_packages_repo" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
+  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encryption_yn="$encryption_yn" luks_ot="$luks_ot" encrypted_partition="$encrypted_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" hdd_ssd="$hdd_ssd" void_packages_repo="$void_packages_repo" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
   header_ibsac
   
