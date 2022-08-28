@@ -6,104 +6,63 @@ newuser_yn=''
 
 # Functions
 
-function set_root {
+# Source: https://www.reddit.com/r/voidlinux/comments/jlkv1j/xs_quick_install_tool_for_void_linux/
+function xs {
+
+  xpkg -a | fzf -m --preview 'xq {1}' --preview-window=right:66%:wrap | xargs -ro xi
+
+}
+
+function initial_configuration {
 
   clear
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Setting root password${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Initial configuration${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+  echo -e -n "\nSetting root password:\n"
+  while true ; do
+    echo
+    passwd root
+    if [[ "$?" == "0" ]] ; then
+      break
+    else
+      echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      echo
+    fi
+  done
   
-  echo -e -n "\nSetting root password:\n\n"
-  passwd root
-  
-  echo -e -n "\nSetting root permissions...\n\n"
+  echo -e -n "\nSetting root permissions...\n"
   chown root:root /
   chmod 755 /
 
-  read -n 1 -r -p "[Press any key to continue...]" key
-  clear
-    
-}
-
-function edit_fstab {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}        ${GREEN_LIGHT}fstab creation${NORMAL}         ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-
   echo -e -n "\nExporting variables that will be used for fstab...\n"
-  export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
   export LUKS_UUID=$(blkid -s UUID -o value "$encrypted_partition")
   export ROOT_UUID=$(blkid -s UUID -o value "$final_drive")
   
-  echo -e -n "\nWriting fstab...\n\n"
+  echo -e -n "\nWriting fstab...\n"
   sed -i '/tmpfs/d' /etc/fstab
 
 cat << EOF >> /etc/fstab
 
-# root subvolume
+# Root subvolume
 UUID=$ROOT_UUID / btrfs $BTRFS_OPT,subvol=@ 0 1
 
-# home subvolume
+# Home subvolume
 UUID=$ROOT_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
 
-# root snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
+# Snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
 #UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
-
-# EFI partition
-UUID=$UEFI_UUID /boot/efi vfat defaults,noatime 0 2
 
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
 
-  read -n 1 -r -p "[Press any key to continue...]" key
-  clear
-
-}
-
-function generate_random_key {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Random key generation${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-
-  echo -e -n "\nGenerate random key to avoid typing password twice at boot...\n\n"
-  dd bs=512 count=4 if=/dev/random of=/boot/volume.key
-  
-  echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
-  cryptsetup luksAddKey "$encrypted_partition" /boot/volume.key
-  chmod 000 /boot/volume.key
-  chmod -R g-rwx,o-rwx /boot
-
-  echo -e -n "\nAdding random key to /etc/crypttab...\n\n"
-cat << EOF >> /etc/crypttab
-
-$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks
-EOF
-
-  read -n 1 -r -p "[Press any key to continue...]" key
-  clear
-  
-}
-
-function generate_dracut_conf {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Dracut configuration${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-
-  echo -e -n "\nAdding random key and other needed dracut configuration files...\n"
+  echo -e -n "\nAdding needed dracut configuration files...\n"
   echo -e "hostonly=yes\nhostonly_cmdline=yes" >> /etc/dracut.conf.d/00-hostonly.conf
-  echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
   echo -e "add_dracutmodules+=\" crypt btrfs lvm resume \"" >> /etc/dracut.conf.d/20-addmodules.conf
   echo -e "tmpdir=/tmp" >> /etc/dracut.conf.d/30-tmpfs.conf
 
@@ -118,68 +77,155 @@ function generate_dracut_conf {
 
 }
 
-function header_ig {
+function header_ib {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}       ${GREEN_LIGHT}GRUB installation${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}    ${GREEN_LIGHT}Bootloader installation${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   
 }
 
-function install_grub {
-
-  header_ig
-
-  echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
-cat << EOF >> /etc/default/grub
-
-GRUB_ENABLE_CRYPTODISK=y
-EOF
-
-  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name&/" /etc/default/grub
-  if [[ "$hdd_ssd" == "ssd" ]] ; then
-    sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/grub
-  fi
-
-  if ! grep -q efivar /proc/mounts ; then
-    echo -e -n "\nMounting efivarfs...\n"
-    mount -t efivarfs efivarfs /sys/firmware/efi/efivars/
-  fi
+function install_bootloader {
 
   while true ; do
-    echo -e -n "\nSelect a ${BLUE_LIGHT}bootloader-id${NORMAL} that will be used for grub install: "
-    read -r bootloader_id
-    if [[ -z "$bootloader_id" ]] ; then
-      echo -e -n "\nPlease enter a valid bootloader-id.\n\n"
+
+    if [[ "$luks_ot" == "2" ]] ; then
+      header_ib
+      echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n\n"
+      bootloader="EFISTUB"
       read -n 1 -r -p "[Press any key to continue...]" key
-    else
+    elif [[ "$luks_ot" == "1" ]] ; then
+      header_ib
+      echo -e -n "\nSelect which ${BLUE_LIGHT}bootloader${NORMAL} do you want to use (EFISTUB, GRUB2): "
+      read -r -p $bootloader
+    fi
+
+    if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+      echo -e -n "\n\nMounting $boot_partition to /boot...\n"
+      mkdir /TEMPBOOT
+      cp -pr /boot/* /TEMPBOOT/
+      rm -rf /boot/*
+      mount -o rw,noatime "$boot_partition" /boot
+      cp -pr /TEMPBOOT/* /boot/
+      rm -rf /TEMPBOOT
+      echo -e -n "\nSetting correct options in /etc/default/efibootmgr-kernel-hook...\n"
+      sed -i "/MODIFY_EFI_ENTRIES=0/s/0/1/" /etc/default/efibootmgr-kernel-hook
+      if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name\"/" /etc/default/efibootmgr-kernel-hook
+        if [[ "$hdd_ssd" == "ssd" ]] ; then
+          sed -i "/OPTIONS=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/efibootmgr-kernel-hook
+        fi
+      elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 rd.auto=1\"/" /etc/default/efibootmgr-kernel-hook
+      else
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4\"/" /etc/default/efibootmgr-kernel-hook
+      fi
+      sed -i "/# DISK=/s|.*|DISK=\"\$(lsblk -pd -no pkname \$(findmnt -enr -o SOURCE -M /boot))\"|" /etc/default/efibootmgr-kernel-hook
+      sed -i "/# PART=/s_.*_PART=\"\$(lsblk -pd -no pkname \$(findmnt -enr -o SOURCE -M /boot) | grep --color=never -Eo \\\\\"[0-9]+\$\\\\\")\"_" /etc/default/efibootmgr-kernel-hook
+      echo -e -n "\nModifying /etc/kernel.d/post-install/50-efibootmgr to keep EFI entry after reboot...\n"
+      sed -i "/efibootmgr -qo \$bootorder/s/^/#/" /etc/kernel.d/post-install/50-efibootmgr
+      echo -e -n "\n${RED_LIGHT}Keep in mind that to keep the new EFI entry after each reboot,${NORMAL}\n"
+      echo -e -n "${RED_LIGHT}the last line of /etc/kernel.d/post-install/50-efibootmgr has been commented.${NORMAL}\n"
+      echo -e -n "${RED_LIGHT}Probably you will have to comment the same line after each efibootmgr update.${NORMAL}\n\n"
+
+      read -n 1 -r -p "[Press any key to continue...]" key
+      break
+
+    elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+      if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+        echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
+        echo -e -n "\nGRUB_ENABLE_CRYPTODISK=y\n" >> /etc/default/grub
+        sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name&/" /etc/default/grub
+        if [[ "$hdd_ssd" == "ssd" ]] ; then
+          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/grub
+        fi
+     elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
+        sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1&/" /etc/default/grub
+      fi
+
+      if ! grep -q efivar /proc/mounts ; then
+        echo -e -n "\nMounting efivarfs...\n"
+        mount -t efivarfs efivarfs /sys/firmware/efi/efivars/
+      fi
+
       while true ; do
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$bootloader_id${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
-        if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-          echo -e -n "\n\nInstalling GRUB on ${BLUE_LIGHT}/boot/efi${NORMAL} partition with ${BLUE_LIGHT}$bootloader_id${NORMAL} as bootloader-id...\n\n"
-          grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id="$bootloader_id" --recheck
-          break 2
-        elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
-          echo -e -n "\n\nPlease select another bootloader-id.\n\n"
+        echo -e -n "\nSelect a ${BLUE_LIGHT}bootloader-id${NORMAL} that will be used for grub install: "
+        read -r bootloader_id
+        if [[ -z "$bootloader_id" ]] ; then
+          echo -e -n "\nPlease enter a valid bootloader-id.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-          break
         else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          while true ; do
+            echo -e -n "\nYou entered: ${BLUE_LIGHT}$bootloader_id${NORMAL}.\n\n"
+            read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
+            if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+              if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+                echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
+                dd bs=512 count=4 if=/dev/random of=/boot/volume.key
+                echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
+                while true ; do
+                  echo
+                  cryptsetup luksAddKey "$encrypted_partition" /boot/volume.key
+                  if [[ "$?" == "0" ]] ; then
+                    break
+                  else
+                    echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    echo
+                  fi
+                done
+                chmod 000 /boot/volume.key
+                chmod -R g-rwx,o-rwx /boot
+                echo -e -n "\nAdding random key to /etc/crypttab...\n"
+                echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >> /etc/crypttab
+                echo -e -n "\nAdding random key to dracut configuration files...\n"
+                echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
+                echo -e -n "\nGenerating new dracut initramfs...\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+                echo
+                dracut --regenerate-all --force --hostonly
+              fi
+              echo -e -n "\n\nInstalling GRUB on ${BLUE_LIGHT}/boot/efi${NORMAL} partition with ${BLUE_LIGHT}$bootloader_id${NORMAL} as bootloader-id...\n\n"
+              mkdir -p /boot/efi
+              mount -o rw,noatime "$boot_partition" /boot/efi/
+              grub-install --target=x86_64-efi --boot-directory=/boot --efi-directory=/boot/efi --bootloader-id="$bootloader_id" --recheck
+              break 3
+            elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+              echo -e -n "\n\nPlease select another bootloader-id.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+              break
+            else
+              echo -e -n "\nPlease answer y or n.\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" key
+            fi
+          done
         fi
       done
+
+    else
+      echo -e -n "\nPlease select a valid bootloader.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     fi
+
   done
 
-  if ([[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]) && [[ "$hdd_ssd" == "ssd" ]] ; then
-    echo -e -n "\nEnabling SSD trim for LVM...\n"
+  if { [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } && [[ "$hdd_ssd" == "ssd" ]] ; then
+    echo -e -n "\n\nEnabling SSD trim for LVM...\n"
     sed -i 's/issue_discards = 0/issue_discards = 1/' /etc/lvm/lvm.conf
   fi
 
-  echo
+  export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
+  echo -e -n "\n\nWriting EFI partition to /etc/fstab...\n"
+  if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot vfat defaults,noatime 0 2" >> /etc/fstab
+  elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot/efi vfat defaults,noatime 0 2" >> /etc/fstab
+  fi
+
+  echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
   clear
 
@@ -227,23 +273,29 @@ function create_swapfile {
           swapon /var/swap/swapfile
           gcc -O2 "$HOME"/btrfs_map_physical.c -o "$HOME"/btrfs_map_physical
           RESUME_OFFSET=$(($("$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}')/$(getconf PAGESIZE)))
-          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
-
-cat << EOF >> /etc/fstab
-
-# SwapFile
-/var/swap/swapfile none swap defaults 0 0
-EOF
-
+          if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+            sed -i "/OPTIONS=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
+          elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+            sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
+          fi
+          echo -e "\n# SwapFile\n/var/swap/swapfile none swap defaults 0 0" >> /etc/fstab
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >> /etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           echo
           dracut --regenerate-all --force --hostonly
-          sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/grub
-          echo -e -n "\nUpdating grub...\n\n"
-          update-grub
+          if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+            sed -i "/OPTIONS=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/efibootmgr-kernel-hook
+            echo -e -n "\nReconfiguring kernel...\n\n"
+            kernelver_pre=$(ls /lib/modules/)
+            kernelver=$(echo ${kernelver_pre%.*})
+            xbps-reconfigure -f linux"$kernelver"
+          elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+            sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/grub
+            echo -e -n "\nUpdating grub...\n\n"
+            update-grub
+          fi
           swapoff --all
           echo -e -n "\nSwapfile successfully created and zswap successfully enabled.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
@@ -263,6 +315,187 @@ EOF
       clear
       break
     
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+}
+
+function header_iap {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}  ${GREEN_LIGHT}Install additional packages${NORMAL}  ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function install_additional_packages {
+
+while true ; do
+
+    header_iap
+
+    echo -e -n "\nDo you want to install any additional package in your system? (y/n): "
+    read -n 1 -r yn
+  
+    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+
+      echo -e -n "\n\nPlease mark all the packages you want to install with [TAB] key.\nPress [ENTER] key when you're done to install the selected packages\nor press [ESC] key to abort the operation.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+  
+      xs
+
+      echo
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    
+    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional packages were installed.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+      break
+    
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+}
+
+function header_eds {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}    ${GREEN_LIGHT}Enable/disable services${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function enable_disable_services {
+
+  header_eds
+
+  echo -e -n "\nEnabling internet service at first boot...\n"
+  ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
+  ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
+
+  echo -e -n "\nEnabling grub snapshot service at first boot...\n\n"
+  ln -s /etc/sv/grub-btrfs /etc/runit/runsvdir/default/
+
+  read -n 1 -r -p "[Press any key to continue...]" key
+  clear
+
+  while true ; do
+
+    header_eds
+    echo -e -n "\nDo you want to enable any additional service in your system? (y/n): "
+    read -n 1 -r yn
+  
+    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+
+      while true ; do
+
+        clear
+        header_eds
+        echo -e -n "\nListing all the services that could be enabled...\n"
+        ls --almost-all --color=always /etc/sv/
+
+        echo -e -n "\nListing all the services that are already enabled...\n"
+        ls --almost-all --color=always /etc/runit/runsvdir/default/
+
+        echo -e -n "\nWhich service do you want to enable? (i.e. NetworkManager, \"q\" to break): "
+        read -r service_enabler
+
+        if [[ "$service_enabler" == "q" ]] ; then
+          echo -e -n "\nAborting the operation...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        elif [[ ! -d /etc/sv/"$service_enabler" ]] ; then
+          echo -e -n "\nService ${RED_LIGHT}$service_enabler${NORMAL} does not exist.\nPlease select another service to be enabled.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        elif [[ -L /etc/runit/runsvdir/default/"$service_enabler" ]] ; then
+          echo -e -n "\nService ${RED_LIGHT}$service_enabler${NORMAL} already enabled.\nPlease select another service to be enabled.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        elif [[ "$service_enabler" == "" ]] ; then
+          echo -e -n "\nPlease enter a valid service name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        else
+          echo -e -n "\nEnabling service ${BLUE_LIGHT}$service_enabler${NORMAL}...\n\n"
+          ln -s /etc/sv/"$service_enabler" /etc/runit/runsvdir/default/
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        fi
+
+      done
+    
+    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional services were enabled.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+      break
+    else
+      echo -e -n "\nPlease answer y or n.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+    fi
+  
+  done
+
+  while true ; do
+
+    header_eds
+    echo -e -n "\nDo you want to disable any service in your system? (y/n): "
+    read -n 1 -r yn
+  
+    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+
+      while true ; do
+
+        clear
+        header_eds
+        echo -e -n "\nListing all the services that could be disabled...\n"
+        ls --almost-all --color=always /etc/runit/runsvdir/default/
+
+        echo -e -n "\nWhich service do you want to disable? (i.e. NetworkManager, \"q\" to break): "
+        read -r service_disabler
+
+        if [[ "$service_disabler" == "q" ]] ; then
+          echo -e -n "\nAborting the operation...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          break
+        elif [[ ! -L /etc/runit/runsvdir/default/"$service_disabler" ]] ; then
+          echo -e -n "\nService ${RED_LIGHT}$service_disabler${NORMAL} does not exist.\nPlease select another service to be disabled.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        elif [[ "$service_disabler" == "" ]] ; then
+          echo -e -n "\nPlease enter a valid service name.\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+        else
+          echo -e -n "\nDisabling service ${BLUE_LIGHT}$service_disabler${NORMAL}...\n\n"
+          rm -f /etc/runit/runsvdir/default/"$service_disabler"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        fi
+
+      done
+    
+    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+      echo -e -n "\n\nNo additional services were disabled.\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
+      break
     else
       echo -e -n "\nPlease answer y or n.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
@@ -332,7 +565,17 @@ function create_user {
             useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "$newuser"
             
             echo -e -n "\nPlease select a new password for user ${BLUE_LIGHT}$newuser${NORMAL}:\n"
-            passwd "$newuser"
+            while true ; do
+              echo
+              passwd "$newuser"
+              if [[ "$?" == "0" ]] ; then
+                break
+              else
+                echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+                echo
+              fi
+            done
 
             while true ; do
               echo -e -n "\nListing all the available shells:\n\n"
@@ -455,7 +698,7 @@ function void_packages {
                 while true; do
                   
                   if [[ ! -d "$void_packages_path" ]] ; then
-                    if ! $(su - $void_packages_username --command "mkdir -p $void_packages_path 2> /dev/null") ; then
+                    if ! su - "$void_packages_username" --command "mkdir -p $void_packages_path 2> /dev/null" ; then
                       echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" key
                       break
@@ -480,7 +723,7 @@ function void_packages {
                   if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
                     echo -e -n "\nAborting, select another path.\n\n"
                     if [[ -z "$(ls -A $void_packages_path)" ]]; then
-                      rm -rf $void_packages_path
+                      rm -rf "$void_packages_path"
                     fi
                     read -n 1 -r -p "[Press any key to continue...]" key
                     clear
@@ -682,7 +925,6 @@ function finish_chroot {
           chsh --shell "$set_shell"
           echo -e -n "\nDefault shell successfully changed.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-          clear
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\n\nPlease select another shell.\n\n"
@@ -697,22 +939,21 @@ function finish_chroot {
     fi
   done
 
-  header_fc
-
-  echo -e -n "\nConfiguring AppArmor and setting it to enforce...\n"
-  sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
+  echo -e -n "\n\nConfiguring AppArmor and setting it to enforce...\n"
   sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
   sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
   sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
-  echo -e -n "\nUpdating grub...\n\n"
-  update-grub
-
-  echo -e -n "\nEnabling internet service at first boot...\n"
-  ln -s /etc/sv/dbus /etc/runit/runsvdir/default/
-  ln -s /etc/sv/NetworkManager /etc/runit/runsvdir/default/
-
-  echo -e -n "\nEnabling grub snapshot service at first boot...\n"
-  ln -s /etc/sv/grub-btrfs /etc/runit/runsvdir/default/
+  if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
+    sed -i "/OPTIONS=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/efibootmgr-kernel-hook
+    echo -e -n "\nReconfiguring kernel...\n\n"
+    kernelver_pre=$(ls /lib/modules/)
+    kernelver=$(echo ${kernelver_pre%.*})
+    xbps-reconfigure -f linux"$kernelver"
+  elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+    sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/grub
+    echo -e -n "\nUpdating grub...\n\n"
+    update-grub
+  fi
 
   echo -e -n "\nReconfiguring every package...\n\n"
   read -n 1 -r -p "[Press any key to continue...]" key
@@ -726,12 +967,11 @@ function finish_chroot {
 
 }
 
-set_root
-edit_fstab
-generate_random_key
-generate_dracut_conf
-install_grub
+initial_configuration
+install_bootloader
 create_swapfile
+install_additional_packages
+enable_disable_services
 create_user
 void_packages
 finish_chroot
