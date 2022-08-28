@@ -196,30 +196,7 @@ function generate_dracut_conf {
   echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Dracut configuration${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
-  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
-    echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
-    dd bs=512 count=4 if=/dev/random of=/boot/volume.key
-    echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
-    while true ; do
-      echo
-      cryptsetup luksAddKey "$encrypted_partition" /boot/volume.key
-      if [[ "$?" == "0" ]] ; then
-        break
-      else
-        echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
-        echo
-      fi
-    done
-    chmod 000 /boot/volume.key
-    chmod -R g-rwx,o-rwx /boot
-    echo -e -n "\nAdding random key to /etc/crypttab...\n"
-    echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >> /etc/crypttab
-    echo -e -n "\nAdding random key and other needed dracut configuration files...\n"
-    echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
-  elif [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]] ; then
-    echo -e -n "\nAdding other needed dracut configuration files...\n"
-  fi
+  echo -e -n "\nAdding needed dracut configuration files...\n"
   echo -e "hostonly=yes\nhostonly_cmdline=yes" >> /etc/dracut.conf.d/00-hostonly.conf
   echo -e "add_dracutmodules+=\" crypt btrfs lvm resume \"" >> /etc/dracut.conf.d/20-addmodules.conf
   echo -e "tmpdir=/tmp" >> /etc/dracut.conf.d/30-tmpfs.conf
@@ -319,6 +296,32 @@ function install_bootloader {
             echo -e -n "\nYou entered: ${BLUE_LIGHT}$bootloader_id${NORMAL}.\n\n"
             read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
             if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+              if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+                echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
+                dd bs=512 count=4 if=/dev/random of=/boot/volume.key
+                echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
+                while true ; do
+                  echo
+                  cryptsetup luksAddKey "$encrypted_partition" /boot/volume.key
+                  if [[ "$?" == "0" ]] ; then
+                    break
+                  else
+                    echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" key
+                    echo
+                  fi
+                done
+                chmod 000 /boot/volume.key
+                chmod -R g-rwx,o-rwx /boot
+                echo -e -n "\nAdding random key to /etc/crypttab...\n"
+                echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >> /etc/crypttab
+                echo -e -n "\nAdding random key to dracut configuration files...\n"
+                echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
+                echo -e -n "\nGenerating new dracut initramfs...\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" key
+                echo
+                dracut --regenerate-all --force --hostonly
+              fi
               echo -e -n "\n\nInstalling GRUB on ${BLUE_LIGHT}/boot/efi${NORMAL} partition with ${BLUE_LIGHT}$bootloader_id${NORMAL} as bootloader-id...\n\n"
               mkdir -p /boot/efi
               mount -o rw,noatime "$boot_partition" /boot/efi/
