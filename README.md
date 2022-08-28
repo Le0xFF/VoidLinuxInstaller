@@ -27,17 +27,17 @@ Pull requests are absolutely welcome!
 First update `xbps` package:
 
 ``` bash
-xbps-install -Sy xbps
+xbps-install -Suvy xbps
 ```
 
 then install `wget` or `curl` package:
 
 ``` bash
 # For wget
-xbps-install -Sy wget
+xbps-install -Suvy wget
 
 # For curl
-xbps-install -Sy curl
+xbps-install -Suvy curl
 ```
 
 then download the needed file:
