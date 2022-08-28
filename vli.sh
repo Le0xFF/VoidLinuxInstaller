@@ -406,7 +406,7 @@ function create_swapfile {
           gcc -O2 "$HOME"/btrfs_map_physical.c -o "$HOME"/btrfs_map_physical
           RESUME_OFFSET=$(($("$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}')/$(getconf PAGESIZE)))
           if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
-            sed -i "/# OPTIONS=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
+            sed -i "/OPTIONS=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
           elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
             sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
           fi
@@ -418,7 +418,7 @@ function create_swapfile {
           echo
           dracut --regenerate-all --force --hostonly
           if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
-            sed -i "/# OPTIONS=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/efibootmgr-kernel-hook
+            sed -i "/OPTIONS=/s/\"$/ zswap.enabled=1 zswap.max_pool_percent=25 zswap.compressor=lz4hc zswap.zpool=z3fold&/" /etc/default/efibootmgr-kernel-hook
             echo -e -n "\nReconfiguring kernel...\n\n"
             kernelver_pre=$(ls /lib/modules/)
             kernelver=$(echo ${kernelver_pre%.*})
@@ -1076,7 +1076,7 @@ function finish_chroot {
   sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
   sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
   if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
-    sed -i "/# OPTIONS=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/efibootmgr-kernel-hook
+    sed -i "/OPTIONS=/s/\"$/ apparmor=1 security=apparmor&/" /etc/default/efibootmgr-kernel-hook
     echo -e -n "\nReconfiguring kernel...\n\n"
     kernelver_pre=$(ls /lib/modules/)
     kernelver=$(echo ${kernelver_pre%.*})
