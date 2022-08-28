@@ -122,13 +122,13 @@ function xs {
 
 }
 
-function set_root {
+function initial_configuration {
 
   clear
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Setting root password${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Initial configuration${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   echo -e -n "\nSetting root password:\n"
@@ -144,28 +144,15 @@ function set_root {
     fi
   done
   
-  echo -e -n "\nSetting root permissions...\n\n"
+  echo -e -n "\nSetting root permissions...\n"
   chown root:root /
   chmod 755 /
-
-  read -n 1 -r -p "[Press any key to continue...]" key
-  clear
-    
-}
-
-function edit_fstab {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}        ${GREEN_LIGHT}fstab creation${NORMAL}         ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   echo -e -n "\nExporting variables that will be used for fstab...\n"
   export LUKS_UUID=$(blkid -s UUID -o value "$encrypted_partition")
   export ROOT_UUID=$(blkid -s UUID -o value "$final_drive")
   
-  echo -e -n "\nWriting fstab...\n\n"
+  echo -e -n "\nWriting fstab...\n"
   sed -i '/tmpfs/d' /etc/fstab
 
 cat << EOF >> /etc/fstab
@@ -182,19 +169,6 @@ UUID=$ROOT_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
-
-  read -n 1 -r -p "[Press any key to continue...]" key
-  clear
-
-}
-
-function generate_dracut_conf {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Dracut configuration${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
   echo -e -n "\nAdding needed dracut configuration files...\n"
   echo -e "hostonly=yes\nhostonly_cmdline=yes" >> /etc/dracut.conf.d/00-hostonly.conf
@@ -353,7 +327,7 @@ function install_bootloader {
   fi
 
   export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
-  echo -e -n "\nWriting EFI partition to /etc/fstab...\n"
+  echo -e -n "\n\nWriting EFI partition to /etc/fstab...\n"
   if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
     echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot vfat defaults,noatime 0 2" >> /etc/fstab
   elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
@@ -1074,7 +1048,7 @@ function finish_chroot {
     fi
   done
 
-  echo -e -n "Configuring AppArmor and setting it to enforce...\n"
+  echo -e -n "\n\nConfiguring AppArmor and setting it to enforce...\n"
   sed -i "/APPARMOR=/s/.*/APPARMOR=enforce/" /etc/default/apparmor
   sed -i "/#write-cache/s/^#//" /etc/apparmor/parser.conf
   sed -i "/#show_notifications/s/^#//" /etc/apparmor/notify.conf
@@ -1102,9 +1076,7 @@ function finish_chroot {
 
 }
 
-set_root
-edit_fstab
-generate_dracut_conf
+initial_configuration
 install_bootloader
 create_swapfile
 install_additional_packages
@@ -2539,7 +2511,7 @@ function create_filesystems {
     lsblk -p
     echo
 
-    echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}/boot/efi${NORMAL} partition?\n"
+    echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}bootable EFI${NORMAL} partition?\n"
     read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
 
     if [[ "$boot_partition" == "$encrypted_partition" ]] || [[ "$boot_partition" == "$root_partition" ]] ; then
