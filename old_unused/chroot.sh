@@ -99,7 +99,7 @@ function install_bootloader {
     else
       header_ib
       echo -e -n "\nSelect which ${BLUE_LIGHT}bootloader${NORMAL} do you want to use (EFISTUB, GRUB2): "
-      read -r -p $bootloader
+      read -r $bootloader
     fi
 
     if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
