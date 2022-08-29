@@ -15,8 +15,6 @@
 
 </details>
 
-<br>
-
 # VoidLinuxInstaller script
 
 The **VoidLinuxInstaller script** is an attempt to make [my gist](https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3) an interactive bash script.
