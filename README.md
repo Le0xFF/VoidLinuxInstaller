@@ -1,3 +1,22 @@
+<details>
+  <summary>Table of contents</summary>
+
+  - [VoidLinuxInstaller script](#voidlinuxinstaller-script)
+    - [Some fancy screenshots](#some-fancy-screenshots)
+    - [How to run it?](#how-to-run-it)
+    - [How does it work](#how-does-it-work)
+        - [Suggested partition layout](#suggested-partition-layout)
+        - [Final partitioning result](#final-partitioning-result)
+    - [Follow up for `@snapshots` subvolume](#follow-up-for-snapshots-subvolume)
+    - [What to do if system breaks?](#what-to-do-if-system-breaks)
+    - [How to add more space with a new drive with LVM](#how-to-add-more-space-with-a-new-drive-with-lvm)
+    - [Notes](#notes)
+    - [Resources](#resources)
+
+</details>
+
+<br>
+
 # VoidLinuxInstaller script
 
 The **VoidLinuxInstaller script** is an attempt to make [my gist](https://gist.github.com/Le0xFF/ff0e3670c06def675bb6920fe8dd64a3) an interactive bash script.
@@ -19,6 +38,12 @@ This script comes from my need to automate my gist as much as I can, and also as
 I've tried this script a lot with virtual machines and following every step always brought me to a functional system, so there should be no problem from this point of view!
 
 Pull requests are absolutely welcome!
+
+<br>
+
+## Some fancy screenshots
+
+![ScriptScreenshot](imgs/ScriptScreenshot.png)
 
 <br>
 
