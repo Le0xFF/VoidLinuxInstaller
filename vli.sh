@@ -1935,7 +1935,7 @@ function disk_wiping {
     header_dw
   
     echo
-    read -n 1 -r -p "Do you want to wipe any drive? (y/n): " yn
+    read -n 1 -r -p "Do you want to ${BLUE_LIGHT}wipe${NORMAL} any drive? (y/n): " yn
     
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
       
@@ -2021,7 +2021,7 @@ function disk_partitioning {
     
     if [[ -z "$user_drive" ]] ; then
       echo -e -n "\nNo drive previously selected for partitioning.\n\n"
-      read -n 1 -r -p "Do you want to partition any drive? (y/n): " yn
+      read -n 1 -r -p "Do you want to ${BLUE_LIGHT}partition${NORMAL} any drive? (y/n): " yn
     else
       while true ; do
         echo -e -n "\nDrive previously selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}.\n\n"
