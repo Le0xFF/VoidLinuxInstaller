@@ -2021,8 +2021,9 @@ function disk_partitioning {
     header_dp
     
     if [[ -z "$user_drive" ]] ; then
-      echo -e -n "\nNo drive previously selected for partitioning.\n\n"
-      read -n 1 -r -p "Do you want to ${BLUE_LIGHT}partition${NORMAL} any drive? (y/n): " yn
+      echo -e -n "\nNo drive previously selected for partitioning.\n"
+      echo -e -n "\nDo you want to ${BLUE_LIGHT}partition${NORMAL} any drive? (y/n): "
+      read -n 1 -r yn
     else
       while true ; do
         echo -e -n "\nDrive previously selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}.\n\n"
