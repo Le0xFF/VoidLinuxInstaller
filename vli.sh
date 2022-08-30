@@ -332,7 +332,7 @@ function install_bootloader {
   fi
 
   export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
-  echo -e -n "\n\nWriting EFI partition to /etc/fstab...\n"
+  echo -e -n "\nWriting EFI partition to /etc/fstab...\n"
   if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
     echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot vfat defaults,noatime 0 2" >> /etc/fstab
   elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
