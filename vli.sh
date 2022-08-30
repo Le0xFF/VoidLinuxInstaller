@@ -210,6 +210,7 @@ function install_bootloader {
       echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n\n"
       bootloader="EFISTUB"
       read -n 1 -r -p "[Press any key to continue...]" key
+      echo
     else
       header_ib
       echo -e -n "\nSelect which ${BLUE_LIGHT}bootloader${NORMAL} do you want to use (EFISTUB, GRUB2): "
@@ -217,7 +218,8 @@ function install_bootloader {
     fi
 
     if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
-      echo -e -n "\n\nMounting $boot_partition to /boot...\n"
+      echo -e -n "\nBootloader selected: ${BLUE_LIGHT}$bootloader${NORMAL}.\n"
+      echo -e -n "\nMounting $boot_partition to /boot...\n"
       mkdir /TEMPBOOT
       cp -pr /boot/* /TEMPBOOT/
       rm -rf /boot/*
@@ -248,6 +250,7 @@ function install_bootloader {
       break
 
     elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+      echo -e -n "\nBootloader selected: ${BLUE_LIGHT}$bootloader${NORMAL}.\n"
       if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
         echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
         echo -e -n "\nGRUB_ENABLE_CRYPTODISK=y\n" >> /etc/default/grub
@@ -924,8 +927,9 @@ function finish_chroot {
     echo -e -n "\nSetting ${BLUE_LIGHT}$user_keyboard_layout${NORMAL} keyboard layout in /etc/rc.conf...\n"
     sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
     echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
-    echo "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
+    echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
     read -n 1 -r -p "[Press any key to continue...]" key
+    echo
     dracut --regenerate-all --force --hostonly
     echo
     read -n 1 -r -p "[Press any key to continue...]" key
@@ -945,8 +949,9 @@ function finish_chroot {
         sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
         echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n"
         echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
-        echo "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
+        echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
         read -n 1 -r -p "[Press any key to continue...]" key
+        echo
         dracut --regenerate-all --force --hostonly
         echo
         read -n 1 -r -p "[Press any key to continue...]" key
@@ -2289,7 +2294,7 @@ function disk_encryption {
                   read -n 1 -r -p "Is this the desired name? (y/n): " yn
 
                   if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-                    echo -e -n "\n\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n\n"
+                    echo -e -n "\n\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n"
                     while true ; do
                       echo
                       cryptsetup open "$encrypted_partition" "$encrypted_name"
