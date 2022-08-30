@@ -279,7 +279,7 @@ function install_bootloader {
             read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
             if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
               if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
-                echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
+                echo -e -n "\n\nGenerating random key to avoid typing password twice at boot...\n\n"
                 dd bs=512 count=4 if=/dev/random of=/boot/volume.key
                 echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
                 while true ; do
