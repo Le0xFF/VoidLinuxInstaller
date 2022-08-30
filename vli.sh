@@ -921,8 +921,13 @@ function finish_chroot {
 
   header_fc
   if [[ -n "$user_keyboard_layout" ]] ; then
-    echo -e -n "\nSetting ${BLUE_LIGHT}$user_keyboard_layout${NORMAL} keyboard layout in /etc/rc.conf...\n\n"
+    echo -e -n "\nSetting ${BLUE_LIGHT}$user_keyboard_layout${NORMAL} keyboard layout in /etc/rc.conf...\n"
     sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
+    echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
+    echo "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
+    read -n 1 -r -p "[Press any key to continue...]" key
+    dracut --regenerate-all --force --hostonly
+    echo
     read -n 1 -r -p "[Press any key to continue...]" key
     clear
   else
@@ -938,7 +943,12 @@ function finish_chroot {
         read -n 1 -r -p "[Press any key to continue...]" key
       else
         sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
-        echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n\n"
+        echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n"
+        echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
+        echo "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
+        read -n 1 -r -p "[Press any key to continue...]" key
+        dracut --regenerate-all --force --hostonly
+        echo
         read -n 1 -r -p "[Press any key to continue...]" key
         clear
         break
@@ -1705,6 +1715,7 @@ function set_keyboard_layout {
     header_skl
 
     echo -e -n "\nIf you set your keyboard layout now, it will be also configured for your future system.\n"
+    echo -e -n "\nIf you don't do it now, you can also do it later.\n"
     echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
     read -n 1 -r yn
   
