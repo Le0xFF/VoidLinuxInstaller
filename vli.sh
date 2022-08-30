@@ -1788,8 +1788,9 @@ function check_and_connect_to_internet {
     echo -e -n "\nChecking internet connectivity...\n"
 
     if ! ping -c 2 8.8.8.8 &> /dev/null ; then
-      echo -e -n "\nNo internet connection found.\n\n"
-      read -n 1 -r -p "Do you want to connect to the ${BLUE_LIGHT}internet${NORMAL}? (y/n): " yn
+      echo -e -n "\nNo internet connection found.\n"
+      echo -e -n "\nDo you want to connect to the ${BLUE_LIGHT}internet${NORMAL}? (y/n): "
+      read -n 1 -r yn
     
       if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
 
@@ -1934,8 +1935,8 @@ function disk_wiping {
 
     header_dw
   
-    echo
-    read -n 1 -r -p "Do you want to ${BLUE_LIGHT}wipe${NORMAL} any drive? (y/n): " yn
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}wipe${NORMAL} any drive? (y/n): "
+    read -n 1 -r yn
     
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
       
