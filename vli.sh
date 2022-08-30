@@ -47,14 +47,16 @@ function kill_script {
 
   echo -e -n "\n\n${RED_LIGHT}Kill signal captured.\nUnmonting what should have been mounted, cleaning and closing everything...${NORMAL}\n\n"
   
-  umount --recursive /mnt
+  if findmnt /mnt &> /dev/null ; then
+    umount --recursive /mnt
+  fi
   
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+  if findmnt /dev/mapper/"$vg_name"-"$lv_root_name" &> /dev/null; then
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
     vgchange -an /dev/mapper/"$vg_name"
   fi
 
-  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+  if findmnt /dev/mapper/"$encrypted_name" &> /dev/null ; then
     cryptsetup close /dev/mapper/"$encrypted_name"
   fi
 
@@ -2798,13 +2800,16 @@ function install_base_system_and_chroot {
   rm -f /mnt/root/btrfs_map_physical
 
   echo -e -n "\nUnmounting partitions...\n\n"
-  umount --recursive /mnt
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+  if findmnt /mnt &> /dev/null ; then
+    umount --recursive /mnt
+  fi
+  
+  if findmnt /dev/mapper/"$vg_name"-"$lv_root_name" &> /dev/null; then
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
     vgchange -an /dev/mapper/"$vg_name"
   fi
 
-  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+  if findmnt /dev/mapper/"$encrypted_name" &> /dev/null ; then
     cryptsetup close /dev/mapper/"$encrypted_name"
   fi
 
