@@ -1721,7 +1721,7 @@ function set_keyboard_layout {
 
     echo -e -n "\nIf you set your keyboard layout now, it will be also configured for your future system.\n"
     echo -e -n "\nIf you don't set it now, you can also do it later.\n"
-    echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
+    echo -e -n "\nDo you want to change your ${BLUE_LIGHT}keyboard layout${NORMAL}? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -1789,7 +1789,7 @@ function check_and_connect_to_internet {
 
     if ! ping -c 2 8.8.8.8 &> /dev/null ; then
       echo -e -n "\nNo internet connection found.\n\n"
-      read -n 1 -r -p "Do you want to connect to the internet? (y/n): " yn
+      read -n 1 -r -p "Do you want to connect to the ${BLUE_LIGHT}internet${NORMAL}? (y/n): " yn
     
       if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
 
