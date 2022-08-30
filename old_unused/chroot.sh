@@ -39,6 +39,9 @@ function initial_configuration {
   chown root:root /
   chmod 755 /
 
+  echo -e -n "\nEnabling wheel group to use sudo...\n"
+  echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/10-wheel
+
   echo -e -n "\nExporting variables that will be used for fstab...\n"
   export LUKS_UUID=$(blkid -s UUID -o value "$encrypted_partition")
   export ROOT_UUID=$(blkid -s UUID -o value "$final_drive")
