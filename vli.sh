@@ -51,12 +51,12 @@ function kill_script {
     umount --recursive /mnt
   fi
   
-  if findmnt /dev/mapper/"$vg_name"-"$lv_root_name" &> /dev/null; then
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
     vgchange -an /dev/mapper/"$vg_name"
   fi
 
-  if findmnt /dev/mapper/"$encrypted_name" &> /dev/null ; then
+  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
     cryptsetup close /dev/mapper/"$encrypted_name"
   fi
 
@@ -2825,12 +2825,12 @@ function install_base_system_and_chroot {
     umount --recursive /mnt
   fi
   
-  if findmnt /dev/mapper/"$vg_name"-"$lv_root_name" &> /dev/null; then
+  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
     lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
     vgchange -an /dev/mapper/"$vg_name"
   fi
 
-  if findmnt /dev/mapper/"$encrypted_name" &> /dev/null ; then
+  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
     cryptsetup close /dev/mapper/"$encrypted_name"
   fi
 
