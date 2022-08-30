@@ -1715,7 +1715,7 @@ function set_keyboard_layout {
     header_skl
 
     echo -e -n "\nIf you set your keyboard layout now, it will be also configured for your future system.\n"
-    echo -e -n "\nIf you don't do it now, you can also do it later.\n"
+    echo -e -n "\nIf you don't set it now, you can also do it later.\n"
     echo -e -n "\nDo you want to change your keyboard layout? (y/n): "
     read -n 1 -r yn
   
