@@ -133,7 +133,7 @@ function initial_configuration {
   echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Initial configuration${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
-  echo -e -n "\nSetting root password:\n"
+  echo -e -n "\nSetting ${BLUE_LIGHT}root password${NORMAL}:\n"
   while true ; do
     echo
     passwd root
@@ -458,7 +458,7 @@ while true ; do
 
     header_iap
 
-    echo -e -n "\nDo you want to install any additional package in your system? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}install${NORMAL} any ${BLUE_LIGHT}additional package${NORMAL} in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -515,7 +515,7 @@ function enable_disable_services {
   while true ; do
 
     header_eds
-    echo -e -n "\nDo you want to enable any additional service in your system? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}enable${normal} any additional ${BLUE_LIGHT}service${NORMAL} in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -573,7 +573,7 @@ function enable_disable_services {
   while true ; do
 
     header_eds
-    echo -e -n "\nDo you want to disable any service in your system? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}disable${NORMAL} any ${BLUE_LIGHT}service${NORMAL} in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -639,7 +639,7 @@ function create_user {
 
     header_cu
 
-    echo -e -n "\nDo you want to add any new user?\nOnly non-root users can later configure Void Packages (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}add${NORMAL} any ${BLUE_LIGHT}new user${NORMAL}?\nOnly non-root users can later configure Void Packages (y/n): "
     read -n 1 -r yn
     
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -677,7 +677,7 @@ function create_user {
             clear
             break
           elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-            echo -e -n "\nAdding new user ${BLUE_LIGHT}$newuser${NORMAL} and giving access to groups:\n"
+            echo -e -n "\n\nAdding new user ${BLUE_LIGHT}$newuser${NORMAL} and giving access to groups:\n"
             echo -e -n "kmem, wheel, tty, tape, daemon, floppy, disk, lp, dialout, audio, video,\nutmp, cdrom, optical, mail, storage, scanner, kvm, input, plugdev, users.\n"
             useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "$newuser"
             
@@ -773,7 +773,7 @@ function void_packages {
 
       header_vp
   
-      echo -e -n "\nDo you want to clone ${BLUE_LIGHT}Void Packages${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
+      echo -e -n "\nDo you want to clone ${BLUE_LIGHT}Void Packages${NORMAL} official repository to a specific folder for a specific non-root user? (y/n): "
       read -n 1 -r yn
     
       if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
