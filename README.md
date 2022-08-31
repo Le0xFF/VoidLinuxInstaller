@@ -7,11 +7,11 @@
     - [How does it work](#how-does-it-work)
         - [Suggested partition layout](#suggested-partition-layout)
         - [Final partitioning result](#final-partitioning-result)
-    - [Follow up for `@snapshots` subvolume](#follow-up-for-snapshots-subvolume)
+        - [Follow up for `@snapshots` subvolume](#follow-up-for-snapshots-subvolume)
     - [What to do if system breaks?](#what-to-do-if-system-breaks)
     - [How to add more space with a new drive with LVM](#how-to-add-more-space-with-a-new-drive-with-lvm)
-    - [Notes](#notes)
-    - [Resources](#resources)
+  - [Notes](#notes)
+  - [Resources](#resources)
 
 </details>
 
@@ -163,9 +163,7 @@ Following the script, at the very end your drive will end up being like the foll
 
 > Note: `/.snapshots` will be available after following the [Follow up for `@snapshots` subvolume](#follow-up-for-snapshots-subvolume) section.
 
-<br>
-
-## Follow up for `@snapshots` subvolume
+### Follow up for `@snapshots` subvolume
 
 With this script, the `@snapshots` subvolume will be created, but not the `/.snapshots` folder. This is done to avoid stupid snapper issues when trying to create a configuration for `/`.
 
@@ -291,7 +289,7 @@ btrfs filesystem resize max /mnt/
 
 <br>
 
-## Notes
+# Notes
 
 - To speed up decryption at boot you could lower the number of iteration for each key as described on the [Arch Wiki](https://wiki.archlinux.org/title/GRUB/Tips_and_tricks#Speeding_up_LUKS_decryption_in_GRUB), but keep in mind that this comes with its own security concerns.
 - **I DON'T RECOMMEND FOLLOWING THIS, IT'S HERE ONLY AS REFERENCE:**
@@ -300,7 +298,7 @@ btrfs filesystem resize max /mnt/
 
 <br>
 
-## Resources
+# Resources
 
 > **[1]** https://tldp.org/LDP/Bash-Beginners-Guide/html/index.html
 
