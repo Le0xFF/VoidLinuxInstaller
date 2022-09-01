@@ -125,7 +125,7 @@ Here is documented how the script works in details and what will ask to the user
 10. chroot:
     * set *root* password and `/` permissions;
     * create proper `/etc/fstab` file;
-    * if encryption was choosen, generate random key to avoid typing password two times at boot;
+    * if encryption was chosen, generate random key to avoid typing password two times at boot;
     * create proper dracut configuration and initramfs;
     * optionally create a swapfile and enable zswap;
     * install any additional package;
