@@ -863,13 +863,13 @@ function void_packages {
                             void_packages_custom_repo_check="$void_packages_custom_repo $void_packages_custom_branch"
                           fi
                           
-                          if GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code "$void_packages_custom_repo_check" &> /dev/null ; then
+                          if [[ "$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo_check" | wc -l)" == "1" ]] ; then
                             echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
                             
                             if [[ -z "$void_packages_custom_branch" ]] ; then
-                              void_packages_repo="$void_packages_custom_repo"
+                              git_cmd="git clone $void_packages_custom_repo"
                             else
-                              void_packages_repo="$void_packages_custom_repo -b $void_packages_custom_branch"
+                              git_cmd="git clone $void_packages_custom_repo -b $void_packages_custom_branch"
                             fi
                             break 2
 
@@ -885,8 +885,8 @@ function void_packages {
                     done
 
                     echo -e -n "\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
-su --login --shell=/bin/bash --whitelist-environment=void_packages_repo,void_packages_path "$void_packages_username" << EOSU
-git clone "$void_packages_repo" "$void_packages_path"
+su --login --shell=/bin/bash --whitelist-environment=git_cmd,void_packages_path "$void_packages_username" << EOSU
+$git_cmd
 echo -e -n "\nEnabling restricted packages...\n"
 echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
 EOSU
