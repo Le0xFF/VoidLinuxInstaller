@@ -886,7 +886,7 @@ function void_packages {
 
                     echo -e -n "\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
 su --login --shell=/bin/bash --whitelist-environment=git_cmd,void_packages_path "$void_packages_username" << EOSU
-$git_cmd
+$git_cmd "$void_packages_path"
 echo -e -n "\nEnabling restricted packages...\n"
 echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
 EOSU
