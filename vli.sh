@@ -677,7 +677,7 @@ function create_user {
             clear
             break
           elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-            echo -e -n "\n\nAdding new user ${BLUE_LIGHT}$newuser${NORMAL} and giving access to groups:\n"
+            echo -e -n "\nAdding new user ${BLUE_LIGHT}$newuser${NORMAL} and giving access to groups:\n"
             echo -e -n "kmem, wheel, tty, tape, daemon, floppy, disk, lp, dialout, audio, video,\nutmp, cdrom, optical, mail, storage, scanner, kvm, input, plugdev, users.\n"
             useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "$newuser"
             
@@ -852,6 +852,7 @@ function void_packages {
                       read -n 1 -r yn
                       if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
                         echo -e -n "\n\nOfficial repository will be used.\n"
+                        git_cmd="git clone $void_packages_repo"
                       elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                         while true ; do
                           echo -e -n "\n\nPlease enter a public repository url and optionally a branch (i.e. https://github.com/MyPersonal/VoidPackages MyBranch): "
