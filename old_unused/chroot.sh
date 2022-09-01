@@ -22,7 +22,7 @@ function initial_configuration {
   echo -e -n "${GREEN_DARK}#######${NORMAL}     ${GREEN_LIGHT}Initial configuration${NORMAL}     ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
-  echo -e -n "\nSetting root password:\n"
+  echo -e -n "\nSetting ${BLUE_LIGHT}root password${NORMAL}:\n"
   while true ; do
     echo
     passwd root
@@ -99,6 +99,7 @@ function install_bootloader {
       echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n\n"
       bootloader="EFISTUB"
       read -n 1 -r -p "[Press any key to continue...]" key
+      echo
     else
       header_ib
       echo -e -n "\nSelect which ${BLUE_LIGHT}bootloader${NORMAL} do you want to use (EFISTUB, GRUB2): "
@@ -106,7 +107,8 @@ function install_bootloader {
     fi
 
     if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
-      echo -e -n "\n\nMounting $boot_partition to /boot...\n"
+      echo -e -n "\nBootloader selected: ${BLUE_LIGHT}$bootloader${NORMAL}.\n"
+      echo -e -n "\nMounting $boot_partition to /boot...\n"
       mkdir /TEMPBOOT
       cp -pr /boot/* /TEMPBOOT/
       rm -rf /boot/*
@@ -137,6 +139,7 @@ function install_bootloader {
       break
 
     elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+      echo -e -n "\nBootloader selected: ${BLUE_LIGHT}$bootloader${NORMAL}.\n"
       if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
         echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
         echo -e -n "\nGRUB_ENABLE_CRYPTODISK=y\n" >> /etc/default/grub
@@ -165,7 +168,7 @@ function install_bootloader {
             read -n 1 -r -p "Is this the desired bootloader-id? (y/n): " yn
             if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
               if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
-                echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
+                echo -e -n "\n\nGenerating random key to avoid typing password twice at boot...\n\n"
                 dd bs=512 count=4 if=/dev/random of=/boot/volume.key
                 echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
                 while true ; do
@@ -221,7 +224,7 @@ function install_bootloader {
   fi
 
   export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
-  echo -e -n "\n\nWriting EFI partition to /etc/fstab...\n"
+  echo -e -n "\nWriting EFI partition to /etc/fstab...\n"
   if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
     echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot vfat defaults,noatime 0 2" >> /etc/fstab
   elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
@@ -344,7 +347,7 @@ while true ; do
 
     header_iap
 
-    echo -e -n "\nDo you want to install any additional package in your system? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}install${NORMAL} any ${BLUE_LIGHT}additional package${NORMAL} in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -401,7 +404,7 @@ function enable_disable_services {
   while true ; do
 
     header_eds
-    echo -e -n "\nDo you want to enable any additional service in your system? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}enable${NORMAL} any additional ${BLUE_LIGHT}service${NORMAL} in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -459,7 +462,7 @@ function enable_disable_services {
   while true ; do
 
     header_eds
-    echo -e -n "\nDo you want to disable any service in your system? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}disable${NORMAL} any ${BLUE_LIGHT}service${NORMAL} in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -525,7 +528,7 @@ function create_user {
 
     header_cu
 
-    echo -e -n "\nDo you want to add any new user?\nOnly non-root users can later configure Void Packages (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}add${NORMAL} any ${BLUE_LIGHT}new user${NORMAL}?\nOnly non-root users can later configure Void Packages (y/n): "
     read -n 1 -r yn
     
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -535,7 +538,7 @@ function create_user {
         clear
         header_cu
 
-        echo -e -n "\nPlease select a name for your new user (i.e. MyNewUser): "
+        echo -e -n "\nPlease select a ${BLUE_LIGHT}name${NORMAL} for your new user (i.e. MyNewUser): "
         read -r newuser
       
         if [[ -z "$newuser" ]] ; then
@@ -555,7 +558,7 @@ function create_user {
         else
           while true; do
           echo -e -n "\nIs username ${BLUE_LIGHT}$newuser${NORMAL} okay? (y/n and [ENTER]): "
-          read -n 1 -r yn
+          read -r yn
         
           if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
             echo -e -n "\nAborting, pleasae select another name.\n\n"
@@ -659,7 +662,7 @@ function void_packages {
 
       header_vp
   
-      echo -e -n "\nDo you want to clone ${BLUE_LIGHT}Void Packages${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
+      echo -e -n "\nDo you want to clone a ${BLUE_LIGHT}Void Packages${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
       read -n 1 -r yn
     
       if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -732,9 +735,48 @@ function void_packages {
                     clear
                     break
                   elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-                    echo -e -n "\n\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
-su --login --shell=/bin/bash --whitelist-environment=void_packages_repo,void_packages_path "$void_packages_username" << EOSU
-git clone "$void_packages_repo" "$void_packages_path"
+
+                    while true ; do
+                      echo -e -n "\n\nDo you want to specify a ${BLUE_LIGHT}custom public repository${NORMAL}?\nIf not, official repository will be used (y/n): "
+                      read -n 1 -r yn
+                      if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+                        echo -e -n "\n\nOfficial repository will be used.\n"
+                        git_cmd="git clone $void_packages_repo"
+                      elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+                        while true ; do
+                          echo -e -n "\n\nPlease enter a public repository url and optionally a branch (i.e. https://github.com/MyPersonal/VoidPackages MyBranch): "
+                          read -r void_packages_custom_repo void_packages_custom_branch
+
+                          if [[ -z "$void_packages_custom_branch" ]] ; then
+                            repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" | wc -l)
+                          else
+                            repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" "$void_packages_custom_branch" | wc -l)
+                          fi
+                          
+                          if [[ "$repo_check" == "1" ]] ; then
+                            echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
+                            
+                            if [[ -z "$void_packages_custom_branch" ]] ; then
+                              git_cmd="git clone $void_packages_custom_repo"
+                            else
+                              git_cmd="git clone $void_packages_custom_repo -b $void_packages_custom_branch"
+                            fi
+                            break 2
+
+                          else
+                            echo -e -n "\n\nPlease enter a valid public repository url.\n\n"
+                            read -n 1 -r -p "[Press any key to continue...]" key
+                          fi
+                        done
+                      else
+                        echo -e -n "\nPlease answer y or n.\n\n"
+                        read -n 1 -r -p "[Press any key to continue...]" key
+                      fi
+                    done
+
+                    echo -e -n "\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
+su --login --shell=/bin/bash --whitelist-environment=git_cmd,void_packages_path "$void_packages_username" << EOSU
+$git_cmd "$void_packages_path"
 echo -e -n "\nEnabling restricted packages...\n"
 echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
 EOSU
@@ -810,8 +852,14 @@ function finish_chroot {
 
   header_fc
   if [[ -n "$user_keyboard_layout" ]] ; then
-    echo -e -n "\nSetting ${BLUE_LIGHT}$user_keyboard_layout${NORMAL} keyboard layout in /etc/rc.conf...\n\n"
+    echo -e -n "\nSetting ${BLUE_LIGHT}$user_keyboard_layout${NORMAL} keyboard layout in /etc/rc.conf...\n"
     sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
+    echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
+    echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
+    read -n 1 -r -p "[Press any key to continue...]" key
+    echo
+    dracut --regenerate-all --force --hostonly
+    echo
     read -n 1 -r -p "[Press any key to continue...]" key
     clear
   else
@@ -827,7 +875,13 @@ function finish_chroot {
         read -n 1 -r -p "[Press any key to continue...]" key
       else
         sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
-        echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n\n"
+        echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n"
+        echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
+        echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
+        read -n 1 -r -p "[Press any key to continue...]" key
+        echo
+        dracut --regenerate-all --force --hostonly
+        echo
         read -n 1 -r -p "[Press any key to continue...]" key
         clear
         break
