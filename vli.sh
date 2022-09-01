@@ -515,7 +515,7 @@ function enable_disable_services {
   while true ; do
 
     header_eds
-    echo -e -n "\nDo you want to ${BLUE_LIGHT}enable${normal} any additional ${BLUE_LIGHT}service${NORMAL} in your system? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}enable${NORMAL} any additional ${BLUE_LIGHT}service${NORMAL} in your system? (y/n): "
     read -n 1 -r yn
   
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -649,7 +649,7 @@ function create_user {
         clear
         header_cu
 
-        echo -e -n "\nPlease select a name for your new user (i.e. MyNewUser): "
+        echo -e -n "\nPlease select a ${BLUE_LIGHT}name${NORMAL} for your new user (i.e. MyNewUser): "
         read -r newuser
       
         if [[ -z "$newuser" ]] ; then
@@ -848,20 +848,20 @@ function void_packages {
                   elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
 
                     while true ; do
-                      echo -e -n "\nDo you want to specify a ${BLUE_LIGHT}custom public repository${NORMAL}?\nIf not, official repository will be used (y/n): "
-                      read -r yn
+                      echo -e -n "\n\nDo you want to specify a ${BLUE_LIGHT}custom public repository${NORMAL}?\nIf not, official repository will be used (y/n): "
+                      read -n 1 -r yn
                       if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
                         echo -e -n "\n\nOfficial repository will be used.\n"
                       elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                         while true ; do
                           echo -e -n "\n\nPlease enter a public repository url (i.e. https://github.com/MyPersonal/VoidPackages [-b MyBranch]): "
-                          read -r void_packages_custom_repo
+                          read -r "void_packages_custom_repo"
                           if GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" &> /dev/null ; then
                             echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
                             void_packages_repo="$void_packages_custom_repo"
                             break 2
                           else
-                            echo -e -n "\nPlease enter a valid public repository url.\n\n"
+                            echo -e -n "\n\nPlease enter a valid public repository url.\n\n"
                             read -n 1 -r -p "[Press any key to continue...]" key
                           fi
                         done
@@ -2362,7 +2362,7 @@ function disk_encryption {
 
     elif [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]] ; then
 
-      echo -e -n "\nEncryption won't be enabled.\n\n"
+      echo -e -n "\n\nEncryption won't be enabled.\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
 
