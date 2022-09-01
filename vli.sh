@@ -669,7 +669,7 @@ function create_user {
         else
           while true; do
           echo -e -n "\nIs username ${BLUE_LIGHT}$newuser${NORMAL} okay? (y/n and [ENTER]): "
-          read -n 1 -r yn
+          read -r yn
         
           if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
             echo -e -n "\nAborting, pleasae select another name.\n\n"
@@ -854,12 +854,25 @@ function void_packages {
                         echo -e -n "\n\nOfficial repository will be used.\n"
                       elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                         while true ; do
-                          echo -e -n "\n\nPlease enter a public repository url (i.e. https://github.com/MyPersonal/VoidPackages [-b MyBranch]): "
-                          read -r "void_packages_custom_repo"
-                          if GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" &> /dev/null ; then
+                          echo -e -n "\n\nPlease enter a public repository url and optionally a branch (i.e. https://github.com/MyPersonal/VoidPackages MyBranch): "
+                          read -r void_packages_custom_repo void_packages_custom_branch
+
+                          if [[ -z "$void_packages_custom_branch" ]] ; then
+                            void_packages_custom_repo_check="$void_packages_custom_repo"
+                          else
+                            void_packages_custom_repo_check="$void_packages_custom_repo $void_packages_custom_branch"
+                          fi
+                          
+                          if GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code "$void_packages_custom_repo_check" &> /dev/null ; then
                             echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
-                            void_packages_repo="$void_packages_custom_repo"
+                            
+                            if [[ -z "$void_packages_custom_branch" ]] ; then
+                              void_packages_repo="$void_packages_custom_repo"
+                            else
+                              void_packages_repo="$void_packages_custom_repo -b $void_packages_custom_branch"
+                            fi
                             break 2
+
                           else
                             echo -e -n "\n\nPlease enter a valid public repository url.\n\n"
                             read -n 1 -r -p "[Press any key to continue...]" key
