@@ -858,12 +858,12 @@ function void_packages {
                           read -r void_packages_custom_repo void_packages_custom_branch
 
                           if [[ -z "$void_packages_custom_branch" ]] ; then
-                            void_packages_custom_repo_check="$void_packages_custom_repo"
+                            repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" | wc -l)
                           else
-                            void_packages_custom_repo_check="$void_packages_custom_repo $void_packages_custom_branch"
+                            repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" "$void_packages_custom_branch" | wc -l)
                           fi
                           
-                          if [[ "$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo_check" | wc -l)" == "1" ]] ; then
+                          if [[ "$repo_check" == "1" ]] ; then
                             echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
                             
                             if [[ -z "$void_packages_custom_branch" ]] ; then
