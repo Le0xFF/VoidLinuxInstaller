@@ -857,7 +857,7 @@ function void_packages {
                           echo -e -n "\n\nPlease enter a public repository url (i.e. https://github.com/MyPersonal/VoidPackages [-b MyBranch]): "
                           read -r void_packages_custom_repo
                           if GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" &> /dev/null ; then
-                            echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n
+                            echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
                             void_packages_repo="$void_packages_custom_repo"
                             break 2
                           else
