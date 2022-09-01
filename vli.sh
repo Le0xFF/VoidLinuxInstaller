@@ -773,7 +773,7 @@ function void_packages {
 
       header_vp
   
-      echo -e -n "\nDo you want to clone ${BLUE_LIGHT}Void Packages${NORMAL} official repository to a specific folder for a specific non-root user? (y/n): "
+      echo -e -n "\nDo you want to clone a ${BLUE_LIGHT}Void Packages${NORMAL} repository to a specific folder for a specific non-root user? (y/n): "
       read -n 1 -r yn
     
       if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -846,7 +846,32 @@ function void_packages {
                     clear
                     break
                   elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
-                    echo -e -n "\n\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
+
+                    while true ; do
+                      echo -e -n "\nDo you want to specify a ${BLUE_LIGHT}custom public repository${NORMAL}?\nIf not, official repository will be used (y/n): "
+                      read -r yn
+                      if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+                        echo -e -n "\n\nOfficial repository will be used.\n"
+                      elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+                        while true ; do
+                          echo -e -n "\n\nPlease enter a public repository url (i.e. https://github.com/MyPersonal/VoidPackages [-b MyBranch]): "
+                          read -r void_packages_custom_repo
+                          if GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" &> /dev/null ; then
+                            echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n
+                            void_packages_repo="$void_packages_custom_repo"
+                            break 2
+                          else
+                            echo -e -n "\nPlease enter a valid public repository url.\n\n"
+                            read -n 1 -r -p "[Press any key to continue...]" key
+                          fi
+                        done
+                      else
+                        echo -e -n "\nPlease answer y or n.\n\n"
+                        read -n 1 -r -p "[Press any key to continue...]" key
+                      fi
+                    done
+
+                    echo -e -n "\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
 su --login --shell=/bin/bash --whitelist-environment=void_packages_repo,void_packages_path "$void_packages_username" << EOSU
 git clone "$void_packages_repo" "$void_packages_path"
 echo -e -n "\nEnabling restricted packages...\n"
