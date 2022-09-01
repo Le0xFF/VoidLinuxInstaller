@@ -125,7 +125,7 @@ Here is documented how the script works in details and what will ask to the user
 10. chroot:
     * set *root* password and `/` permissions;
     * create proper `/etc/fstab` file;
-    * if encryption was chosen, generate random key to avoid typing password two times at boot;
+    * if encryption was choosen, generate random key to avoid typing password two times at boot;
     * create proper dracut configuration and initramfs;
     * optionally create a swapfile and enable zswap;
     * install any additional package;
@@ -149,7 +149,7 @@ You don't need to create a `/home` partition because BTRFS subvolumes will take 
 
 ### Final partitioning result
 
-Following the script, at the very end your drive will end up being like the following, if you choosed LUKS, LVM and GRUB2 as bootloader:
+Following the script, at the very end your drive will end up being like the following, if you chose LUKS, LVM and GRUB2 as bootloader:
 
 ``` bash
 /dev/nvme0n1                               259:0    0 953,9G  0 disk  
