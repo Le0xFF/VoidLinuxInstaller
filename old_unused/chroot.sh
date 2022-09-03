@@ -2,6 +2,8 @@
 
 # Variables
 
+bootloader_id=''
+bootloader=''
 newuser_yn=''
 
 # Functions
@@ -122,7 +124,7 @@ function install_bootloader {
         if [[ "$hdd_ssd" == "ssd" ]] ; then
           sed -i "/OPTIONS=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/efibootmgr-kernel-hook
         fi
-      elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
+      elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
         sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 rd.auto=1\"/" /etc/default/efibootmgr-kernel-hook
       else
         sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4\"/" /etc/default/efibootmgr-kernel-hook
@@ -147,7 +149,7 @@ function install_bootloader {
         if [[ "$hdd_ssd" == "ssd" ]] ; then
           sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/grub
         fi
-     elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
+     elif { [[ "$encryption_yn" == "n" ]] || [[ "$encryption_yn" == "N" ]]; } && { [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; } ; then
         sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ rd.auto=1&/" /etc/default/grub
       fi
 
@@ -692,7 +694,7 @@ function void_packages {
               clear
               header_vp
               echo -e -n "\nUser selected: ${BLUE_LIGHT}$void_packages_username${NORMAL}\n"
-              echo -e -n "\nPlease enter a ${BLUE_LIGHT}full empty path${NORMAL} where you want to clone Void Packages.\nThe script will create that folder and then clone Void Packages into it (i.e. /opt/MyPath/ToVoidPackages/): "
+              echo -e -n "\nPlease enter a ${BLUE_LIGHT}full empty path${NORMAL} where you want to clone Void Packages.\nThe script will create that folder and then clone Void Packages into it (i.e. /home/user/MyVoidPackages/): "
               read -r void_packages_path
       
               if [[ -z "$void_packages_path" ]] ; then
@@ -885,6 +887,100 @@ function finish_chroot {
         read -n 1 -r -p "[Press any key to continue...]" key
         clear
         break
+      fi
+    done
+  fi
+
+  if [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
+    while true ; do
+      header_fc
+      echo -e -n "\nDo you want to set the same keyboard layout in GRUB2? (y/n): "
+      read -n 1 -r yn
+      if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
+        if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
+          if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+            root_line=$(echo -e -n "cryptomount -u ${LUKS_UUID//-/}\nset root=(lvm/$vg_name-$lv_root_name)\n")
+          else
+            root_line="set root=(lvm/$vg_name-$lv_root_name)"
+          fi
+        else
+          if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]] ; then
+            root_line=$(echo -e -n "cryptomount -u ${LUKS_UUID//-/}\nset root=(cryptouuid/${LUKS_UUID//-/})\n")
+          else
+            disk=$(blkid -s UUID -o value $final_drive)
+            root_line=$(echo -e -n "search --no-floppy --fs-uuid $disk --set pre_root\nset root=(\\\$pre_root)\n")
+          fi
+        fi
+
+        echo -e -n "\n\nCreating /etc/kernel.d/post-install/51-grub_ckb...\n"
+
+cat << End >> /etc/kernel.d/post-install/51-grub_ckb
+#! /bin/sh
+#
+# Create grubx64.efi containing custom keyboard layout
+# Requires: ckbcomp, grub2, xkeyboard-config
+#
+
+if [ ! -f /boot/efi/EFI/$bootloader_id/ORIG_grubx64.efi_ORIG ] ; then
+    if [ ! -f /boot/efi/EFI/$bootloader_id/grubx64.efi ] ; then
+        echo -e -n "\nFIle /boot/efi/EFI/$bootloader_id/grubx64.efi not found, install GRUB2 first!\n"
+        exit 1
+    else
+        mv /boot/efi/EFI/$bootloader_id/grubx64.efi /boot/efi/EFI/$bootloader_id/ORIG_grubx64.efi_ORIG
+    fi
+fi
+
+for file in $user_keyboard_layout.gkb early-grub.cfg grubx64_ckb.efi memdisk_ckb.tar ; do
+    if [ -f /boot/grub/\$file ] ; then
+        rm -f /boot/grub/\$file
+    fi
+done
+
+grub-kbdcomp --output=/boot/grub/$user_keyboard_layout.gkb $user_keyboard_layout 2> /dev/null
+
+tar --create --file=/boot/grub/memdisk_ckb.tar --directory=/boot/grub/ $user_keyboard_layout.gkb 2> /dev/null
+
+cat << EndOfGrubConf >> /boot/grub/early-grub.cfg
+set gfxpayload=keep
+loadfont=unicode
+terminal_output gfxterm
+terminal_input at_keyboard
+keymap (memdisk)/$user_keyboard_layout.gkb
+
+${root_line}/@
+set prefix=\\\$root/boot/grub
+
+configfile \\\$prefix/grub.cfg
+EndOfGrubConf
+
+grub-mkimage --config=/boot/grub/early-grub.cfg --output=/boot/grub/grubx64_ckb.efi --format=x86_64-efi --memdisk=/boot/grub/memdisk_ckb.tar diskfilter gcry_rijndael gcry_sha256 ext2 memdisk tar at_keyboard keylayouts configfile gzio part_gpt all_video efi_gop efi_uga video_bochs video_cirrus echo linux font gfxterm gettext gfxmenu help reboot terminal test search search_fs_file search_fs_uuid search_label cryptodisk luks lvm btrfs
+
+if [ -f /boot/efi/EFI/$bootloader_id/grubx64.efi ] ; then
+    rm -f /boot/efi/EFI/$bootloader_id/grubx64.efi
+fi
+
+cp /boot/grub/grubx64_ckb.efi /boot/efi/EFI/$bootloader_id/grubx64.efi
+End
+
+        chmod +x /etc/kernel.d/post-install/51-grub_ckb
+        echo -e -n "\nReconfiguring kernel...\n\n"
+        kernelver_pre=$(ls /lib/modules/)
+        kernelver="${kernelver_pre%.*}"
+        xbps-reconfigure -f linux"$kernelver"
+        echo
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+        break
+
+      elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
+        echo -e -n "\n\nNo changes were made.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+        break
+      else
+        echo -e -n "\nPlease answer y or n.\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
       fi
     done
   fi
