@@ -8,6 +8,7 @@
         - [Suggested partition layout](#suggested-partition-layout)
         - [Final partitioning result](#final-partitioning-result)
         - [Follow up for `@snapshots` subvolume](#follow-up-for-snapshots-subvolume)
+    - [How to unlock encrypted partition in GRUB2](#how-to-unlock-encrypted-partition-in-grub2)
     - [What to do if system breaks?](#what-to-do-if-system-breaks)
     - [How to add more space with a new drive with LVM](#how-to-add-more-space-with-a-new-drive-with-lvm)
   - [Notes](#notes)
@@ -133,7 +134,7 @@ Here is documented how the script works in details and what will ask to the user
     * ask user which bootloader to install: EFISTUB or GRUB2;
     * create new users and configure them;
     * git clone [void-packages](https://github.com/void-linux/void-packages) or a custom public repository for selected users (it's not possible to `binary-bootstrap` because `xbps-src` can't do that while being already in a chrooted environment; see related issues: [#30496](https://github.com/void-linux/void-packages/issues/30496#issuecomment-826537866), [#35018](https://github.com/void-linux/void-packages/issues/35018), [#35410](https://github.com/void-linux/void-packages/issues/35410))
-    * choose timezone, keyboard layout, locale, hostname and default shell for root user;
+    * choose timezone, keyboard layout integrating it eventually even in GRUB2, locale, hostname and default shell for root user;
     * configure AppArmor and reconfigure every package.
 
 ### Suggested partition layout
@@ -180,6 +181,46 @@ reboot
 ```
 
 > Source: [Arch Wiki](https://wiki.archlinux.org/title/Snapper#Configuration_of_snapper_and_mount_point)
+
+<br>
+
+## How to unlock encrypted partition in GRUB2
+
+In case a wrong password was put in GRUB2, a shell will be dropped.
+
+In order to boot the system, the encrypted partition have to be unlocked and the right GRUB configuration file must be loaded.
+
+### GRUB2 standard keyboard layout
+
+If a custom keyboard layout was **not** choosen, the following commands must be put in GRUB2 shell:
+
+``` bash
+# unlock all the encrypted partitions
+cryptomount -a
+
+# input your password, then insert module normal and run it
+insmod normal
+normal
+```
+
+### GRUB2 custom keyboard layout
+
+If a custom keyboard layout was choosen, the following commands must be put in GRUB2 shell:
+
+``` bash
+# unlock all the encrypted partitions
+cryptomount -a
+
+# input your password and if LVM was used, then
+set root=(lvm/<vg_name>-<lv_root_name>)/@
+
+# if LVM was not used, then (<uuid> is the same printed on screen; you can also use (crypto#), where # is where your system is, typically 0)
+set root=(cryptouuid/<uuid>)/@
+
+# finally load main GRUB2 configuration file
+set prefix=$root/boot/grub
+configfile $prefix/grub.cfg
+```
 
 <br>
 
