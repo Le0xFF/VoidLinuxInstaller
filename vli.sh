@@ -1005,7 +1005,7 @@ function finish_chroot {
   if [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
     while true ; do
       header_fc
-      echo -e -n "\nDo you want to set the same keyboard layout in GRUB2? (y/n): "
+      echo -e -n "\nDo you want to set ${BLUE_LIGHT}$user_keyboard_layout${NORMAL} keyboard layout also in GRUB2 console? (y/n): "
       read -n 1 -r yn
       if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
         if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]] ; then
