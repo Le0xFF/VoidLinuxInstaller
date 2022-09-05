@@ -1033,7 +1033,7 @@ cat << End >> /etc/kernel.d/post-install/51-grub_ckb
 #
 
 if [ ! -f /boot/efi/EFI/$bootloader_id/ORIG_grubx64.efi_ORIG ] ; then
-    if [ ! -f /boot/efi/EFI/$bootloader_id/grubx64.efi ] ; then
+    if [ ! -d /boot/grub ] || [ ! -f /boot/efi/EFI/$bootloader_id/grubx64.efi ] ; then
         echo -e -n "\nFIle /boot/efi/EFI/$bootloader_id/grubx64.efi not found, install GRUB2 first!\n"
         exit 1
     else
