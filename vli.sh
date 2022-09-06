@@ -861,24 +861,23 @@ function void_packages {
                           read -r void_packages_custom_repo void_packages_custom_branch
 
                           if [[ -z "$void_packages_custom_branch" ]] ; then
-                            repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" | wc -l)
-                          else
-                            repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" "$void_packages_custom_branch" | wc -l)
-                          fi
-                          
-                          if [[ "$repo_check" == "1" ]] ; then
-                            echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
-                            
-                            if [[ -z "$void_packages_custom_branch" ]] ; then
+                            if [[ "$(GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code --heads "$void_packages_custom_repo" &> /dev/null ; echo "$?")" == "0" ]] ; then
+                              echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
                               git_cmd="git clone $void_packages_custom_repo"
+                              break 2
                             else
-                              git_cmd="git clone $void_packages_custom_repo -b $void_packages_custom_branch"
+                              echo -e -n "\n\nPlease enter a valid public repository url.\n\n"
+                              read -n 1 -r -p "[Press any key to continue...]" key
                             fi
-                            break 2
-
                           else
-                            echo -e -n "\n\nPlease enter a valid public repository url.\n\n"
-                            read -n 1 -r -p "[Press any key to continue...]" key
+                            if [[ "$(GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code --heads "$void_packages_custom_repo" "$void_packages_custom_branch" &> /dev/null ; echo "$?")" == "0" ]] ; then
+                              echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
+                              git_cmd="git clone $void_packages_custom_repo -b $void_packages_custom_branch"
+                              break 2
+                            else
+                              echo -e -n "\nPlease enter a valid public repository url.\n\n"
+                              read -n 1 -r -p "[Press any key to continue...]" key
+                            fi
                           fi
                         done
                       else
