@@ -179,7 +179,7 @@ EOF
 
   echo -e -n "\nAdding needed dracut configuration files...\n"
   echo -e "hostonly=yes\nhostonly_cmdline=yes" >> /etc/dracut.conf.d/00-hostonly.conf
-  echo -e "add_dracutmodules+=\" crypt btrfs lvm resume \"" >> /etc/dracut.conf.d/20-addmodules.conf
+  echo -e "add_dracutmodules+=\" i18n crypt btrfs lvm resume \"" >> /etc/dracut.conf.d/20-addmodules.conf
   echo -e "tmpdir=/tmp" >> /etc/dracut.conf.d/30-tmpfs.conf
 
   echo -e -n "\nGenerating new dracut initramfs...\n\n"
