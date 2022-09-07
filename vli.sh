@@ -858,7 +858,7 @@ function void_packages {
                         break
                       elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                         while true ; do
-                          echo -e -n "\n\nPlease enter a public repository url and optionally a branch (i.e. https://github.com/MyPersonal/VoidPackages MyBranch): "
+                          echo -e -n "\n\nPlease enter a public repository url\nand optionally a branch (i.e. https://github.com/MyPersonal/VoidPackages MyBranch): "
                           read -r void_packages_custom_repo void_packages_custom_branch
 
                           if [[ -z "$void_packages_custom_branch" ]] ; then
@@ -2070,7 +2070,7 @@ function disk_wiping {
 
     header_dw
   
-    echo -e -n "\nDo you want to ${BLUE_LIGHT}wipe${NORMAL} any drive? (y/n): "
+    echo -e -n "\nDo you want to ${BLUE_LIGHT}wipe${NORMAL} any drive?\nThis is needed if you want to set GPT partition table later with partitioning (y/n): "
     read -n 1 -r yn
     
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
