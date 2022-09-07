@@ -855,6 +855,7 @@ function void_packages {
                       if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
                         echo -e -n "\n\nOfficial repository will be used.\n"
                         git_cmd="git clone $void_packages_repo"
+                        break
                       elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
                         while true ; do
                           echo -e -n "\n\nPlease enter a public repository url and optionally a branch (i.e. https://github.com/MyPersonal/VoidPackages MyBranch): "
