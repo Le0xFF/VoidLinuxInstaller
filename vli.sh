@@ -387,7 +387,7 @@ function create_swapfile {
           truncate -s 0 /var/swap/swapfile
           chattr +C /var/swap/swapfile
           chmod 600 /var/swap/swapfile
-          dd if=/dev/zero of=/var/swap/swapfile bs=1G count="$swap_size" status=progress
+          dd if=/dev/zero of=/var/swap/swapfile bs=100M count="$((${swap_size}*10))" status=progress
           mkswap --label SwapFile /var/swap/swapfile
           swapon /var/swap/swapfile
           gcc -O2 "$HOME"/btrfs_map_physical.c -o "$HOME"/btrfs_map_physical
