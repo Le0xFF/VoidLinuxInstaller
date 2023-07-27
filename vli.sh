@@ -2924,10 +2924,10 @@ function install_base_system_and_chroot {
   fi
   
   echo -e -n "\nMounting folders for chroot...\n"
-  for dir in sys dev proc ; do
-    mount --rbind /$dir /mnt/$dir
-    mount --make-rslave /mnt/$dir
-  done
+  mount -t proc none /mnt/proc
+  mount -t sysfs none /mnt/sys
+  mount --rbind /dev /mnt/dev
+  mount --rbind /run /mnt/run
   mount --rbind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars/
   
   echo -e -n "\nCopying /etc/resolv.conf...\n"
