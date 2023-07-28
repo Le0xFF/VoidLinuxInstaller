@@ -1928,11 +1928,10 @@ function connect_to_internet {
   while true; do
 
     header_cti
-    echo -e -n "\nDo you want to use wifi? (y/n): "
-    read -n 1 -r yn
+    echo -e -n "\nDo you want to use wifi? (y/n/back): "
+    read -r yn
     if [[ $yn =~ ${if_regex_YES} ]]; then
       if pgrep NetworkManager &>/dev/null; then
-        echo
         echo
         ip --color=auto link show
         echo
@@ -1964,16 +1963,20 @@ function connect_to_internet {
 
     elif [[ $yn =~ ${if_regex_NO} ]]; then
       if ping -c 1 8.8.8.8 &>/dev/null; then
-        echo -e -n "\n\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
+        echo -e -n "\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
       else
-        echo -e -n "\n\n${RED_LIGHT}Please check or connect your ethernet cable.${NORMAL}\n\n"
+        echo -e -n "\n${RED_LIGHT}Please check or connect your ethernet cable.${NORMAL}\n\n"
       fi
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
 
+    elif [[ $yn =~ ${if_regex_BACK} ]]; then
+      clear
+      break
+
     else
-      echo -e -n "\n\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+      echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
     fi
@@ -1995,76 +1998,55 @@ function disk_wiping {
   while true; do
 
     header_dw
+    echo -e -n "\nPrinting all the connected drives:\n\n"
+    lsblk -p
 
-    echo -e -n "\nDo you want to ${BLUE_LIGHT}wipe${NORMAL} any drive?\nThis is needed if you want to set GPT partition table later with partitioning (y/n): "
-    read -n 1 -r yn
+    echo -e -n "\nWhich ${BLUE_LIGHT}drive${NORMAL} do you want to ${BLUE_LIGHT}wipe${NORMAL}?\nIt will be automatically selected as the drive to be partitioned.\n\nPlease enter the full drive path (i.e. /dev/sda || back): "
+    read -r user_drive
 
-    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-
-      while true; do
-
-        clear
-        header_dw
-
-        echo -e -n "\nPrinting all the connected drives:\n\n"
-        lsblk -p
-
-        echo -e -n "\nWhich ${BLUE_LIGHT}drive${NORMAL} do you want to ${BLUE_LIGHT}wipe${NORMAL}?\nIt will be automatically selected as the drive to be partitioned.\n\nPlease enter the full drive path (i.e. /dev/sda): "
-        read -r user_drive
-
-        if [[ ! -b "$user_drive" ]]; then
-          echo -e -n "\nPlease select a valid drive.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-
-        else
-          while true; do
-            echo -e -n "\nDrive selected for wiping: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
-            echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
-            echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
-            read -r yn
-
-            if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-              echo -e -n "\nAborting, select another drive.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              clear
-              break
-            elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-              if grep -q "$user_drive" /proc/mounts; then
-                echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before wiping...\n"
-                cd "$HOME"
-                umount --recursive "$(findmnt $user_drive | awk -F " " 'FNR == 2 {print $1}')"
-                echo -e -n "\nDrive unmounted successfully.\n"
-              fi
-
-              echo -e -n "\nWiping the drive...\n\n"
-              wipefs -a "$user_drive"
-              sync
-              echo -e -n "\nDrive successfully wiped.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              clear
-              break 3
-            else
-              echo -e -n "\nPlease answer y or n.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-            fi
-          done
-        fi
-      done
-
-    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-      echo -e -n "\n\nNo additional changes were made.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+    if [[ $user_drive =~ ${if_regex_BACK} ]]; then
       clear
       break
-
-    else
-      echo -e -n "\nPlease answer y or n.\n\n"
+    elif [[ ! -b "$user_drive" ]]; then
+      echo -e -n "\n${RED_LIGHT}Please select a valid drive.${NORMAL}\n\n"
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
+    else
+      echo -e -n "\nDrive selected for wiping: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
+      while true; do
+        echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+        echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
+        read -r yn
+
+        if [[ $yn =~ ${if_regex_NO} ]]; then
+          echo -e -n "\n${RED_LIGHT}Aborting, select another drive.${NORMAL}\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        elif [[ $yn =~ ${if_regex_YES} ]]; then
+          if grep -q "$user_drive" /proc/mounts; then
+            echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before wiping...\n"
+            cd "$HOME"
+            umount --recursive "$(findmnt "$user_drive" | awk -F " " 'FNR == 2 {print $1}')"
+            echo -e -n "\nDrive unmounted successfully.\n"
+          fi
+          echo -e -n "\nWiping the drive...\n\n"
+          wipefs -a "$user_drive"
+          sync
+          echo -e -n "\n${GREEN_LIGHT}Drive successfully wiped.${NORMAL}\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break 2
+        else
+          echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          echo
+        fi
+      done
     fi
 
   done
+
 }
 
 function header_dp {
@@ -2955,6 +2937,8 @@ function main {
       echo -e -n "${RED_LIGHT}\tnot connected${NORMAL}"
     fi
 
+    echo -e -n "\n3) Wipe disks"
+
     echo -e -n "\n\nx) ${RED_LIGHT}Quit and unmount everything.${NORMAL}\n"
 
     echo -e -n "\nUser selection: "
@@ -2971,6 +2955,11 @@ function main {
       connect_to_internet
       clear
       ;;
+    3)
+      clear
+      disk_wiping
+      clear
+      ;;
     x)
       kill_script
       break 2
@@ -2985,7 +2974,6 @@ function main {
 }
 
 main
-#disk_wiping
 #disk_partitioning
 #disk_encryption
 #lvm_creation
