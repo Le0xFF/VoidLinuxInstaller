@@ -1985,23 +1985,25 @@ function connect_to_internet {
 
 }
 
-function header_dw {
+function header_sdd {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}          ${GREEN_LIGHT}Disk wiping${NORMAL}          ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}       ${GREEN_LIGHT}Destination drive${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
 }
 
-function disk_wiping {
+function select_destination_drive {
 
   while true; do
 
-    header_dw
+    header_sdd
     echo -e -n "\nPrinting all the connected drives:\n\n"
     lsblk -p
 
-    echo -e -n "\nWhich ${BLUE_LIGHT}drive${NORMAL} do you want to ${BLUE_LIGHT}wipe${NORMAL}?\nIt will be automatically selected as the drive to be partitioned.\n\nPlease enter the full drive path (i.e. /dev/sda || back): "
+    echo -e -n "\nWhich ${BLUE_LIGHT}drive${NORMAL} do you want to select as ${BLUE_LIGHT}destination drive${NORMAL}?"
+    echo -e -n "\nIt will be automatically selected as the drive to be formatted and partitioned."
+    echo -e -n "\n\nPlease enter the full drive path (i.e. /dev/sda || back): "
     read -r user_drive
 
     if [[ $user_drive =~ ${if_regex_BACK} ]]; then
@@ -2012,9 +2014,9 @@ function disk_wiping {
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
     else
-      echo -e -n "\nDrive selected for wiping: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
+      echo -e -n "\nDrive selected as destination: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
       while true; do
-        echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+        echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE WIPED AND PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
         echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
         read -r yn
 
@@ -2025,15 +2027,12 @@ function disk_wiping {
           break
         elif [[ $yn =~ ${if_regex_YES} ]]; then
           if grep -q "$user_drive" /proc/mounts; then
-            echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before wiping...\n"
+            echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition...\n"
             cd "$HOME"
             umount --recursive "$(findmnt "$user_drive" | awk -F " " 'FNR == 2 {print $1}')"
             echo -e -n "\nDrive unmounted successfully.\n"
           fi
-          echo -e -n "\nWiping the drive...\n\n"
-          wipefs -a "$user_drive"
-          sync
-          echo -e -n "\n${GREEN_LIGHT}Drive successfully wiped.${NORMAL}\n\n"
+          echo -e -n "\n${GREEN_LIGHT}Correct drive selected.${NORMAL}\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break 2
@@ -2049,6 +2048,58 @@ function disk_wiping {
 
 }
 
+function header_dw {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}          ${GREEN_LIGHT}Disk wiping${NORMAL}          ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function disk_wiping {
+
+  if [[ ! -b "$user_drive" ]]; then
+    header_dw
+    echo -e -n "\n${RED_LIGHT}Please select a valid destination drive before wiping.${NORMAL}\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" key
+    clear
+  else
+    while true; do
+      header_dw
+      echo -e -n "\nDrive selected for wiping: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
+      echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE WIPED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+      echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
+      read -r yn
+
+      if [[ $yn =~ ${if_regex_NO} ]]; then
+        echo -e -n "\n${RED_LIGHT}Aborting, please select another destination drive.${NORMAL}\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+        break
+      elif [[ $yn =~ ${if_regex_YES} ]]; then
+        if grep -q "$user_drive" /proc/mounts; then
+          echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before wiping...\n"
+          cd "$HOME"
+          umount --recursive "$(findmnt "$user_drive" | awk -F " " 'FNR == 2 {print $1}')"
+          echo -e -n "\nDrive unmounted successfully.\n"
+        fi
+        echo -e -n "\nWiping the drive...\n\n"
+        wipefs -a "$user_drive"
+        sync
+        echo -e -n "\n${GREEN_LIGHT}Drive successfully wiped.${NORMAL}\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+        break
+      else
+        echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+      fi
+    done
+  fi
+
+}
+
 function header_dp {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
@@ -2059,185 +2110,93 @@ function header_dp {
 
 function disk_partitioning {
 
-  while true; do
-
+  if [[ ! -b "$user_drive" ]]; then
     header_dp
-
-    if [[ -z "$user_drive" ]]; then
-      echo -e -n "\nNo drive previously selected for partitioning.\n"
-      echo -e -n "\nDo you want to ${BLUE_LIGHT}partition${NORMAL} any drive? (y/n): "
-      read -n 1 -r yn
-    else
-      while true; do
-        echo -e -n "\nDrive previously selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}.\n\n"
-        read -n 1 -r -p "Do you want to change it? (y/n): " yn
-        if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-          echo -e -n "\n\nKeeping the previously selected drive.\n\n"
+    echo -e -n "\n${RED_LIGHT}Please select a valid destination drive before partitioning.${NORMAL}\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" key
+    clear
+  else
+    while true; do
+      clear
+      header_dp
+      echo -e -n "\nDrive previously selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}.\n\n"
+      read -r -p "Do you want to change it? (y/n): " yn
+      if [[ $yn =~ ${if_regex_YES} ]]; then
+        echo -e -n "\n${RED_LIGHT}Aborting, please select another destination drive.${NORMAL}\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        break
+      elif [[ $yn =~ ${if_regex_NO} ]]; then
+        if grep -q "$user_drive" /proc/mounts; then
+          echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before partitioning...\n"
+          cd "$HOME"
+          umount --recursive "$(findmnt "$user_drive" | awk -F " " 'FNR == 2 {print $1}')"
+          echo -e -n "\nDrive unmounted successfully.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
-          yn="y"
-          break
-        elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-          echo -e -n "\n\nPlease select another drive.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          user_drive=''
-          yn="y"
-          break
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
         fi
-      done
-    fi
+        while true; do
+          clear
+          header_dp
+          echo -e -n "\n${BLUE_LIGHT}Suggested disk layout${NORMAL}:"
+          echo -e -n "\n- GPT as disk label type for UEFI systems;"
+          echo -e -n "\n- Less than 1 GB for /boot/efi as first partition [EFI System];"
+          echo -e -n "\n- Rest of the disk for the partition that will be logically partitioned with LVM (/ and /home) [Linux filesystem]."
+          echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because btrfs subvolumes will take care of that.\n"
+          echo -e -n "\nDrive selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}\n\n"
+          read -r -p "Which tool do you want to use? (fdisk/cfdisk/sfdisk): " tool
 
-    if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
+          case "$tool" in
+          fdisk)
+            fdisk "$user_drive"
+            sync
+            break
+            ;;
+          cfdisk)
+            cfdisk "$user_drive"
+            sync
+            break
+            ;;
+          sfdisk)
+            sfdisk "$user_drive"
+            sync
+            break
+            ;;
+          *)
+            echo -e -n "\n${RED_LIGHT}Please select only one of the three suggested tools.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            ;;
+          esac
+        done
 
-      while true; do
-
-        if [[ -n "$user_drive" ]]; then
-
-          if grep -q "$user_drive" /proc/mounts; then
-            echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before partitioning...\n"
-            cd "$HOME"
-            umount --recursive "$(findmnt $user_drive | awk -F " " 'FNR == 2 {print $1}')"
-            echo -e -n "\nDrive unmounted successfully.\n\n"
+        while true; do
+          clear
+          header_dp
+          echo
+          lsblk -p "$user_drive"
+          echo
+          read -r -p "Is this the desired partition table? (y/n): " yn
+          if [[ $yn =~ ${if_regex_YES} ]]; then
+            echo -e -n "\n${GREEN_LIGHT}Drive successfully partitioned.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break 3
+          elif [[ $yn =~ ${if_regex_NO} ]]; then
+            echo -e -n "\n${RED_LIGHT}Please partition your drive again.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            break
+          else
+            echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
             read -n 1 -r -p "[Press any key to continue...]" key
             clear
           fi
-
-          while true; do
-
-            clear
-            header_dp
-
-            echo -e -n "\nSuggested disk layout:"
-            echo -e -n "\n- GPT as disk label type for UEFI systems;"
-            echo -e -n "\n- Less than 1 GB for /boot/efi as first partition [EFI System];"
-            echo -e -n "\n- Rest of the disk for the partition that will be logically partitioned with LVM (/ and /home) [Linux filesystem]."
-            echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because btrfs subvolumes will take care of that.\n"
-
-            echo -e -n "\nDrive selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}\n\n"
-
-            read -r -p "Which tool do you want to use? (fdisk/cfdisk/sfdisk): " tool
-
-            case "$tool" in
-            fdisk)
-              fdisk "$user_drive"
-              sync
-              break
-              ;;
-            cfdisk)
-              cfdisk "$user_drive"
-              sync
-              break
-              ;;
-            sfdisk)
-              sfdisk "$user_drive"
-              sync
-              break
-              ;;
-            *)
-              echo -e -n "\nPlease select only one of the three suggested tools.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              ;;
-            esac
-
-          done
-
-          while true; do
-
-            clear
-            header_dp
-
-            echo
-            lsblk -p "$user_drive"
-            echo
-            read -n 1 -r -p "Is this the desired partition table? (y/n): " yn
-
-            if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-              echo -e -n "\n\nDrive partitioned, keeping changes.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              clear
-              break 3
-            elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-              echo -e -n "\n\nPlease partition your drive again.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              break
-            else
-              echo -e -n "\nPlease answer y or n.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              clear
-            fi
-          done
-
-        else
-
-          while true; do
-
-            clear
-            header_dp
-
-            echo -e -n "\nPrinting all the connected drive(s):\n\n"
-
-            lsblk -p
-
-            echo -e -n "\nWhich drive do you want to partition?\nPlease enter the full drive path (i.e. /dev/sda): "
-            read -r user_drive
-
-            if [[ ! -b "$user_drive" ]]; then
-              echo -e -n "\nPlease select a valid drive.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-
-            else
-
-              while true; do
-                echo -e -n "\nYou selected: $user_drive.\n"
-                echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
-                echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
-                read -r yn
-
-                if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-                  echo -e -n "\nAborting, select another drive.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                  break
-                elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-                  if grep -q "$user_drive" /proc/mounts; then
-                    echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before selecting it for partitioning...\n"
-                    cd "$HOME"
-                    umount --recursive "$(findmnt $user_drive | awk -F " " 'FNR == 2 {print $1}')"
-                    echo -e -n "\nDrive unmounted successfully.\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" key
-                  fi
-
-                  echo -e -n "\nCorrect drive selected, back to tool selection...\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                  break 2
-                else
-                  echo -e -n "\nPlease answer y or n.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                fi
-              done
-
-            fi
-
-          done
-
-        fi
-
-      done
-
-    elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-      echo -e -n "\n\nNo additional changes were made.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-      break
-
-    else
-      echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-    fi
-
-  done
+        done
+      else
+        echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+      fi
+    done
+  fi
 
 }
 
@@ -2921,7 +2880,7 @@ function main {
 
     header_main
 
-    echo -e -n "\n1) Set keyboard layout\t\t......\tCurrent keyboard layout: "
+    echo -e -n "\n1) Set keyboard layout\t\t......\tKeyboard layout: "
     current_xkeyboard_layout=$(setxkbmap -query 2>/dev/null | grep layout | awk '{print $2}')
     if [[ -n "${current_xkeyboard_layout}" ]] || [[ -n "${user_keyboard_layout}" ]]; then
       echo -e -n "\t${GREEN_LIGHT}${current_xkeyboard_layout:-${user_keyboard_layout}}${NORMAL}"
@@ -2930,14 +2889,35 @@ function main {
       echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
     fi
 
-    echo -e -n "\n2) Set up internet connection\t......\tCurrent connection status: "
+    echo -e -n "\n2) Set up internet connection\t......\tConnection status: "
     if ping -c 1 8.8.8.8 &>/dev/null; then
       echo -e -n "${GREEN_LIGHT}\tconnected${NORMAL}"
     else
       echo -e -n "${RED_LIGHT}\tnot connected${NORMAL}"
     fi
 
-    echo -e -n "\n3) Wipe disks"
+    echo
+
+    echo -e -n "\n3) Select destination drive\t......\tDrive selected: "
+    if [[ -b "$user_drive" ]]; then
+      echo -e -n "${GREEN_LIGHT}\t${user_drive}${NORMAL}"
+    else
+      echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
+    fi
+
+    echo -e -n "\n4) Wipe destination drive\t......\tDrive selected: "
+    if [[ -b "$user_drive" ]]; then
+      echo -e -n "${GREEN_LIGHT}\t${user_drive}${NORMAL}"
+    else
+      echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
+    fi
+
+    echo -e -n "\n5) Partition destination drive\t......\tDrive selected: "
+    if [[ -b "$user_drive" ]]; then
+      echo -e -n "${GREEN_LIGHT}\t${user_drive}${NORMAL}"
+    else
+      echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
+    fi
 
     echo -e -n "\n\nx) ${RED_LIGHT}Quit and unmount everything.${NORMAL}\n"
 
@@ -2957,7 +2937,17 @@ function main {
       ;;
     3)
       clear
+      select_destination_drive
+      clear
+      ;;
+    4)
+      clear
       disk_wiping
+      clear
+      ;;
+    5)
+      clear
+      disk_partitioning
       clear
       ;;
     x)
@@ -2974,7 +2964,6 @@ function main {
 }
 
 main
-#disk_partitioning
 #disk_encryption
 #lvm_creation
 #create_filesystems
