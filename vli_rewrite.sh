@@ -1857,15 +1857,15 @@ function set_keyboard_layout {
   while true; do
 
     while true; do
-      if [[ -n "${current_xkeyboard_layout}" ]]; then
+      if [[ -n "${current_xkeyboard_layout}" ]] || [[ -n "${user_keyboard_layout}" ]]; then
         header_skl
-        echo -e -n "\nYour current keyboard layout is ${BLUE_LIGHT}${current_xkeyboard_layout}${NORMAL}, do you want to change it? (y/n/back): "
+        echo -e -n "\nYour current keyboard layout is ${BLUE_LIGHT}${current_xkeyboard_layout:-${user_keyboard_layout}}${NORMAL}, do you want to change it? (y/n/back): "
         read -r yn
         if [[ $yn =~ ${if_regex_YES} ]]; then
           clear
           break
         elif [[ $yn =~ ${if_regex_NO} ]]; then
-          user_keyboard_layout="${current_xkeyboard_layout}"
+          user_keyboard_layout="${current_xkeyboard_layout:-${user_keyboard_layout}}"
           echo -e -n "\nKeyboard layout won't be changed.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
@@ -1910,13 +1910,12 @@ function set_keyboard_layout {
       fi
     done
 
-    clear
     break
   done
 
 }
 
-function header_cacti {
+function header_cti {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}# VLI #${NORMAL}   ${GREEN_LIGHT}Setup internet connection${NORMAL}   ${GREEN_DARK}#${NORMAL}\n"
@@ -1924,142 +1923,91 @@ function header_cacti {
 
 }
 
-function check_and_connect_to_internet {
+function connect_to_internet {
 
   while true; do
 
-    header_cacti
-
-    echo -e -n "\nChecking internet connectivity...\n"
-
-    if ! ping -c 2 8.8.8.8 &>/dev/null; then
-      echo -e -n "\nNo internet connection found.\n"
-      echo -e -n "\nDo you want to connect to the ${BLUE_LIGHT}internet${NORMAL}? (y/n): "
-      read -n 1 -r yn
-
-      if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-
-        while true; do
-
-          echo -e -n "\n\nDo you want to use wifi? (y/n): "
-          read -n 1 -r yn
-
-          if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-
-            if [[ -L /var/service/NetworkManager ]]; then
-
-              while true; do
-                echo
-                echo
-                read -n 1 -r -p "Is your ESSID hidden? (y/n): " yn
-
-                if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-                  echo
-                  echo
-                  nmcli device wifi
-                  echo
-                  nmcli --ask device wifi connect hidden yes
-                  echo
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                  clear
-                  break 2
-                elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-                  echo
-                  echo
-                  nmcli device wifi
-                  echo
-                  nmcli --ask device wifi connect
-                  echo
-                  read -n 1 -r -p "[Press any key to continue...]" key
-                  clear
-                  break 2
-                else
-                  echo -e -n "\nPlease answer y or n."
-                fi
-
-              done
-
-            else
-
-              ### UNTESTED ###
-
-              while true; do
-
-                echo
-                echo
-                ip a
-                echo
-
-                echo -e -n "Enter the wifi interface and press [ENTER]: "
-                read -r wifi_interface
-
-                if [[ -n "$wifi_interface" ]]; then
-
-                  echo -e -n "\nEnabling wpa_supplicant service...\n"
-
-                  if [[ -L /var/service/wpa_supplicant ]]; then
-                    echo -e -n "\nService already enabled, restarting...\n"
-                    sv restart {dhcpcd,wpa_supplicant}
-                  else
-                    echo -e -n "\nCreating service, starting...\n"
-                    ln -s /etc/sv/wpa_supplicant /var/service/
-                    sv restart dhcpcd
-                    sleep 1
-                    sv start wpa_supplicant
-                  fi
-
-                  echo -e -n "\nEnter your ESSID and press [ENTER]: "
-                  read -r wifi_essid
-
-                  if [[ ! -d /etc/wpa_supplicant/ ]]; then
-                    mkdir -p /etc/wpa_supplicant/
-                  fi
-
-                  echo -e -n "\nGenerating configuration files..."
-                  wpa_passphrase "$wifi_essid" | tee /etc/wpa_supplicant/wpa_supplicant.conf
-                  wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "$wifi_interface"
-                  break 2
-                else
-                  echo -e -n "\nPlease input a valid wifi interface.\n"
-                fi
-              done
-            fi
-
-            if ping -c 2 8.8.8.8 &>/dev/null; then
-              echo -e -n "\nSuccessfully connected to the internet.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
-              clear
-            fi
-            break
-
-          elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-            echo -e -n "\n\nPlease connect your ethernet cable and wait a minute before pressing any key."
-            read -n 1 -r key
-            clear
-            break
-
-          else
-            echo -e -n "\nPlease answer y or n."
-          fi
-
-        done
-
-      elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-        echo -e -n "\n\nNot connecting to the internet.\n\n"
+    header_cti
+    echo -e -n "\nDo you want to use wifi? (y/n): "
+    read -n 1 -r yn
+    if [[ $yn =~ ${if_regex_YES} ]]; then
+      echo
+      echo
+      ip --color=auto link show
+      echo
+      echo -e -n "Input you wifi interface name (i.e. wlp2s0): "
+      read -r WIFI_INTERFACE
+      echo -e -n "\nInput a preferred name to give to your internet connection: "
+      read -r WIFI_NAME
+      echo -e -n "Input your wifi SSID or BSSID: "
+      read -r WIFI_SSID
+      if pgrep NetworkManager &>/dev/null; then
+        nmcli connection add type wifi con-name "${WIFI_NAME}" ifname "${WIFI_INTERFACE}" ssid "${WIFI_SSID}"
+        nmcli connection modify "${WIFI_NAME}" wifi-sec.key-mgmt wpa-psk
+        nmcli --ask connection up "${WIFI_NAME}"
+      else
+        ## UNTESTED ##
+        if [[ ! -d /etc/sv/dhcpcd ]]; then
+          echo -e -n "\n${RED_LIGHT}Please be sure that dhcpcd is installed.${NORMAL}\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        fi
+        if [[ ! -d /etc/sv/wpa_supplicant ]]; then
+          echo -e -n "\n${RED_LIGHT}Please be sure that wpa_supplicant is installed.${NORMAL}\n"
+          read -n 1 -r -p "[Press any key to continue...]" key
+          clear
+          break
+        fi
+        if [[ -L /var/service/dhcpcd ]]; then
+          echo -e -n "\nService dhcpcd already existing, restarting...\n"
+          sv restart dhcpcd
+        else
+          echo -e -n "\nCreating dhcpcd service...\n"
+          ln -s /etc/sv/dhcpcd /var/service/
+          sv start dhcpcd
+        fi
+        if [[ -L /var/service/wpa_supplicant ]]; then
+          echo -e -n "\nService wpa_supplicant already existing, restarting...\n"
+          sv restart wpa_supplicant
+        else
+          echo -e -n "\nCreating wpa_supplicant service...\n"
+          ln -s /etc/sv/wpa_supplicant /var/service/
+          sv start wpa_supplicant
+        fi
+        if [[ ! -d /etc/wpa_supplicant/ ]]; then
+          mkdir -p /etc/wpa_supplicant/
+        fi
+        echo -e -n "\nGenerating configuration files..."
+        wpa_passphrase "${WIFI_SSID}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
+        wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${WIFI_INTERFACE}"
+      fi
+      if ping -c 2 8.8.8.8 &>/dev/null; then
+        echo -e -n "\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
         read -n 1 -r -p "[Press any key to continue...]" key
         clear
-        break
       else
-        echo -e -n "\nPlease answer y or n.\n\n"
+        echo -e -n "\n${RED_LIGHT}No internet connection detected.${NORMAL}\n\n"
         read -n 1 -r -p "[Press any key to continue...]" key
         clear
       fi
 
-    else
-      echo -e -n "\nAlready connected to the internet.\n\n"
+      break
+
+    elif [[ $yn =~ ${if_regex_NO} ]]; then
+      if ping -c 1 8.8.8.8 &>/dev/null; then
+        echo -e -n "\n\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
+      else
+        echo -e -n "\n\n${RED_LIGHT}Please check or connect your ethernet cable.${NORMAL}\n\n"
+      fi
       read -n 1 -r -p "[Press any key to continue...]" key
       clear
       break
+
+    else
+      echo -e -n "\n\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" key
+      clear
     fi
 
   done
@@ -3027,9 +2975,16 @@ function main {
     current_xkeyboard_layout=$(setxkbmap -query 2>/dev/null | grep layout | awk '{print $2}')
     if [[ -n "${current_xkeyboard_layout}" ]] || [[ -n "${user_keyboard_layout}" ]]; then
       echo -e -n "\t${GREEN_LIGHT}${current_xkeyboard_layout:-${user_keyboard_layout}}${NORMAL}"
-      user_keyboard_layout="${current_xkeyboard_layout}"
+      user_keyboard_layout="${current_xkeyboard_layout:-${user_keyboard_layout}}"
     else
       echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
+    fi
+
+    echo -e -n "\n2) Set up internet connection\t......\tCurrent connection status: "
+    if ping -c 1 8.8.8.8 &>/dev/null; then
+      echo -e -n "${GREEN_LIGHT}\tconnected${NORMAL}"
+    else
+      echo -e -n "${RED_LIGHT}\tnot connected${NORMAL}"
     fi
 
     echo -e -n "\n\nx) ${RED_LIGHT}Quit and unmount everything.${NORMAL}\n"
@@ -3041,6 +2996,11 @@ function main {
     1)
       clear
       set_keyboard_layout
+      clear
+      ;;
+    2)
+      clear
+      connect_to_internet
       clear
       ;;
     x)
@@ -3057,8 +3017,6 @@ function main {
 }
 
 main
-
-#check_and_connect_to_internet
 #disk_wiping
 #disk_partitioning
 #disk_encryption
