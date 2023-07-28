@@ -1931,68 +1931,36 @@ function connect_to_internet {
     echo -e -n "\nDo you want to use wifi? (y/n): "
     read -n 1 -r yn
     if [[ $yn =~ ${if_regex_YES} ]]; then
-      echo
-      echo
-      ip --color=auto link show
-      echo
-      echo -e -n "Input you wifi interface name (i.e. wlp2s0): "
-      read -r WIFI_INTERFACE
-      echo -e -n "\nInput a preferred name to give to your internet connection: "
-      read -r WIFI_NAME
-      echo -e -n "Input your wifi SSID or BSSID: "
-      read -r WIFI_SSID
       if pgrep NetworkManager &>/dev/null; then
+        echo
+        echo
+        ip --color=auto link show
+        echo
+        echo -e -n "Input you wifi interface name (i.e. wlp2s0): "
+        read -r WIFI_INTERFACE
+        echo -e -n "\nInput a preferred name to give to your internet connection: "
+        read -r WIFI_NAME
+        echo -e -n "Input your wifi SSID or BSSID: "
+        read -r WIFI_SSID
         nmcli connection add type wifi con-name "${WIFI_NAME}" ifname "${WIFI_INTERFACE}" ssid "${WIFI_SSID}"
         nmcli connection modify "${WIFI_NAME}" wifi-sec.key-mgmt wpa-psk
         nmcli --ask connection up "${WIFI_NAME}"
-      else
-        ## UNTESTED ##
-        if [[ ! -d /etc/sv/dhcpcd ]]; then
-          echo -e -n "\n${RED_LIGHT}Please be sure that dhcpcd is installed.${NORMAL}\n"
+        if ping -c 2 8.8.8.8 &>/dev/null; then
+          echo -e -n "\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
           break
-        fi
-        if [[ ! -d /etc/sv/wpa_supplicant ]]; then
-          echo -e -n "\n${RED_LIGHT}Please be sure that wpa_supplicant is installed.${NORMAL}\n"
+        else
+          echo -e -n "\n${RED_LIGHT}No internet connection detected.${NORMAL}\n\n"
           read -n 1 -r -p "[Press any key to continue...]" key
           clear
-          break
         fi
-        if [[ -L /var/service/dhcpcd ]]; then
-          echo -e -n "\nService dhcpcd already existing, restarting...\n"
-          sv restart dhcpcd
-        else
-          echo -e -n "\nCreating dhcpcd service...\n"
-          ln -s /etc/sv/dhcpcd /var/service/
-          sv start dhcpcd
-        fi
-        if [[ -L /var/service/wpa_supplicant ]]; then
-          echo -e -n "\nService wpa_supplicant already existing, restarting...\n"
-          sv restart wpa_supplicant
-        else
-          echo -e -n "\nCreating wpa_supplicant service...\n"
-          ln -s /etc/sv/wpa_supplicant /var/service/
-          sv start wpa_supplicant
-        fi
-        if [[ ! -d /etc/wpa_supplicant/ ]]; then
-          mkdir -p /etc/wpa_supplicant/
-        fi
-        echo -e -n "\nGenerating configuration files..."
-        wpa_passphrase "${WIFI_SSID}" | tee /etc/wpa_supplicant/wpa_supplicant.conf
-        wpa_supplicant -B -c /etc/wpa_supplicant/wpa_supplicant.conf -i "${WIFI_INTERFACE}"
-      fi
-      if ping -c 2 8.8.8.8 &>/dev/null; then
-        echo -e -n "\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
-        clear
       else
-        echo -e -n "\n${RED_LIGHT}No internet connection detected.${NORMAL}\n\n"
+        echo -e -n "\n\n${RED_LIGHT}Please be sure that NetworkManager is running.${NORMAL}\n\n"
         read -n 1 -r -p "[Press any key to continue...]" key
         clear
+        break
       fi
-
-      break
 
     elif [[ $yn =~ ${if_regex_NO} ]]; then
       if ping -c 1 8.8.8.8 &>/dev/null; then
