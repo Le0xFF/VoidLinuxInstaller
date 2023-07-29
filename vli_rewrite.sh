@@ -2956,13 +2956,6 @@ function header_main {
 
 function main {
 
-  check_if_bash
-  check_if_run_as_root
-  check_if_uefi
-  create_chroot_script
-  create_btrfs_map_physical_c
-  intro
-
   while true; do
 
     header_main
@@ -3112,8 +3105,13 @@ function main {
 
 }
 
+check_if_bash
+check_if_run_as_root
+check_if_uefi
+create_chroot_script
+create_btrfs_map_physical_c
+intro
 main
-#lvm_creation
 #create_filesystems
 #create_btrfs_subvolumes
 #install_base_system_and_chroot
