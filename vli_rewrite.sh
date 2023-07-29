@@ -14,6 +14,7 @@ trap "kill_script" INT TERM QUIT
 
 # Variables
 
+drive_partition_selection='0'
 user_drive=''
 encryption_yn=''
 luks_ot=''
@@ -24,6 +25,7 @@ vg_name=''
 lv_root_name=''
 final_drive=''
 boot_partition=''
+root_partition=''
 hdd_ssd=''
 current_xkeyboard_layout=''
 user_keyboard_layout=''
@@ -1985,7 +1987,7 @@ function connect_to_internet {
 
 }
 
-function header_sdd {
+function header_sd {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}# VLI #${NORMAL}       ${GREEN_LIGHT}Destination drive${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
@@ -1993,58 +1995,107 @@ function header_sdd {
 
 }
 
-function select_destination_drive {
+function select_destination {
 
-  while true; do
+  if [[ "${drive_partition_selection}" == "3" ]] ||
+    { [[ "${drive_partition_selection}" == "6" ]] && [[ -b "$user_drive" ]]; } ||
+    { [[ "${drive_partition_selection}" == "7" ]] && [[ -b "$user_drive" ]]; }; then
+    while true; do
+      header_sd
+      if [[ "${drive_partition_selection}" == "3" ]]; then
+        echo -e -n "\nPrinting all the connected drives:\n\n"
+        lsblk -p
+        echo -e -n "\nWhich ${BLUE_LIGHT}drive${NORMAL} do you want to select as ${BLUE_LIGHT}destination drive${NORMAL}?"
+        echo -e -n "\nIt will be automatically selected as the drive to be formatted and partitioned."
+        echo -e -n "\n\nPlease enter the full drive path (i.e. /dev/sda || back): "
+        read -r user_drive
+      elif [[ "${drive_partition_selection}" == "6" ]]; then
+        echo -e -n "\nPrinting destination drive:\n\n"
+        lsblk -p "${user_drive}"
+        echo -e -n "\nWhich ${BLUE_LIGHT}partition${NORMAL} do you want to select as ${BLUE_LIGHT}EFI${NORMAL}?"
+        echo -e -n "\n\nPlease enter the full partition path (i.e. /dev/sda1 || back): "
+        read -r boot_partition
+      elif [[ "${drive_partition_selection}" == "7" ]]; then
+        echo -e -n "\nPrinting destination drive:\n\n"
+        lsblk -p "${user_drive}"
+        echo -e -n "\nWhich ${BLUE_LIGHT}partition${NORMAL} do you want to select as ${BLUE_LIGHT}ROOT${NORMAL}?"
+        echo -e -n "\n\nPlease enter the full partition path (i.e. /dev/sda2 || back): "
+        read -r root_partition
+      fi
 
-    header_sdd
-    echo -e -n "\nPrinting all the connected drives:\n\n"
-    lsblk -p
-
-    echo -e -n "\nWhich ${BLUE_LIGHT}drive${NORMAL} do you want to select as ${BLUE_LIGHT}destination drive${NORMAL}?"
-    echo -e -n "\nIt will be automatically selected as the drive to be formatted and partitioned."
-    echo -e -n "\n\nPlease enter the full drive path (i.e. /dev/sda || back): "
-    read -r user_drive
-
-    if [[ $user_drive =~ ${if_regex_BACK} ]]; then
-      clear
-      break
-    elif [[ ! -b "$user_drive" ]]; then
-      echo -e -n "\n${RED_LIGHT}Please select a valid drive.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
-      clear
-    else
-      echo -e -n "\nDrive selected as destination: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
-      while true; do
-        echo -e -n "\n${RED_LIGHT}THIS DRIVE WILL BE WIPED AND PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
-        echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
-        read -r yn
-
-        if [[ $yn =~ ${if_regex_NO} ]]; then
-          echo -e -n "\n${RED_LIGHT}Aborting, select another drive.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break
-        elif [[ $yn =~ ${if_regex_YES} ]]; then
-          if grep -q "$user_drive" /proc/mounts; then
-            echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition...\n"
-            cd "$HOME"
-            umount --recursive "$(findmnt "$user_drive" | awk -F " " 'FNR == 2 {print $1}')"
-            echo -e -n "\nDrive unmounted successfully.\n"
-          fi
-          echo -e -n "\n${GREEN_LIGHT}Correct drive selected.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          clear
-          break 2
-        else
-          echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
-          echo
+      if [[ $user_drive =~ ${if_regex_BACK} ]] || [[ $boot_partition =~ ${if_regex_BACK} ]] || [[ $root_partition =~ ${if_regex_BACK} ]]; then
+        clear
+        break
+      elif { [[ "${drive_partition_selection}" == "3" ]] && [[ ! -b "$user_drive" ]]; } ||
+        { [[ "${drive_partition_selection}" == "6" ]] && [[ ! -b "$boot_partition" ]]; } ||
+        { [[ "${drive_partition_selection}" == "7" ]] && [[ ! -b "$root_partition" ]]; }; then
+        echo -e -n "\n${RED_LIGHT}Please select a valid destination.${NORMAL}\n\n"
+        read -n 1 -r -p "[Press any key to continue...]" key
+        clear
+      else
+        if [[ "${drive_partition_selection}" == "3" ]]; then
+          echo -e -n "\nDrive selected as destination: ${BLUE_LIGHT}$user_drive${NORMAL}\n"
+        elif [[ "${drive_partition_selection}" == "6" ]]; then
+          echo -e -n "\nEFI partition selected as destination: ${BLUE_LIGHT}$boot_partition${NORMAL}\n"
+        elif [[ "${drive_partition_selection}" == "7" ]]; then
+          echo -e -n "\nROOT partition selected as destination: ${BLUE_LIGHT}$root_partition${NORMAL}\n"
         fi
-      done
-    fi
+        while true; do
+          echo -e -n "\n${RED_LIGHT}Destination WILL BE WIPED AND PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+          echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
+          read -r yn
 
-  done
+          if [[ $yn =~ ${if_regex_NO} ]]; then
+            echo -e -n "\n${RED_LIGHT}Aborting, select another destination.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break
+          elif [[ $yn =~ ${if_regex_YES} ]]; then
+            if [[ "${drive_partition_selection}" == "3" ]]; then
+              if grep -q "$user_drive" /proc/mounts; then
+                echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition...\n"
+                cd "$HOME"
+                umount --recursive "$(findmnt "$user_drive" | awk -F " " 'FNR == 2 {print $1}')"
+                echo -e -n "\nDrive unmounted successfully.\n"
+              fi
+              echo -e -n "\n${GREEN_LIGHT}Correct drive selected.${NORMAL}\n\n"
+              boot_partition=''
+              root_partition=''
+            elif [[ "${drive_partition_selection}" == "6" ]]; then
+              if grep -q "$boot_partition" /proc/mounts; then
+                echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting partition...\n"
+                cd "$HOME"
+                umount --recursive "$(findmnt "$boot_partition" | awk -F " " 'FNR == 2 {print $1}')"
+                echo -e -n "\nPartition unmounted successfully.\n"
+              fi
+              echo -e -n "\n${GREEN_LIGHT}Correct EFI partition selected.${NORMAL}\n\n"
+            elif [[ "${drive_partition_selection}" == "7" ]]; then
+              if grep -q "$root_partition" /proc/mounts; then
+                echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting partition...\n"
+                cd "$HOME"
+                umount --recursive "$(findmnt "$root_partition" | awk -F " " 'FNR == 2 {print $1}')"
+                echo -e -n "\nPartition unmounted successfully.\n"
+              fi
+              echo -e -n "\n${GREEN_LIGHT}Correct ROOT partition selected.${NORMAL}\n\n"
+            fi
+            read -n 1 -r -p "[Press any key to continue...]" key
+            clear
+            break 2
+          else
+            echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" key
+            echo
+          fi
+        done
+      fi
+
+    done
+  else
+    header_dw
+    echo -e -n "\n${RED_LIGHT}Please first select a valid destination drive.${NORMAL}\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" key
+    clear
+  fi
 
 }
 
@@ -2919,6 +2970,22 @@ function main {
       echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
     fi
 
+    echo
+
+    echo -e -n "\n6) Select EFI partition\t\t......\tPartition selected: "
+    if [[ -b "$boot_partition" ]]; then
+      echo -e -n "${GREEN_LIGHT}\t${boot_partition}${NORMAL}"
+    else
+      echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
+    fi
+
+    echo -e -n "\n7) Select ROOT partition\t......\tPartition selected: "
+    if [[ -b "$root_partition" ]]; then
+      echo -e -n "${GREEN_LIGHT}\t${root_partition}${NORMAL}"
+    else
+      echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
+    fi
+
     echo -e -n "\n\nx) ${RED_LIGHT}Quit and unmount everything.${NORMAL}\n"
 
     echo -e -n "\nUser selection: "
@@ -2937,7 +3004,9 @@ function main {
       ;;
     3)
       clear
-      select_destination_drive
+      drive_partition_selection='3'
+      select_destination
+      drive_partition_selection='0'
       clear
       ;;
     4)
@@ -2948,6 +3017,20 @@ function main {
     5)
       clear
       disk_partitioning
+      clear
+      ;;
+    6)
+      clear
+      drive_partition_selection='6'
+      select_destination
+      drive_partition_selection='0'
+      clear
+      ;;
+    7)
+      clear
+      drive_partition_selection='7'
+      select_destination
+      drive_partition_selection='0'
       clear
       ;;
     x)
