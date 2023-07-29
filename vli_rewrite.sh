@@ -2242,6 +2242,7 @@ function disk_partitioning {
               clear
             fi
           else
+            user_drive=''
             echo -e -n "\n${RED_LIGHT}Please wipe destination drive again and select GPT as partition table.${NORMAL}\n\n"
             read -n 1 -r -p "[Press any key to continue...]" _key
             clear
