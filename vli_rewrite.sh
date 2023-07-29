@@ -148,7 +148,7 @@ function initial_configuration {
       break
     else
       echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       echo
     fi
   done
@@ -188,12 +188,12 @@ EOF
   echo -e "tmpdir=/tmp" >> /etc/dracut.conf.d/30-tmpfs.conf
 
   echo -e -n "\nGenerating new dracut initramfs...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   echo
   dracut --regenerate-all --force --hostonly
 
   echo
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   clear
 
 }
@@ -216,7 +216,7 @@ function install_bootloader {
       header_ib
       echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n\n"
       bootloader="EFISTUB"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       echo
     else
       header_ib
@@ -253,7 +253,7 @@ function install_bootloader {
       echo -e -n "${RED_LIGHT}the last line of /etc/kernel.d/post-install/50-efibootmgr has been commented.${NORMAL}\n"
       echo -e -n "${RED_LIGHT}Probably you will have to comment the same line after each efibootmgr update.${NORMAL}\n\n"
 
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       break
 
     elif [[ "$bootloader" == "GRUB2" ]] || [[ "$bootloader" == "grub2" ]] ; then
@@ -279,7 +279,7 @@ function install_bootloader {
         read -r bootloader_id
         if [[ -z "$bootloader_id" ]] ; then
           echo -e -n "\nPlease enter a valid bootloader-id.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         else
           while true ; do
             echo -e -n "\nYou entered: ${BLUE_LIGHT}$bootloader_id${NORMAL}.\n\n"
@@ -296,7 +296,7 @@ function install_bootloader {
                     break
                   else
                     echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" key
+                    read -n 1 -r -p "[Press any key to continue...]" _key
                     echo
                   fi
                 done
@@ -307,7 +307,7 @@ function install_bootloader {
                 echo -e -n "\nAdding random key to dracut configuration files...\n"
                 echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >> /etc/dracut.conf.d/10-crypt.conf
                 echo -e -n "\nGenerating new dracut initramfs...\n\n"
-                read -n 1 -r -p "[Press any key to continue...]" key
+                read -n 1 -r -p "[Press any key to continue...]" _key
                 echo
                 dracut --regenerate-all --force --hostonly
               fi
@@ -318,11 +318,11 @@ function install_bootloader {
               break 3
             elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
               echo -e -n "\n\nPlease select another bootloader-id.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               break
             else
               echo -e -n "\nPlease answer y or n.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
             fi
           done
         fi
@@ -330,7 +330,7 @@ function install_bootloader {
 
     else
       echo -e -n "\nPlease select a valid bootloader.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
 
@@ -350,7 +350,7 @@ function install_bootloader {
   fi
 
   echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   clear
 
 }
@@ -406,7 +406,7 @@ function create_swapfile {
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >> /etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           echo
           dracut --regenerate-all --force --hostonly
           if [[ "$bootloader" == "EFISTUB" ]] || [[ "$bootloader" == "efistub" ]] ; then
@@ -422,26 +422,26 @@ function create_swapfile {
           fi
           swapoff --all
           echo -e -n "\nSwapfile successfully created and zswap successfully enabled.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break 2
 
         else
           echo -e -n "\nPlease enter a valid value.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         fi
 
       done
 
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo swapfile created.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       break
     
     else
       echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
   
@@ -471,23 +471,23 @@ while true ; do
     if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
 
       echo -e -n "\n\nPlease mark all the packages you want to install with [TAB] key.\nPress [ENTER] key when you're done to install the selected packages\nor press [ESC] key to abort the operation.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
   
       xs
 
       echo
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo additional packages were installed.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       break
     
     else
       echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
   
@@ -516,7 +516,7 @@ function enable_disable_services {
   echo -e -n "\nEnabling grub snapshot service at first boot...\n\n"
   ln -s /etc/sv/grub-btrfs /etc/runit/runsvdir/default/
 
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   clear
 
   while true ; do
@@ -542,22 +542,22 @@ function enable_disable_services {
 
         if [[ "$service_enabler" == "q" ]] ; then
           echo -e -n "\nAborting the operation...\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           break
         elif [[ ! -d /etc/sv/"$service_enabler" ]] ; then
           echo -e -n "\nService ${RED_LIGHT}$service_enabler${NORMAL} does not exist.\nPlease select another service to be enabled.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         elif [[ -L /etc/runit/runsvdir/default/"$service_enabler" ]] ; then
           echo -e -n "\nService ${RED_LIGHT}$service_enabler${NORMAL} already enabled.\nPlease select another service to be enabled.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         elif [[ "$service_enabler" == "" ]] ; then
           echo -e -n "\nPlease enter a valid service name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           break
         else
           echo -e -n "\nEnabling service ${BLUE_LIGHT}$service_enabler${NORMAL}...\n\n"
           ln -s /etc/sv/"$service_enabler" /etc/runit/runsvdir/default/
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
         fi
@@ -566,12 +566,12 @@ function enable_disable_services {
     
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo additional services were enabled.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       break
     else
       echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
   
@@ -597,18 +597,18 @@ function enable_disable_services {
 
         if [[ "$service_disabler" == "q" ]] ; then
           echo -e -n "\nAborting the operation...\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           break
         elif [[ ! -L /etc/runit/runsvdir/default/"$service_disabler" ]] ; then
           echo -e -n "\nService ${RED_LIGHT}$service_disabler${NORMAL} does not exist.\nPlease select another service to be disabled.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         elif [[ "$service_disabler" == "" ]] ; then
           echo -e -n "\nPlease enter a valid service name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         else
           echo -e -n "\nDisabling service ${BLUE_LIGHT}$service_disabler${NORMAL}...\n\n"
           rm -f /etc/runit/runsvdir/default/"$service_disabler"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
         fi
@@ -617,12 +617,12 @@ function enable_disable_services {
     
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo additional services were disabled.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       break
     else
       echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
   
@@ -661,15 +661,15 @@ function create_user {
       
         if [[ -z "$newuser" ]] ; then
           echo -e -n "\nPlease select a valid name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         
         elif [[ "$newuser" == "root" ]] ; then
           echo -e -n "\nYou can't add root again\nPlease select another name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
 
         elif getent passwd "$newuser" &> /dev/null ; then
           echo -e -n "\nUser ${BLUE_LIGHT}$newuser${NORMAL} already exists.\nPlease select another username.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
       
@@ -680,7 +680,7 @@ function create_user {
         
           if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
             echo -e -n "\nAborting, pleasae select another name.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             clear
             break
           elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -696,7 +696,7 @@ function create_user {
                 break
               else
                 echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-                read -n 1 -r -p "[Press any key to continue...]" key
+                read -n 1 -r -p "[Press any key to continue...]" _key
                 echo
               fi
             done
@@ -708,7 +708,7 @@ function create_user {
               read -r set_user_shell
               if [[ ! -x "$set_user_shell" ]] ; then
                 echo -e -n "\nPlease enter a valid shell.\n\n"
-                read -n 1 -r -p "[Press any key to continue...]" key
+                read -n 1 -r -p "[Press any key to continue...]" _key
               else
                 while true ; do
                   echo -e -n "\nYou entered: ${BLUE_LIGHT}$set_user_shell${NORMAL}.\n\n"
@@ -719,17 +719,17 @@ function create_user {
                     chsh --shell "$set_user_shell" "$newuser"
                     echo -e -n "\nDefault shell for user ${BLUE_LIGHT}$newuser${NORMAL} successfully changed.\n"
                     echo -e -n "\nUser ${BLUE_LIGHT}$newuser${NORMAL} successfully created.\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" key
+                    read -n 1 -r -p "[Press any key to continue...]" _key
                     newuser_yn="y"
                     clear
                     break 4
                   elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
                     echo -e -n "\n\nPlease select another shell.\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" key
+                    read -n 1 -r -p "[Press any key to continue...]" _key
                     break
                   else
                     echo -e -n "\nPlease answer y or n.\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" key
+                    read -n 1 -r -p "[Press any key to continue...]" _key
                   fi
                 done
               fi
@@ -737,7 +737,7 @@ function create_user {
 
           else
             echo -e -n "\nPlease answer y or n.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
           fi
           done
         fi
@@ -745,7 +745,7 @@ function create_user {
       
     elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
       echo -e -n "\n\nNo additional user was added.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       if [[ "$newuser_yn" == "" ]] ; then
         newuser_yn="n"
       fi
@@ -754,7 +754,7 @@ function create_user {
     
     else
       echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
   
@@ -795,15 +795,15 @@ function void_packages {
 
           if [[ -z "$void_packages_username" ]] ; then
             echo -e -n "\nPlease input a valid username.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
 
           elif [[ "$void_packages_username" == "root" ]] ; then
             echo -e -n "\nRoot user cannot be used to configure Void Packages.\nPlease select another username.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
 
           elif ! getent passwd "$void_packages_username" &> /dev/null ; then
             echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} doesn't exists.\nPlease select another username.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
 
           else
             while true ; do
@@ -815,7 +815,7 @@ function void_packages {
       
               if [[ -z "$void_packages_path" ]] ; then
                 echo -e -n "\nPlease input a valid path.\n\n"
-                read -n 1 -r -p "[Press any key to continue...]" key
+                read -n 1 -r -p "[Press any key to continue...]" _key
                 clear
       
               else
@@ -824,18 +824,18 @@ function void_packages {
                   if [[ ! -d "$void_packages_path" ]] ; then
                     if ! su - "$void_packages_username" --command "mkdir -p $void_packages_path 2> /dev/null" ; then
                       echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} cannot create a folder in this directory.\nPlease select another path.\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" key
+                      read -n 1 -r -p "[Press any key to continue...]" _key
                       break
                     fi
                   else
                     if [[ -n $(ls -A "$void_packages_path") ]] ; then
                       echo -e -n "\nDirectory ${RED_LIGHT}$void_packages_path${NORMAL} is not empty.\nPlease select another path.\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" key
+                      read -n 1 -r -p "[Press any key to continue...]" _key
                       break
                     fi
                     if [[ $(stat --dereference --format="%U" $void_packages_path) != "$void_packages_username" ]] ; then
                       echo -e -n "\nUser ${RED_LIGHT}$void_packages_username${NORMAL} doesn't have write permission in this directory.\nPlease select another path.\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" key
+                      read -n 1 -r -p "[Press any key to continue...]" _key
                       break
                     fi
                   fi
@@ -849,7 +849,7 @@ function void_packages {
                     if [[ -z "$(ls -A $void_packages_path)" ]]; then
                       rm -rf "$void_packages_path"
                     fi
-                    read -n 1 -r -p "[Press any key to continue...]" key
+                    read -n 1 -r -p "[Press any key to continue...]" _key
                     clear
                     break
                   elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]] ; then
@@ -873,7 +873,7 @@ function void_packages {
                               break 2
                             else
                               echo -e -n "\n\nPlease enter a valid public repository url.\n\n"
-                              read -n 1 -r -p "[Press any key to continue...]" key
+                              read -n 1 -r -p "[Press any key to continue...]" _key
                             fi
                           else
                             if [[ "$(GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code --heads "$void_packages_custom_repo" "$void_packages_custom_branch" &> /dev/null ; echo "$?")" == "0" ]] ; then
@@ -882,13 +882,13 @@ function void_packages {
                               break 2
                             else
                               echo -e -n "\nPlease enter a valid public repository url.\n\n"
-                              read -n 1 -r -p "[Press any key to continue...]" key
+                              read -n 1 -r -p "[Press any key to continue...]" _key
                             fi
                           fi
                         done
                       else
                         echo -e -n "\nPlease answer y or n.\n\n"
-                        read -n 1 -r -p "[Press any key to continue...]" key
+                        read -n 1 -r -p "[Press any key to continue...]" _key
                       fi
                     done
 
@@ -900,12 +900,12 @@ echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
 EOSU
                     echo -e -n "\nLogging out user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n"
                     echo -e -n "\nVoid Packages successfully cloned and configured.\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" key
+                    read -n 1 -r -p "[Press any key to continue...]" _key
                     clear
                     break 3
                   else
                     echo -e -n "\nPlease answer y or n.\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" key
+                    read -n 1 -r -p "[Press any key to continue...]" _key
                   fi
                 done
               fi
@@ -915,13 +915,13 @@ EOSU
       
       elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
         echo -e -n "\n\nVoid Packages were not configured.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
     
       else
         echo -e -n "\nPlease answer y or n.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
       fi
   
@@ -930,7 +930,7 @@ EOSU
   elif [[ "$newuser_yn" == "n" ]] ; then
     header_vp
     echo -e -n "\nNo non-root user was created.\nVoid Packages cannot be configured for root user.\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   fi
 
@@ -958,11 +958,11 @@ function finish_chroot {
     read -r user_timezone
     if [[ ! -f /usr/share/zoneinfo/"$user_timezone" ]] ; then
       echo -e "\nEnter a valid timezone.\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
     else
       sed -i "/#TIMEZONE=/s|.*|TIMEZONE=\"$user_timezone\"|" /etc/rc.conf
       echo -e -n "\nTimezone set to: ${BLUE_LIGHT}$user_timezone${NORMAL}.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       break
     fi
@@ -974,11 +974,11 @@ function finish_chroot {
     sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
     echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
     echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     echo
     dracut --regenerate-all --force --hostonly
     echo
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   else
     echo -e -n "\nSetting ${BLUE_LIGHT}keyboard layout${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
@@ -990,17 +990,17 @@ function finish_chroot {
       read -r user_keyboard_layout
       if [[ -z "$user_keyboard_layout" ]] || ! loadkeys "$user_keyboard_layout" 2> /dev/null ; then
         echo -e -n "\nPlease select a valid keyboard layout.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
       else
         sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
         echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n"
         echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
         echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >> /etc/dracut.conf.d/i18n.conf
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         echo
         dracut --regenerate-all --force --hostonly
         echo
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
       fi
@@ -1084,18 +1084,18 @@ End
         kernelver="${kernelver_pre%.*}"
         xbps-reconfigure -f linux"$kernelver"
         echo
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
 
       elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
         echo -e -n "\n\nNo changes were made.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
       else
         echo -e -n "\nPlease answer y or n.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
       fi
     done
@@ -1112,7 +1112,7 @@ End
       read -r user_locale_line_number
       if [[ -z "$user_locale_line_number" ]] ; then
         echo -e "\nEnter a valid line-number.\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
       else
         while true ; do
           user_locale_pre=$(sed -n "${user_locale_line_number}"p /etc/default/libc-locales)
@@ -1125,16 +1125,16 @@ End
             sed -i "$user_locale_line_number s/^#//" /etc/default/libc-locales
             echo -e -n "\nWriting locale ${BLUE_LIGHT}$user_locale${NORMAL} to /etc/locale.conf...\n\n"
             sed -i "/LANG=/s/.*/LANG=$user_locale/" /etc/locale.conf
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             clear
             break 2
           elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
             echo -e -n "\n\nPlease select another locale.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             break
           else
             echo -e -n "\nPlease answer y or n.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
           fi
         done
       fi
@@ -1147,7 +1147,7 @@ End
     read -r hostname
     if [[ -z "$hostname" ]] ; then
       echo -e -n "\nPlease enter a valid hostname.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     else
       while true ; do
@@ -1158,17 +1158,17 @@ End
           echo "$hostname" > /etc/hostname
           set -o noclobber
           echo -e -n "\n\nHostname successfully set.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\n\nPlease select another hostname.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
         else
           echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         fi
       done
     fi
@@ -1182,7 +1182,7 @@ End
     read -r set_shell
     if [[ ! -x "$set_shell" ]] ; then
       echo -e -n "\nPlease enter a valid shell.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     else
       while true ; do
@@ -1193,16 +1193,16 @@ End
           echo
           chsh --shell "$set_shell"
           echo -e -n "\nDefault shell successfully changed.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]] ; then
           echo -e -n "\n\nPlease select another shell.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
         else
           echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         fi
       done
     fi
@@ -1225,13 +1225,13 @@ End
   fi
 
   echo -e -n "\nReconfiguring every package...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   echo
   xbps-reconfigure -fa
 
   echo -e -n "\nEverything's done, exiting chroot...\n\n"
 
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   clear
 
 }
@@ -1868,7 +1868,7 @@ function set_keyboard_layout {
         elif [[ $yn =~ ${if_regex_NO} ]]; then
           user_keyboard_layout="${current_xkeyboard_layout:-${user_keyboard_layout}}"
           echo -e -n "\nKeyboard layout won't be changed.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break 2
         elif [[ $yn =~ ${if_regex_BACK} ]]; then
@@ -1876,7 +1876,7 @@ function set_keyboard_layout {
           break 2
         else
           echo -e -n "\nNot a valid input.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
         fi
       else
@@ -1887,7 +1887,7 @@ function set_keyboard_layout {
     header_skl
     echo -e -n "\nThe keyboard layout will be also set configured for your future installed system.\n"
     echo -e -n "\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list.\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     echo
 
     find /usr/share/kbd/keymaps/ \
@@ -1903,7 +1903,7 @@ function set_keyboard_layout {
       read -r user_keyboard_layout
       if loadkeys "$user_keyboard_layout" 2>/dev/null; then
         echo -e -n "\nKeyboad layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
       else
@@ -1947,17 +1947,17 @@ function connect_to_internet {
         nmcli --ask connection up "${WIFI_NAME}"
         if ping -c 2 8.8.8.8 &>/dev/null; then
           echo -e -n "\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
         else
           echo -e -n "\n${RED_LIGHT}No internet connection detected.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
         fi
       else
         echo -e -n "\n\n${RED_LIGHT}Please be sure that NetworkManager is running.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
       fi
@@ -1968,7 +1968,7 @@ function connect_to_internet {
       else
         echo -e -n "\n${RED_LIGHT}Please check or connect your ethernet cable.${NORMAL}\n\n"
       fi
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       break
 
@@ -1978,7 +1978,7 @@ function connect_to_internet {
 
     else
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
 
@@ -2029,7 +2029,7 @@ function select_destination {
         { [[ "${drive_partition_selection}" == "6" ]] && [[ ! -b "$boot_partition" ]]; } ||
         { [[ "${drive_partition_selection}" == "7" ]] && [[ ! -b "$root_partition" ]]; }; then
         echo -e -n "\n${RED_LIGHT}Please select a valid destination.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
       else
         if [[ "${drive_partition_selection}" == "3" ]]; then
@@ -2046,7 +2046,7 @@ function select_destination {
 
           if [[ $yn =~ ${if_regex_NO} ]]; then
             echo -e -n "\n${RED_LIGHT}Aborting, select another destination.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             clear
             break
           elif [[ $yn =~ ${if_regex_YES} ]]; then
@@ -2077,12 +2077,12 @@ function select_destination {
               fi
               echo -e -n "\n${GREEN_LIGHT}Correct ROOT partition selected.${NORMAL}\n\n"
             fi
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             clear
             break 2
           else
             echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             echo
           fi
         done
@@ -2092,7 +2092,7 @@ function select_destination {
   else
     header_dw
     echo -e -n "\n${RED_LIGHT}Please first select a valid destination drive.${NORMAL}\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   fi
 
@@ -2111,7 +2111,7 @@ function disk_wiping {
   if [[ ! -b "$user_drive" ]]; then
     header_dw
     echo -e -n "\n${RED_LIGHT}Please select a valid destination drive before wiping.${NORMAL}\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   else
     while true; do
@@ -2123,7 +2123,7 @@ function disk_wiping {
 
       if [[ $yn =~ ${if_regex_NO} ]]; then
         echo -e -n "\n${RED_LIGHT}Aborting, please select another destination drive.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
       elif [[ $yn =~ ${if_regex_YES} ]]; then
@@ -2137,12 +2137,12 @@ function disk_wiping {
         wipefs -a "$user_drive"
         sync
         echo -e -n "\n${GREEN_LIGHT}Drive successfully wiped.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
       else
         echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
       fi
     done
@@ -2163,7 +2163,7 @@ function disk_partitioning {
   if [[ ! -b "$user_drive" ]]; then
     header_dp
     echo -e -n "\n${RED_LIGHT}Please select a valid destination drive before partitioning.${NORMAL}\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   else
     while true; do
@@ -2173,7 +2173,7 @@ function disk_partitioning {
       read -r -p "Do you want to change it? (y/n): " yn
       if [[ $yn =~ ${if_regex_YES} ]]; then
         echo -e -n "\n${RED_LIGHT}Aborting, please select another destination drive.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         break
       elif [[ $yn =~ ${if_regex_NO} ]]; then
         if grep -q "$user_drive" /proc/mounts; then
@@ -2181,7 +2181,7 @@ function disk_partitioning {
           cd "$HOME"
           umount --recursive "$(findmnt "$user_drive" | awk -F " " 'FNR == 2 {print $1}')"
           echo -e -n "\nDrive unmounted successfully.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
         fi
         while true; do
@@ -2213,7 +2213,7 @@ function disk_partitioning {
             ;;
           *)
             echo -e -n "\n${RED_LIGHT}Please select only one of the three suggested tools.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             ;;
           esac
         done
@@ -2227,22 +2227,22 @@ function disk_partitioning {
           read -r -p "Is this the desired partition table? (y/n): " yn
           if [[ $yn =~ ${if_regex_YES} ]]; then
             echo -e -n "\n${GREEN_LIGHT}Drive successfully partitioned.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             clear
             break 3
           elif [[ $yn =~ ${if_regex_NO} ]]; then
             echo -e -n "\n${RED_LIGHT}Please partition your drive again.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             break
           else
             echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             clear
           fi
         done
       else
         echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         clear
       fi
     done
@@ -2263,7 +2263,7 @@ function disk_encryption {
   if [[ ! -b "$root_partition" ]]; then
     header_de
     echo -e -n "\n${RED_LIGHT}Please select a valid ROOT partition before enabling Full Disk Encryption.${NORMAL}\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   else
     if [[ $encryption_yn =~ ${if_regex_YES} ]]; then
@@ -2275,13 +2275,13 @@ function disk_encryption {
         if [[ $yn =~ ${if_regex_YES} ]]; then
           if cryptsetup close /dev/mapper/"${encrypted_name}"; then
             echo -e -n "\n${RED_LIGHT}Encryption will be disabled.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             encryption_yn='n'
             clear
             break
           else
             echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
             clear
             break
           fi
@@ -2290,7 +2290,7 @@ function disk_encryption {
           break
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
         fi
       done
@@ -2310,12 +2310,12 @@ function disk_encryption {
             if [[ $yn =~ ${if_regex_NO} ]]; then
               encryption_yn='n'
               echo -e -n "\n${RED_LIGHT}Aborting, please select another ROOT partition.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               clear
               break 2
             elif [[ $yn =~ ${if_regex_YES} ]]; then
               echo -e -n "\n${GREEN_LIGHT}Correct partition selected.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               clear
               header_de
               echo -e -n "\nThe selected partition will now be encrypted with LUKS version 1 or 2.\n"
@@ -2336,17 +2336,17 @@ function disk_encryption {
                       break
                     else
                       echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" key
+                      read -n 1 -r -p "[Press any key to continue...]" _key
                       echo
                     fi
                   done
                   echo -e -n "\n${GREEN_LIGHT}Partition successfully encrypted.${NORMAL}\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                   clear
                   break
                 else
                   echo -e -n "\n${RED_LIGHT}Please enter 1 or 2.${NORMAL}\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                 fi
               done
 
@@ -2357,7 +2357,7 @@ function disk_encryption {
                 read -r encrypted_name
                 if [[ -z "$encrypted_name" ]]; then
                   echo -e -n "\nPlease enter a valid name.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                   clear
                 else
                   while true; do
@@ -2372,22 +2372,22 @@ function disk_encryption {
                           break
                         else
                           echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-                          read -n 1 -r -p "[Press any key to continue...]" key
+                          read -n 1 -r -p "[Press any key to continue...]" _key
                           echo
                         fi
                       done
                       echo -e -n "\n${GREEN_LIGHT}Encrypted partition successfully mounted.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" key
+                      read -n 1 -r -p "[Press any key to continue...]" _key
                       clear
                       break 2
                     elif [[ $yn =~ ${if_regex_NO} ]]; then
                       echo -e -n "\n${RED_LIGHT}Please select another name.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" key
+                      read -n 1 -r -p "[Press any key to continue...]" _key
                       clear
                       break
                     else
                       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" key
+                      read -n 1 -r -p "[Press any key to continue...]" _key
                     fi
                   done
                 fi
@@ -2396,7 +2396,7 @@ function disk_encryption {
               break 2
             else
               echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
             fi
           done
 
@@ -2406,7 +2406,7 @@ function disk_encryption {
 
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
         fi
 
@@ -2450,7 +2450,7 @@ function lvm_creation {
 
         if [[ -z "$vg_name" ]]; then
           echo -e -n "\nPlease enter a valid name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
         else
           while true; do
@@ -2461,17 +2461,17 @@ function lvm_creation {
               echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
               vgcreate "$vg_name" "$final_drive"
               echo
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               clear
               break 2
             elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
               echo -e -n "\n\nPlease select another name.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               clear
               break
             else
               echo -e -n "\nPlease answer y or n.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
             fi
           done
         fi
@@ -2488,7 +2488,7 @@ function lvm_creation {
 
         if [[ -z "$lv_root_name" ]]; then
           echo -e -n "\nPlease enter a valid name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
         else
           while true; do
@@ -2499,18 +2499,18 @@ function lvm_creation {
               echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} will now be created.\n\n"
               lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"
               echo
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               final_drive=/dev/mapper/"$vg_name"-"$lv_root_name"
               clear
               break 3
             elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
               echo -e -n "\n\nPlease select another name.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               clear
               break
             else
               echo -e -n "\nPlease answer y or n.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
             fi
           done
         fi
@@ -2519,13 +2519,13 @@ function lvm_creation {
 
     elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]; then
       echo -e -n "\n\nLVM won't be used.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       break
 
     else
       echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     fi
 
@@ -2558,11 +2558,11 @@ function create_filesystems {
 
     if [[ "$boot_partition" == "$root_partition" ]] || [[ "$boot_partition" == "$root_partition" ]]; then
       echo -e -n "\nPlease select a partition different from your root partition.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     elif [[ ! -b "$boot_partition" ]]; then
       echo -e -n "\nPlease select a valid partition.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     else
       while true; do
@@ -2573,7 +2573,7 @@ function create_filesystems {
 
         if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
           echo -e -n "\nAborting, select another partition.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
         elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
@@ -2582,11 +2582,11 @@ function create_filesystems {
             cd "$HOME"
             umount --recursive "$(findmnt $boot_partition | awk -F " " 'FNR == 2 {print $1}')"
             echo -e -n "\nDrive unmounted successfully.\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" key
+            read -n 1 -r -p "[Press any key to continue...]" _key
           fi
 
           echo -e -n "\nCorrect partition selected.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
 
           while true; do
@@ -2598,7 +2598,7 @@ function create_filesystems {
 
             if [[ -z "$boot_name" ]]; then
               echo -e -n "\nPlease enter a valid name.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" key
+              read -n 1 -r -p "[Press any key to continue...]" _key
               clear
             else
               while true; do
@@ -2610,17 +2610,17 @@ function create_filesystems {
                   mkfs.vfat -n "$boot_name" -F 32 "$boot_partition"
                   sync
                   echo -e -n "\nPartition successfully formatted.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                   clear
                   break 4
                 elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
                   echo -e -n "\n\nPlease select another name.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                   clear
                   break
                 else
                   echo -e -n "\nPlease answer y or n.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" key
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                 fi
               done
             fi
@@ -2629,7 +2629,7 @@ function create_filesystems {
 
         else
           echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         fi
       done
 
@@ -2646,7 +2646,7 @@ function create_filesystems {
 
     if [[ -z "$root_name" ]]; then
       echo -e -n "\nPlease enter a valid name.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     else
       while true; do
@@ -2659,17 +2659,17 @@ function create_filesystems {
           mkfs.btrfs --force -L "$root_name" "$final_drive"
           sync
           echo -e -n "\nPartition successfully formatted.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
           echo -e -n "\n\nPlease select another name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break
         else
           echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" key
+          read -n 1 -r -p "[Press any key to continue...]" _key
         fi
       done
     fi
@@ -2716,7 +2716,7 @@ function create_btrfs_subvolumes {
   echo -e -n "- /var/log\n"
 
   echo -e -n "\n${BLUE_LIGHT}If you prefer to change any option, please quit this script NOW and modify it according to you tastes.${NORMAL}\n\n"
-  read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." key
+  read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." _key
 
   echo -e -n "\n\nThe root partition ${BLUE_LIGHT}$final_drive${NORMAL} will now be mounted to /mnt.\n"
 
@@ -2725,7 +2725,7 @@ function create_btrfs_subvolumes {
     cd "$HOME"
     umount --recursive /mnt
     echo -e -n "\nDone.\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" key
+    read -n 1 -r -p "[Press any key to continue...]" _key
   fi
 
   echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
@@ -2749,7 +2749,7 @@ function create_btrfs_subvolumes {
   btrfs subvolume create /mnt/var/log
 
   echo -e -n "\nDone.\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   clear
 
 }
@@ -2786,7 +2786,7 @@ function install_base_system_and_chroot {
         ;;
       *)
         echo -e -n "\nPlease select one of the two architectures.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" key
+        read -n 1 -r -p "[Press any key to continue...]" _key
         ;;
       esac
     done
@@ -2798,7 +2798,7 @@ function install_base_system_and_chroot {
   cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
 
   echo -e -n "\nInstalling base system...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   echo
   XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
   XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
@@ -2826,7 +2826,7 @@ function install_base_system_and_chroot {
   fi
 
   echo -e -n "\nChrooting...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   cp "$HOME"/chroot.sh /mnt/root/
   cp "$HOME"/btrfs_map_physical.c /mnt/root/
 
@@ -2854,7 +2854,7 @@ function install_base_system_and_chroot {
   fi
 
   echo
-  read -n 1 -r -p "[Press any key to continue...]" key
+  read -n 1 -r -p "[Press any key to continue...]" _key
   clear
 
 }
@@ -2869,7 +2869,7 @@ function outro {
   echo -e -n "- If you plan yo use snapper, after installing it and creating a configuration for / [root],\n  uncomment the line relative to /.snapshots folder\n"
   echo -e -n "\n${BLUE_LIGHT}Everything's done, goodbye.${NORMAL}\n\n"
 
-  read -n 1 -r -p "[Press any key to exit...]" key
+  read -n 1 -r -p "[Press any key to exit...]" _key
   clear
 
 }
@@ -3018,7 +3018,7 @@ function main {
       ;;
     *)
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" key
+      read -n 1 -r -p "[Press any key to continue...]" _key
       clear
       ;;
     esac
