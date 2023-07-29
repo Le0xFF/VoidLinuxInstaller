@@ -31,9 +31,10 @@ user_keyboard_layout=''
 
 # Constants
 
-if_regex_YES="[Yy]"
-if_regex_NO="[Nn]"
-if_regex_BACK="[Bb][Aa][Cc][Kk]"
+regex_GPT="[Gg][Pp][Tt]"
+regex_YES="[Yy]"
+regex_NO="[Nn]"
+regex_BACK="[Bb][Aa][Cc][Kk]"
 void_packages_repo="https://github.com/void-linux/void-packages.git"
 
 # Colours
@@ -1862,16 +1863,16 @@ function set_keyboard_layout {
         header_skl
         echo -e -n "\nYour current keyboard layout is ${BLUE_LIGHT}${current_xkeyboard_layout:-${user_keyboard_layout}}${NORMAL}, do you want to change it? (y/n/back): "
         read -r yn
-        if [[ $yn =~ ${if_regex_YES} ]]; then
+        if [[ $yn =~ ${regex_YES} ]]; then
           clear
           break
-        elif [[ $yn =~ ${if_regex_NO} ]]; then
+        elif [[ $yn =~ ${regex_NO} ]]; then
           user_keyboard_layout="${current_xkeyboard_layout:-${user_keyboard_layout}}"
           echo -e -n "\nKeyboard layout won't be changed.\n\n"
           read -n 1 -r -p "[Press any key to continue...]" _key
           clear
           break 2
-        elif [[ $yn =~ ${if_regex_BACK} ]]; then
+        elif [[ $yn =~ ${regex_BACK} ]]; then
           clear
           break 2
         else
@@ -1931,7 +1932,7 @@ function connect_to_internet {
     header_cti
     echo -e -n "\nDo you want to use wifi? (y/n/back): "
     read -r yn
-    if [[ $yn =~ ${if_regex_YES} ]]; then
+    if [[ $yn =~ ${regex_YES} ]]; then
       if pgrep NetworkManager &>/dev/null; then
         echo
         ip --color=auto link show
@@ -1962,7 +1963,7 @@ function connect_to_internet {
         break
       fi
 
-    elif [[ $yn =~ ${if_regex_NO} ]]; then
+    elif [[ $yn =~ ${regex_NO} ]]; then
       if ping -c 1 8.8.8.8 &>/dev/null; then
         echo -e -n "\n${GREEN_LIGHT}Successfully connected to the internet.${NORMAL}\n\n"
       else
@@ -1972,7 +1973,7 @@ function connect_to_internet {
       clear
       break
 
-    elif [[ $yn =~ ${if_regex_BACK} ]]; then
+    elif [[ $yn =~ ${regex_BACK} ]]; then
       clear
       break
 
@@ -2022,7 +2023,7 @@ function select_destination {
         read -r root_partition
       fi
 
-      if [[ $user_drive =~ ${if_regex_BACK} ]] || [[ $boot_partition =~ ${if_regex_BACK} ]] || [[ $root_partition =~ ${if_regex_BACK} ]]; then
+      if [[ $user_drive =~ ${regex_BACK} ]] || [[ $boot_partition =~ ${regex_BACK} ]] || [[ $root_partition =~ ${regex_BACK} ]]; then
         clear
         break
       elif { [[ "${drive_partition_selection}" == "3" ]] && [[ ! -b "$user_drive" ]]; } ||
@@ -2044,12 +2045,12 @@ function select_destination {
           echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
           read -r yn
 
-          if [[ $yn =~ ${if_regex_NO} ]]; then
+          if [[ $yn =~ ${regex_NO} ]]; then
             echo -e -n "\n${RED_LIGHT}Aborting, select another destination.${NORMAL}\n\n"
             read -n 1 -r -p "[Press any key to continue...]" _key
             clear
             break
-          elif [[ $yn =~ ${if_regex_YES} ]]; then
+          elif [[ $yn =~ ${regex_YES} ]]; then
             if [[ "${drive_partition_selection}" == "3" ]]; then
               if grep -q "$user_drive" /proc/mounts; then
                 echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition...\n"
@@ -2121,12 +2122,12 @@ function disk_wiping {
       echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
       read -r yn
 
-      if [[ $yn =~ ${if_regex_NO} ]]; then
+      if [[ $yn =~ ${regex_NO} ]]; then
         echo -e -n "\n${RED_LIGHT}Aborting, please select another destination drive.${NORMAL}\n\n"
         read -n 1 -r -p "[Press any key to continue...]" _key
         clear
         break
-      elif [[ $yn =~ ${if_regex_YES} ]]; then
+      elif [[ $yn =~ ${regex_YES} ]]; then
         if grep -q "$user_drive" /proc/mounts; then
           echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before wiping...\n"
           cd "$HOME"
@@ -2171,11 +2172,11 @@ function disk_partitioning {
       header_dp
       echo -e -n "\nDrive previously selected for partitioning: ${BLUE_LIGHT}$user_drive${NORMAL}.\n\n"
       read -r -p "Do you want to change it? (y/n): " yn
-      if [[ $yn =~ ${if_regex_YES} ]]; then
+      if [[ $yn =~ ${regex_YES} ]]; then
         echo -e -n "\n${RED_LIGHT}Aborting, please select another destination drive.${NORMAL}\n\n"
         read -n 1 -r -p "[Press any key to continue...]" _key
         break
-      elif [[ $yn =~ ${if_regex_NO} ]]; then
+      elif [[ $yn =~ ${regex_NO} ]]; then
         if grep -q "$user_drive" /proc/mounts; then
           echo -e -n "\nDrive already mounted.\nChanging directory to $HOME and unmounting every partition before partitioning...\n"
           cd "$HOME"
@@ -2188,7 +2189,7 @@ function disk_partitioning {
           clear
           header_dp
           echo -e -n "\n${BLUE_LIGHT}Suggested disk layout${NORMAL}:"
-          echo -e -n "\n- GPT as disk label type for UEFI systems;"
+          echo -e -n "\n- GPT as partition table for UEFI systems;"
           echo -e -n "\n- Less than 1 GB for /boot/efi as first partition [EFI System];"
           echo -e -n "\n- Rest of the disk for the partition that will be logically partitioned with LVM (/ and /home) [Linux filesystem]."
           echo -e -n "\n\nThose two will be physical partition.\nYou don't need to create a /home partition now because btrfs subvolumes will take care of that.\n"
@@ -2219,25 +2220,32 @@ function disk_partitioning {
         done
 
         while true; do
-          clear
-          header_dp
-          echo
-          lsblk -p "$user_drive"
-          echo
-          read -r -p "Is this the desired partition table? (y/n): " yn
-          if [[ $yn =~ ${if_regex_YES} ]]; then
-            echo -e -n "\n${GREEN_LIGHT}Drive successfully partitioned.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+          if [[ $(fdisk -l "$user_drive" | grep Disklabel | awk '{print $3}') =~ ${regex_GPT} ]]; then
             clear
-            break 3
-          elif [[ $yn =~ ${if_regex_NO} ]]; then
-            echo -e -n "\n${RED_LIGHT}Please partition your drive again.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
-            break
+            header_dp
+            echo
+            lsblk -p "$user_drive"
+            echo
+            read -r -p "Is this the desired partition table? (y/n): " yn
+            if [[ $yn =~ ${regex_YES} ]]; then
+              echo -e -n "\n${GREEN_LIGHT}Drive successfully partitioned.${NORMAL}\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" _key
+              clear
+              break 2
+            elif [[ $yn =~ ${regex_NO} ]]; then
+              echo -e -n "\n${RED_LIGHT}Please partition your drive again.${NORMAL}\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" _key
+              break
+            else
+              echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" _key
+              clear
+            fi
           else
-            echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+            echo -e -n "\n${RED_LIGHT}Please wipe destination drive again and select GPT as partition table.${NORMAL}\n\n"
             read -n 1 -r -p "[Press any key to continue...]" _key
             clear
+            break 2
           fi
         done
       else
@@ -2266,13 +2274,13 @@ function disk_encryption {
     read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   else
-    if [[ $encryption_yn =~ ${if_regex_YES} ]]; then
+    if [[ $encryption_yn =~ ${regex_YES} ]]; then
       while true; do
         header_de
         echo -e -n "\nEncryption is already enabled for partition ${BLUE_LIGHT}$root_partition${NORMAL}."
         echo -e -n "\nDo you want to disable it? (y/n): "
         read -r yn
-        if [[ $yn =~ ${if_regex_YES} ]]; then
+        if [[ $yn =~ ${regex_YES} ]]; then
           if cryptsetup close /dev/mapper/"${encrypted_name}"; then
             echo -e -n "\n${RED_LIGHT}Encryption will be disabled.${NORMAL}\n\n"
             read -n 1 -r -p "[Press any key to continue...]" _key
@@ -2285,7 +2293,7 @@ function disk_encryption {
             clear
             break
           fi
-        elif [[ $yn =~ ${if_regex_NO} ]]; then
+        elif [[ $yn =~ ${regex_NO} ]]; then
           clear
           break
         else
@@ -2294,26 +2302,26 @@ function disk_encryption {
           clear
         fi
       done
-    elif [[ $encryption_yn =~ ${if_regex_NO} ]]; then
+    elif [[ $encryption_yn =~ ${regex_NO} ]]; then
       while true; do
         header_de
         echo -e -n "\nDo you want to set up ${BLUE_LIGHT}Full Disk Encryption${NORMAL}? (y/n): "
         read -r encryption_yn
 
-        if [[ $encryption_yn =~ ${if_regex_YES} ]]; then
+        if [[ $encryption_yn =~ ${regex_YES} ]]; then
           while true; do
             echo -e -n "\nDestination partition: ${BLUE_LIGHT}$root_partition${NORMAL}.\n"
             echo -e -n "\n${RED_LIGHT}THIS PARTITION WILL BE FORMATTED AND ENCRYPTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
             echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
             read -r yn
 
-            if [[ $yn =~ ${if_regex_NO} ]]; then
+            if [[ $yn =~ ${regex_NO} ]]; then
               encryption_yn='n'
               echo -e -n "\n${RED_LIGHT}Aborting, please select another ROOT partition.${NORMAL}\n\n"
               read -n 1 -r -p "[Press any key to continue...]" _key
               clear
               break 2
-            elif [[ $yn =~ ${if_regex_YES} ]]; then
+            elif [[ $yn =~ ${regex_YES} ]]; then
               echo -e -n "\n${GREEN_LIGHT}Correct partition selected.${NORMAL}\n\n"
               read -n 1 -r -p "[Press any key to continue...]" _key
               clear
@@ -2364,7 +2372,7 @@ function disk_encryption {
                     echo -e -n "\nYou entered: ${BLUE_LIGHT}$encrypted_name${NORMAL}.\n\n"
                     read -r -p "Is this the desired name? (y/n): " yn
 
-                    if [[ $yn =~ ${if_regex_YES} ]]; then
+                    if [[ $yn =~ ${regex_YES} ]]; then
                       echo -e -n "\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n"
                       while true; do
                         echo
@@ -2380,7 +2388,7 @@ function disk_encryption {
                       read -n 1 -r -p "[Press any key to continue...]" _key
                       clear
                       break 2
-                    elif [[ $yn =~ ${if_regex_NO} ]]; then
+                    elif [[ $yn =~ ${regex_NO} ]]; then
                       echo -e -n "\n${RED_LIGHT}Please select another name.${NORMAL}\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" _key
                       clear
@@ -2400,7 +2408,7 @@ function disk_encryption {
             fi
           done
 
-        elif [[ $encryption_yn =~ ${if_regex_NO} ]]; then
+        elif [[ $encryption_yn =~ ${regex_NO} ]]; then
           clear
           break
 
@@ -2955,9 +2963,9 @@ function main {
     echo
 
     echo -e -n "\n8) Set up Full Disk Encryption\t......\tEncryption: "
-    if [[ $encryption_yn =~ ${if_regex_YES} ]]; then
+    if [[ $encryption_yn =~ ${regex_YES} ]]; then
       echo -e -n "${GREEN_LIGHT}\t\tYES${NORMAL}"
-    elif [[ $encryption_yn =~ ${if_regex_NO} ]]; then
+    elif [[ $encryption_yn =~ ${regex_NO} ]]; then
       echo -e -n "${RED_LIGHT}\t\tNO${NORMAL}"
     fi
 
