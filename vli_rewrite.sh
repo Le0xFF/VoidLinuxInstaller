@@ -27,6 +27,8 @@ lvm_partition=''
 final_drive=''
 boot_partition=''
 root_partition=''
+boot_label=''
+root_label=''
 hdd_ssd=''
 current_xkeyboard_layout=''
 user_keyboard_layout=''
@@ -2603,6 +2605,25 @@ function lvm_creation {
 
 }
 
+function header_al {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}       ${GREEN_LIGHT}Filesystem labels${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+}
+
+function assign_labels {
+
+  header_al
+  echo -e -n "\nPlease enter a label for ${BLUE_LIGHT}EFI partition${NORMAL}: "
+  read -r boot_label
+
+  echo -e -n "\nPlease enter a label for ${BLUE_LIGHT}ROOT partition${NORMAL}: "
+  read -r root_label
+
+}
+
 function header_cf {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
@@ -3029,10 +3050,22 @@ function main {
     echo -e -n "\n9) Set up Logical Volume Management\t......\tLVM: "
     if [[ $lvm_yn =~ ${regex_YES} ]]; then
       echo -e -n "${GREEN_LIGHT}\t\t\tYES${NORMAL}"
-      echo -e -n "\n\t\t\t\t\t......\tLVM partition\t\t${GREEN_LIGHT}${lvm_partition}${NORMAL}"
+      echo -e -n "\n\t\t\t\t\t......\tLVM partition\t\t${GREEN_LIGHT}${lvm_partition}${NORMAL}\n"
     elif [[ $lvm_yn =~ ${regex_NO} ]]; then
       echo -e -n "${RED_LIGHT}\t\t\tNO${NORMAL}"
-      echo -e -n "\n\t\t\t\t\t......\tLVM partition:\t\t${RED_LIGHT}none${NORMAL}"
+      echo -e -n "\n\t\t\t\t\t......\tLVM partition:\t\t${RED_LIGHT}none${NORMAL}\n"
+    fi
+
+    echo -e -n "\n10) Set up partition labels: "
+    if [[ -n $boot_label ]]; then
+      echo -e -n "\t\t......\tEFI label\t\t${GREEN_LIGHT}${boot_label}${NORMAL}"
+    elif [[ $lvm_yn =~ ${regex_NO} ]]; then
+      echo -e -n "\t\t......\tEFI label\t\t${RED_LIGHT}none${NORMAL}"
+    fi
+    if [[ -n $root_label ]]; then
+      echo -e -n "\n\t\t\t\t\t......\tROOT label\t\t${GREEN_LIGHT}${root_label}${NORMAL}"
+    elif [[ $lvm_yn =~ ${regex_NO} ]]; then
+      echo -e -n "\n\t\t\t\t\t......\tROOT label\t\t${RED_LIGHT}none${NORMAL}"
     fi
 
     echo -e -n "\n\nx) ${RED_LIGHT}Quit and unmount everything.${NORMAL}\n"
@@ -3090,6 +3123,11 @@ function main {
     9)
       clear
       lvm_creation
+      clear
+      ;;
+    10)
+      clear
+      assign_labels
       clear
       ;;
     x)
