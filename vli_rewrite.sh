@@ -19,9 +19,11 @@ user_drive=''
 encryption_yn='n'
 luks_ot=''
 encrypted_name=''
+encrypted_partition=''
 lvm_yn='n'
 vg_name=''
 lv_root_name=''
+lvm_partition=''
 final_drive=''
 boot_partition=''
 root_partition=''
@@ -2275,151 +2277,158 @@ function disk_encryption {
     read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   else
-    if [[ $encryption_yn =~ ${regex_YES} ]]; then
-      while true; do
-        header_de
-        echo -e -n "\nEncryption is already enabled for partition ${BLUE_LIGHT}$root_partition${NORMAL}."
-        echo -e -n "\nDo you want to disable it? (y/n): "
-        read -r yn
-        if [[ $yn =~ ${regex_YES} ]]; then
-          if cryptsetup close /dev/mapper/"${encrypted_name}"; then
-            echo -e -n "\n${RED_LIGHT}Encryption will be disabled.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
-            encryption_yn='n'
+    if [[ $lvm_yn =~ ${regex_YES} ]] && [[ -b /dev/mapper/"$vg_name"-"$lv_root_name" ]]; then
+      header_de
+      echo -e -n "\n${RED_LIGHT}In this script is not allowed to encrypt a partition after using LVM.${NORMAL}\n\n"
+      read -n 1 -r -p "[Press any key to continue...]" _key
+      clear
+    else
+      if [[ $encryption_yn =~ ${regex_YES} ]]; then
+        while true; do
+          header_de
+          echo -e -n "\nEncryption is already enabled for partition ${BLUE_LIGHT}$root_partition${NORMAL}."
+          echo -e -n "\nDo you want to disable it? (y/n): "
+          read -r yn
+          if [[ $yn =~ ${regex_YES} ]]; then
+            if cryptsetup close /dev/mapper/"${encrypted_name}"; then
+              encryption_yn='n'
+              encrypted_partition=''
+              echo -e -n "\n${RED_LIGHT}Encryption will be disabled.${NORMAL}\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" _key
+              clear
+              break
+            else
+              echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" _key
+              clear
+              break
+            fi
+          elif [[ $yn =~ ${regex_NO} ]]; then
             clear
             break
           else
-            echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
+            echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
             read -n 1 -r -p "[Press any key to continue...]" _key
             clear
-            break
           fi
-        elif [[ $yn =~ ${regex_NO} ]]; then
-          clear
-          break
-        else
-          echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
-          clear
-        fi
-      done
-    elif [[ $encryption_yn =~ ${regex_NO} ]]; then
-      while true; do
-        header_de
-        echo -e -n "\nDo you want to set up ${BLUE_LIGHT}Full Disk Encryption${NORMAL}? (y/n): "
-        read -r encryption_yn
+        done
+      elif [[ $encryption_yn =~ ${regex_NO} ]]; then
+        while true; do
+          header_de
+          echo -e -n "\nDo you want to set up ${BLUE_LIGHT}Full Disk Encryption${NORMAL}? (y/n): "
+          read -r encryption_yn
 
-        if [[ $encryption_yn =~ ${regex_YES} ]]; then
-          while true; do
-            echo -e -n "\nDestination partition: ${BLUE_LIGHT}$root_partition${NORMAL}.\n"
-            echo -e -n "\n${RED_LIGHT}THIS PARTITION WILL BE FORMATTED AND ENCRYPTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
-            echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
-            read -r yn
+          if [[ $encryption_yn =~ ${regex_YES} ]]; then
+            while true; do
+              echo -e -n "\nDestination partition: ${BLUE_LIGHT}$root_partition${NORMAL}.\n"
+              echo -e -n "\n${RED_LIGHT}THIS PARTITION WILL BE FORMATTED AND ENCRYPTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+              echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
+              read -r yn
 
-            if [[ $yn =~ ${regex_NO} ]]; then
-              encryption_yn='n'
-              echo -e -n "\n${RED_LIGHT}Aborting, please select another ROOT partition.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-              clear
-              break 2
-            elif [[ $yn =~ ${regex_YES} ]]; then
-              echo -e -n "\n${GREEN_LIGHT}Correct partition selected.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-              clear
-              header_de
-              echo -e -n "\nThe selected partition will now be encrypted with LUKS version 1 or 2.\n"
-              echo -e -n "\n${RED_LIGHT}LUKS version 1${NORMAL}\n"
-              echo -e -n "- Can be used by both EFISTUB and GRUB2\n"
-              echo -e -n "\n${RED_LIGHT}LUKS version 2${NORMAL}\n"
-              echo -e -n "- Can be used only by EFISTUB and it will automatically be selected later.\n"
-              echo -e -n "  [GRUB2 LUKS version 2 support with encrypted /boot is still limited: https://savannah.gnu.org/bugs/?55093].\n"
-
-              while true; do
-                echo -e -n "\nWhich LUKS version do you want to use? (1/2): "
-                read -r luks_ot
-                if [[ "$luks_ot" == "1" ]] || [[ "$luks_ot" == "2" ]]; then
-                  echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$luks_ot${NORMAL}.\n"
-                  while true; do
-                    echo
-                    if cryptsetup luksFormat --type=luks"$luks_ot" "$root_partition"; then
-                      break
-                    else
-                      echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" _key
-                      echo
-                    fi
-                  done
-                  echo -e -n "\n${GREEN_LIGHT}Partition successfully encrypted.${NORMAL}\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
-                  clear
-                  break
-                else
-                  echo -e -n "\n${RED_LIGHT}Please enter 1 or 2.${NORMAL}\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
-                fi
-              done
-
-              while true; do
+              if [[ $yn =~ ${regex_NO} ]]; then
+                encryption_yn='n'
+                echo -e -n "\n${RED_LIGHT}Aborting, please select another ROOT partition.${NORMAL}\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" _key
+                clear
+                break 2
+              elif [[ $yn =~ ${regex_YES} ]]; then
+                echo -e -n "\n${GREEN_LIGHT}Correct partition selected.${NORMAL}\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" _key
+                clear
                 header_de
-                echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}encrypted partition${NORMAL} without any spaces (i.e. MyEncryptedLinuxPartition).\n"
-                echo -e -n "\nThe name will be used to mount the encrypted partition to ${BLUE_LIGHT}/dev/mapper/[...]${NORMAL} : "
-                read -r encrypted_name
-                if [[ -z "$encrypted_name" ]]; then
-                  echo -e -n "\nPlease enter a valid name.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
-                  clear
-                else
-                  while true; do
-                    echo -e -n "\nYou entered: ${BLUE_LIGHT}$encrypted_name${NORMAL}.\n\n"
-                    read -r -p "Is this the desired name? (y/n): " yn
+                echo -e -n "\nThe selected partition will now be encrypted with LUKS version 1 or 2.\n"
+                echo -e -n "\n${RED_LIGHT}LUKS version 1${NORMAL}\n"
+                echo -e -n "- Can be used by both EFISTUB and GRUB2\n"
+                echo -e -n "\n${RED_LIGHT}LUKS version 2${NORMAL}\n"
+                echo -e -n "- Can be used only by EFISTUB and it will automatically be selected later.\n"
+                echo -e -n "  [GRUB2 LUKS version 2 support with encrypted /boot is still limited: https://savannah.gnu.org/bugs/?55093].\n"
 
-                    if [[ $yn =~ ${regex_YES} ]]; then
-                      echo -e -n "\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n"
-                      while true; do
-                        echo
-                        if cryptsetup open "$root_partition" "$encrypted_name"; then
-                          break
-                        else
-                          echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-                          read -n 1 -r -p "[Press any key to continue...]" _key
+                while true; do
+                  echo -e -n "\nWhich LUKS version do you want to use? (1/2): "
+                  read -r luks_ot
+                  if [[ "$luks_ot" == "1" ]] || [[ "$luks_ot" == "2" ]]; then
+                    echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$luks_ot${NORMAL}.\n"
+                    while true; do
+                      echo
+                      if cryptsetup luksFormat --type=luks"$luks_ot" "$root_partition"; then
+                        break
+                      else
+                        echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                        kill_script
+                      fi
+                    done
+                    echo -e -n "\n${GREEN_LIGHT}Partition successfully encrypted.${NORMAL}\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" _key
+                    clear
+                    break
+                  else
+                    echo -e -n "\n${RED_LIGHT}Please enter 1 or 2.${NORMAL}\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" _key
+                  fi
+                done
+
+                while true; do
+                  header_de
+                  echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}encrypted partition${NORMAL} without any spaces (i.e. MyEncryptedLinuxPartition).\n"
+                  echo -e -n "\nThe name will be used to mount the encrypted partition to ${BLUE_LIGHT}/dev/mapper/[...]${NORMAL} : "
+                  read -r encrypted_name
+                  if [[ -z "$encrypted_name" ]]; then
+                    echo -e -n "\nPlease enter a valid name.\n\n"
+                    read -n 1 -r -p "[Press any key to continue...]" _key
+                    clear
+                  else
+                    while true; do
+                      echo -e -n "\nYou entered: ${BLUE_LIGHT}$encrypted_name${NORMAL}.\n\n"
+                      read -r -p "Is this the desired name? (y/n): " yn
+
+                      if [[ $yn =~ ${regex_YES} ]]; then
+                        echo -e -n "\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n"
+                        while true; do
                           echo
-                        fi
-                      done
-                      echo -e -n "\n${GREEN_LIGHT}Encrypted partition successfully mounted.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" _key
-                      clear
-                      break 2
-                    elif [[ $yn =~ ${regex_NO} ]]; then
-                      echo -e -n "\n${RED_LIGHT}Please select another name.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" _key
-                      clear
-                      break
-                    else
-                      echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" _key
-                    fi
-                  done
-                fi
-              done
+                          if cryptsetup open "$root_partition" "$encrypted_name"; then
+                            break
+                          else
+                            echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                            kill_script
+                          fi
+                        done
+                        encrypted_partition=/dev/mapper/"$encrypted_name"
+                        echo -e -n "\n${GREEN_LIGHT}Encrypted partition successfully mounted.${NORMAL}\n\n"
+                        read -n 1 -r -p "[Press any key to continue...]" _key
+                        clear
+                        break 2
+                      elif [[ $yn =~ ${regex_NO} ]]; then
+                        echo -e -n "\n${RED_LIGHT}Please select another name.${NORMAL}\n\n"
+                        read -n 1 -r -p "[Press any key to continue...]" _key
+                        clear
+                        break
+                      else
+                        echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+                        read -n 1 -r -p "[Press any key to continue...]" _key
+                      fi
+                    done
+                  fi
+                done
 
-              break 2
-            else
-              echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-            fi
-          done
+                break 2
+              else
+                echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" _key
+              fi
+            done
 
-        elif [[ $encryption_yn =~ ${regex_NO} ]]; then
-          clear
-          break
+          elif [[ $encryption_yn =~ ${regex_NO} ]]; then
+            clear
+            break
 
-        else
-          echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
-          clear
-        fi
+          else
+            echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" _key
+            clear
+          fi
 
-      done
+        done
+      fi
     fi
   fi
 
@@ -2435,110 +2444,162 @@ function header_lc {
 
 function lvm_creation {
 
-  while true; do
-
+  if [[ $encryption_yn =~ ${regex_NO} ]] && [[ ! -b "$root_partition" ]]; then
     header_lc
-
-    echo -e -n "\nWith LVM will be easier in the future to add more space\nto the root partition without formatting the whole system\n"
-    echo -e -n "\nDo you want to use ${BLUE_LIGHT}LVM${NORMAL}? (y/n): "
-    read -n 1 -r lvm_yn
-
-    if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; then
-
-      clear
+    echo -e -n "\n${RED_LIGHT}Please select a valid ROOT partition before enabling LVM.${NORMAL}\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" _key
+    clear
+  elif [[ $encryption_yn =~ ${regex_YES} ]] && [[ ! -b "$encrypted_partition" ]]; then
+    header_lc
+    echo -e -n "\n${RED_LIGHT}Please encrypt a valid ROOT partition before enabling LVM.${NORMAL}\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" _key
+    clear
+  else
+    if [[ $lvm_yn =~ ${regex_YES} ]]; then
+      while true; do
+        header_de
+        if [[ $encryption_yn =~ ${regex_YES} ]]; then
+          echo -e -n "\nLVM is already enabled for partition ${BLUE_LIGHT}$root_partition${NORMAL}."
+        elif [[ $encryption_yn =~ ${regex_NO} ]]; then
+          echo -e -n "\nLVM is already enabled for partition ${BLUE_LIGHT}$encrypted_partition${NORMAL}."
+        fi
+        echo -e -n "\nDo you want to disable it? (y/n): "
+        read -r yn
+        if [[ $yn =~ ${regex_YES} ]]; then
+          if lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name" && vgchange -an /dev/mapper/"$vg_name"; then
+            lvm_yn='n'
+            lvm_partition=''
+            echo -e -n "\n${RED_LIGHT}LVM will be disabled.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" _key
+            clear
+            break
+          else
+            echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+            kill_script
+          fi
+        elif [[ $yn =~ ${regex_NO} ]]; then
+          clear
+          break
+        else
+          echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" _key
+          clear
+        fi
+      done
+    elif [[ $lvm_yn =~ ${regex_NO} ]]; then
 
       while true; do
 
         header_lc
 
-        echo -e -n "\nCreating logical partitions wih LVM.\n"
+        echo -e -n "\nWith LVM will be easier in the future to add more space"
+        echo -e -n "\nto the ROOT partition without formatting the whole system.\n"
+        echo -e -n "\nDo you want to use ${BLUE_LIGHT}LVM${NORMAL}? (y/n): "
+        read -r lvm_yn
 
-        echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Volume Group${NORMAL} without any spaces (i.e. MyLinuxVolumeGroup).\n"
-        echo -e -n "\nThe name will be used to mount the Volume Group as: ${BLUE_LIGHT}/dev/mapper/[...]${NORMAL} : "
-        read -r vg_name
+        if [[ $lvm_yn =~ ${regex_YES} ]]; then
 
-        if [[ -z "$vg_name" ]]; then
-          echo -e -n "\nPlease enter a valid name.\n\n"
+          clear
+
+          while true; do
+
+            header_lc
+            echo -e -n "\nCreating logical partitions wih LVM.\n"
+            echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Volume Group${NORMAL} without any spaces (i.e. MyLinuxVolumeGroup).\n"
+            echo -e -n "\nThe name will be used to mount the Volume Group as: ${BLUE_LIGHT}/dev/mapper/[...]${NORMAL} : "
+            read -r vg_name
+
+            if [[ -z "$vg_name" ]]; then
+              echo -e -n "\n${RED_LIGHT}Please enter a valid name.${NORMAL}\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" _key
+              clear
+            else
+              while true; do
+                echo -e -n "\nYou entered: ${BLUE_LIGHT}$vg_name${NORMAL}.\n\n"
+                read -r -p "Is this the desired name? (y/n): " yn
+
+                if [[ $yn =~ ${regex_YES} ]]; then
+                  echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
+                  if [[ $encryption_yn =~ ${regex_YES} ]]; then
+                    vgcreate "$vg_name" "$encrypted_partition"
+                  elif [[ $encryption_yn =~ ${regex_NO} ]]; then
+                    vgcreate "$vg_name" "$root_partition"
+                  fi
+                  echo
+                  read -n 1 -r -p "[Press any key to continue...]" _key
+                  clear
+                  break 2
+                elif [[ $yn =~ ${regex_NO} ]]; then
+                  echo -e -n "\n${RED_LIGHT}Please select another name${NORMAL}.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" _key
+                  clear
+                  break
+                else
+                  echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" _key
+                fi
+              done
+            fi
+
+          done
+
+          while true; do
+
+            header_lc
+            echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical Volume${NORMAL} without any spaces (i.e. MyLinuxLogicVolume)."
+            echo -e -n "\nIts size will be the entire partition previosly selected.\n"
+            echo -e -n "\nThe name will be used to mount the Logical Volume as: ${BLUE_LIGHT}/dev/mapper/$vg_name-[...]${NORMAL} : "
+            read -r lv_root_name
+
+            if [[ -z "$lv_root_name" ]]; then
+              echo -e -n "\n${RED_LIGHT}Please enter a valid name.${NORMAL}\n\n"
+              read -n 1 -r -p "[Press any key to continue...]" _key
+              clear
+            else
+              while true; do
+                echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_root_name${NORMAL}.\n\n"
+                read -r -p "Is this correct? (y/n): " yn
+
+                if [[ $yn =~ ${regex_YES} ]]; then
+                  echo -e -n "\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} will now be created.\n\n"
+                  if lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"; then
+                    echo
+                    read -n 1 -r -p "[Press any key to continue...]" _key
+                    lvm_partition=/dev/mapper/"$vg_name"-"$lv_root_name"
+                    clear
+                    break 3
+                  else
+                    echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                    kill_script
+                  fi
+                elif [[ $yn =~ ${regex_NO} ]]; then
+                  echo -e -n "\n${RED_LIGHT}Please select another name${NORMAL}.\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" _key
+                  clear
+                  break
+                else
+                  echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" _key
+                fi
+              done
+            fi
+
+          done
+
+        elif [[ $lvm_yn =~ ${regex_NO} ]]; then
+          clear
+          break
+
+        else
+          echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
           read -n 1 -r -p "[Press any key to continue...]" _key
           clear
-        else
-          while true; do
-            echo -e -n "\nYou entered: ${BLUE_LIGHT}$vg_name${NORMAL}.\n\n"
-            read -n 1 -r -p "Is this the desired name? (y/n): " yn
-
-            if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-              echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
-              vgcreate "$vg_name" "$final_drive"
-              echo
-              read -n 1 -r -p "[Press any key to continue...]" _key
-              clear
-              break 2
-            elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-              echo -e -n "\n\nPlease select another name.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-              clear
-              break
-            else
-              echo -e -n "\nPlease answer y or n.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-            fi
-          done
         fi
 
       done
-
-      while true; do
-
-        header_lc
-
-        echo -e -n "\nEnter a ${BLUE_LIGHT}name${NORMAL} for the ${BLUE_LIGHT}Logical Volume${NORMAL} without any spaces (i.e. MyLinuxLogicVolume).\nIts size will be the entire partition previosly selected.\n"
-        echo -e -n "\nThe name will be used to mount the Logical Volume as: ${BLUE_LIGHT}/dev/mapper/$vg_name-[...]${NORMAL} : "
-        read -r lv_root_name
-
-        if [[ -z "$lv_root_name" ]]; then
-          echo -e -n "\nPlease enter a valid name.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
-          clear
-        else
-          while true; do
-            echo -e -n "\nYou entered: ${BLUE_LIGHT}$lv_root_name${NORMAL}.\n\n"
-            read -n 1 -r -p "Is this correct? (y/n): " yn
-
-            if [[ "$yn" == "y" ]] || [[ "${yn}" == "Y" ]]; then
-              echo -e -n "\n\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} will now be created.\n\n"
-              lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"
-              echo
-              read -n 1 -r -p "[Press any key to continue...]" _key
-              final_drive=/dev/mapper/"$vg_name"-"$lv_root_name"
-              clear
-              break 3
-            elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-              echo -e -n "\n\nPlease select another name.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-              clear
-              break
-            else
-              echo -e -n "\nPlease answer y or n.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-            fi
-          done
-        fi
-
-      done
-
-    elif [[ "$lvm_yn" == "n" ]] || [[ "$lvm_yn" == "N" ]]; then
-      echo -e -n "\n\nLVM won't be used.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
-      clear
-      break
-
-    else
-      echo -e -n "\nPlease answer y or n.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
-      clear
     fi
 
-  done
+  fi
 
 }
 
@@ -2906,7 +2967,7 @@ function main {
 
     header_main
 
-    echo -e -n "\n1) Set keyboard layout\t\t......\tKeyboard layout: "
+    echo -e -n "\n1) Set keyboard layout\t\t\t......\tKeyboard layout: "
     current_xkeyboard_layout=$(setxkbmap -query 2>/dev/null | grep layout | awk '{print $2}')
     if [[ -n "${current_xkeyboard_layout}" ]] || [[ -n "${user_keyboard_layout}" ]]; then
       echo -e -n "\t${GREEN_LIGHT}${current_xkeyboard_layout:-${user_keyboard_layout}}${NORMAL}"
@@ -2915,7 +2976,7 @@ function main {
       echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
     fi
 
-    echo -e -n "\n2) Set up internet connection\t......\tConnection status: "
+    echo -e -n "\n2) Set up internet connection\t\t......\tConnection status: "
     if ping -c 1 8.8.8.8 &>/dev/null; then
       echo -e -n "${GREEN_LIGHT}\tconnected${NORMAL}"
     else
@@ -2924,21 +2985,21 @@ function main {
 
     echo
 
-    echo -e -n "\n3) Select destination drive\t......\tDrive selected: "
+    echo -e -n "\n3) Select destination drive\t\t......\tDrive selected: "
     if [[ -b "$user_drive" ]]; then
       echo -e -n "${GREEN_LIGHT}\t${user_drive}${NORMAL}"
     else
       echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
     fi
 
-    echo -e -n "\n4) Wipe destination drive\t......\tDrive selected: "
+    echo -e -n "\n4) Wipe destination drive\t\t......\tDrive selected: "
     if [[ -b "$user_drive" ]]; then
       echo -e -n "${GREEN_LIGHT}\t${user_drive}${NORMAL}"
     else
       echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
     fi
 
-    echo -e -n "\n5) Partition destination drive\t......\tDrive selected: "
+    echo -e -n "\n5) Partition destination drive\t\t......\tDrive selected: "
     if [[ -b "$user_drive" ]]; then
       echo -e -n "${GREEN_LIGHT}\t${user_drive}${NORMAL}"
     else
@@ -2947,14 +3008,14 @@ function main {
 
     echo
 
-    echo -e -n "\n6) Select EFI partition\t\t......\tPartition selected: "
+    echo -e -n "\n6) Select EFI partition\t\t\t......\tPartition selected: "
     if [[ -b "$boot_partition" ]]; then
       echo -e -n "${GREEN_LIGHT}\t${boot_partition}${NORMAL}"
     else
       echo -e -n "${RED_LIGHT}\tnone${NORMAL}"
     fi
 
-    echo -e -n "\n7) Select ROOT partition\t......\tPartition selected: "
+    echo -e -n "\n7) Select ROOT partition\t\t......\tPartition selected: "
     if [[ -b "$root_partition" ]]; then
       echo -e -n "${GREEN_LIGHT}\t${root_partition}${NORMAL}"
     else
@@ -2963,11 +3024,22 @@ function main {
 
     echo
 
-    echo -e -n "\n8) Set up Full Disk Encryption\t......\tEncryption: "
+    echo -e -n "\n8) Set up Full Disk Encryption\t\t......\tEncryption: "
     if [[ $encryption_yn =~ ${regex_YES} ]]; then
       echo -e -n "${GREEN_LIGHT}\t\tYES${NORMAL}"
+      echo -e -n "\n\t\t\t\t\t......\tEncrypted partition:\t${GREEN_LIGHT}${encrypted_partition}${NORMAL}"
     elif [[ $encryption_yn =~ ${regex_NO} ]]; then
       echo -e -n "${RED_LIGHT}\t\tNO${NORMAL}"
+      echo -e -n "\n\t\t\t\t\t......\tEncrypted partition:\t${RED_LIGHT}none${NORMAL}"
+    fi
+
+    echo -e -n "\n9) Set up Logical Volume Management\t......\tLVM: "
+    if [[ $lvm_yn =~ ${regex_YES} ]]; then
+      echo -e -n "${GREEN_LIGHT}\t\t\tYES${NORMAL}"
+      echo -e -n "\n\t\t\t\t\t......\tLVM partition\t\t${GREEN_LIGHT}${lvm_partition}${NORMAL}"
+    elif [[ $lvm_yn =~ ${regex_NO} ]]; then
+      echo -e -n "${RED_LIGHT}\t\t\tNO${NORMAL}"
+      echo -e -n "\n\t\t\t\t\t......\tLVM partition:\t\t${RED_LIGHT}none${NORMAL}"
     fi
 
     echo -e -n "\n\nx) ${RED_LIGHT}Quit and unmount everything.${NORMAL}\n"
@@ -3020,6 +3092,11 @@ function main {
     8)
       clear
       disk_encryption
+      clear
+      ;;
+    9)
+      clear
+      lvm_creation
       clear
       ;;
     x)
