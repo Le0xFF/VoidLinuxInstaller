@@ -2624,330 +2624,254 @@ function assign_labels {
 
 }
 
-function header_cf {
+function detect_final_drive {
+
+  if [[ $encryption_yn =~ ${regex_YES} ]]; then
+    if [[ $lvm_yn =~ ${regex_YES} ]]; then
+      final_drive=$lvm_partition
+    elif [[ $lvm_yn =~ ${regex_NO} ]]; then
+      final_drive=$encrypted_partition
+    fi
+  elif [[ $encryption_yn =~ ${regex_NO} ]]; then
+    if [[ $lvm_yn =~ ${regex_YES} ]]; then
+      final_drive=$lvm_partition
+    elif [[ $lvm_yn =~ ${regex_NO} ]]; then
+      final_drive=$root_partition
+    fi
+  fi
+
+}
+
+function header_fcis {
 
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}      ${GREEN_LIGHT}Filesystem creation${NORMAL}      ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}        ${GREEN_LIGHT}System creation${NORMAL}        ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 
 }
 
-function create_filesystems {
+function format_create_install_system {
 
-  while true; do
+  detect_final_drive
 
-    header_cf
-
-    echo -e -n "\nFormatting partitions with proper filesystems.\n\nEFI partition will be formatted as ${BLUE_LIGHT}FAT32${NORMAL}.\nRoot partition will be formatted as ${BLUE_LIGHT}BTRFS${NORMAL}.\n"
-
-    echo
-    lsblk -p
-    echo
-
-    echo -e -n "\nWhich partition will be the ${BLUE_LIGHT}bootable EFI${NORMAL} partition?\n"
-    read -r -p "Please enter the full partition path (i.e. /dev/sda1): " boot_partition
-
-    if [[ "$boot_partition" == "$root_partition" ]] || [[ "$boot_partition" == "$root_partition" ]]; then
-      echo -e -n "\nPlease select a partition different from your root partition.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
-      clear
-    elif [[ ! -b "$boot_partition" ]]; then
-      echo -e -n "\nPlease select a valid partition.\n\n"
+  if [[ -z "$final_drive" ]] || [[ -z "$boot_label" ]] || [[ -z "$root_label" ]]; then
+    header_fcis
+    echo -e -n "\n${RED_LIGHT}Please complete at least steps 3, 6, 7 and 10 before installing the system.${NORMAL}\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" _key
+    clear
+  else
+    if [[ "$boot_partition" == "$root_partition" ]]; then
+      header_fcis
+      echo -e -n "\n${RED_LIGHT}EFI and ROOT partitions must not be the same.${NORMAL}\n\n"
       read -n 1 -r -p "[Press any key to continue...]" _key
       clear
     else
       while true; do
-        echo -e -n "\nYou selected: ${BLUE_LIGHT}$boot_partition${NORMAL}.\n"
-        echo -e -n "\n${RED_LIGHT}THIS PARTITION WILL BE FORMATTED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
-        echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n and [ENTER]):${NORMAL} "
+        header_fcis
+        echo -e -n "\n${RED_LIGHT}BY SELECTING YES, EVERYTHING WILL BE FORMATTED, EVERY DATA WILL BE LOST.${NORMAL}\n"
+        echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
         read -r yn
 
-        if [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-          echo -e -n "\nAborting, select another partition.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+        if [[ $yn =~ ${regex_NO} ]]; then
           clear
           break
-        elif [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
+        elif [[ $yn =~ ${regex_YES} ]]; then
+
+          # Format partition
+          header_fcis
+          echo -e -n "\nFormatting ${BLUE_LIGHT}EFI partition${NORMAL} as ${BLUE_LIGHT}FAT32${NORMAL}..."
           if grep -q "$boot_partition" /proc/mounts; then
             echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
             cd "$HOME"
-            umount --recursive "$(findmnt $boot_partition | awk -F " " 'FNR == 2 {print $1}')"
+            umount --recursive "$(findmnt "$boot_partition" | awk -F " " 'FNR == 2 {print $1}')"
             echo -e -n "\nDrive unmounted successfully.\n\n"
             read -n 1 -r -p "[Press any key to continue...]" _key
           fi
+          if mkfs.vfat -n "$boot_label" -F 32 "$boot_partition"; then
+            sync
+            echo -e -n "\n${GREEN_LIGHT}EFI partition successfully formatted.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" _key
+          else
+            echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+            kill_script
+          fi
 
-          echo -e -n "\nCorrect partition selected.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          echo -e -n "\nRoot partition will be formatted as ${BLUE_LIGHT}BTRFS${NORMAL}.\n"
+          if mkfs.btrfs --force -L "$root_label" "$final_drive"; then
+            sync
+            echo -e -n "\n${GREEN_LIGHT}ROOT partition successfully formatted.${NORMAL}\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" _key
+          else
+            echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+            kill_script
+          fi
+
+          # Create BTRFS subvolumes
           clear
+          header_fcis
+
+          if [[ -n $(lsblk "$final_drive" --discard |
+            awk -F " " 'FNR == 2 {print $3}') ]] && [[ -n $(lsblk "$final_drive" --discard |
+              awk -F " " 'FNR == 2 {print $4}') ]]; then
+            hdd_ssd=ssd
+          else
+            hdd_ssd=hdd
+          fi
+
+          echo -e -n "\nBTRFS subvolumes will now be created with following options:\n"
+          echo -e -n "- rw\n"
+          echo -e -n "- noatime\n"
+          if [[ "$hdd_ssd" == "ssd" ]]; then
+            echo -e -n "- discard=async\n"
+          fi
+          echo -e -n "- compress-force=zstd\n"
+          echo -e -n "- space_cache=v2\n"
+          echo -e -n "- commit=120\n"
+
+          echo -e -n "\nSubvolumes that will be created:\n"
+          echo -e -n "- /@\n"
+          echo -e -n "- /@home\n"
+          echo -e -n "- /@snapshots\n"
+          echo -e -n "- /var/cache/xbps\n"
+          echo -e -n "- /var/tmp\n"
+          echo -e -n "- /var/log\n\n"
+
+          read -n 1 -r -p "[Press any key to continue...]" _key
+
+          if grep -q /mnt /proc/mounts; then
+            echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
+            cd "$HOME"
+            umount --recursive /mnt
+            echo -e -n "\nDone.\n\n"
+            read -n 1 -r -p "[Press any key to continue...]" _key
+          fi
+
+          echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
+
+          if [[ "$hdd_ssd" == "ssd" ]]; then
+            export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
+          elif [[ "$hdd_ssd" == "hdd" ]]; then
+            export BTRFS_OPT=rw,noatime,compress-force=zstd,space_cache=v2,commit=120
+          fi
+          mount -o "$BTRFS_OPT" "$final_drive" /mnt
+          btrfs subvolume create /mnt/@
+          btrfs subvolume create /mnt/@home
+          btrfs subvolume create /mnt/@snapshots
+          umount /mnt
+          mount -o "$BTRFS_OPT",subvol=@ "$final_drive" /mnt
+          mkdir /mnt/home
+          mount -o "$BTRFS_OPT",subvol=@home "$final_drive" /mnt/home/
+          mkdir -p /mnt/var/cache
+          btrfs subvolume create /mnt/var/cache/xbps
+          btrfs subvolume create /mnt/var/tmp
+          btrfs subvolume create /mnt/var/log
+
+          echo -e -n "\n${GREEN_LIGHT}Done.${NORMAL}\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" _key
+
+          # Install base system
 
           while true; do
-
-            header_cf
-
-            echo -e -n "\nEnter a ${BLUE_LIGHT}label${NORMAL} for the ${BLUE_LIGHT}boot${NORMAL} partition without any spaces (i.e. MYBOOTPARTITION): "
-            read -r boot_name
-
-            if [[ -z "$boot_name" ]]; then
-              echo -e -n "\nPlease enter a valid name.\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
-              clear
-            else
-              while true; do
-                echo -e -n "\nYou entered: ${BLUE_LIGHT}$boot_name${NORMAL}.\n\n"
-                read -n 1 -r -p "Is this the desired name? (y/n): " yn
-
-                if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-                  echo -e -n "\n\nBoot partition ${BLUE_LIGHT}$boot_partition${NORMAL} will now be formatted as ${BLUE_LIGHT}FAT32${NORMAL} with ${BLUE_LIGHT}$boot_name${NORMAL} label.\n\n"
-                  mkfs.vfat -n "$boot_name" -F 32 "$boot_partition"
-                  sync
-                  echo -e -n "\nPartition successfully formatted.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
-                  clear
-                  break 4
-                elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-                  echo -e -n "\n\nPlease select another name.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
-                  clear
-                  break
-                else
-                  echo -e -n "\nPlease answer y or n.\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
-                fi
-              done
-            fi
-
+            clear
+            header_fcis
+            echo -e -n "\nSelect which ${BLUE_LIGHT}architecture${NORMAL} do you want to use:\n\n"
+            select user_arch in x86_64 x86_64-musl; do
+              case "$user_arch" in
+              x86_64)
+                echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n"
+                ARCH="$user_arch"
+                export REPO=https://repo-default.voidlinux.org/current
+                break 2
+                ;;
+              x86_64-musl)
+                echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n"
+                ARCH="$user_arch"
+                export REPO=https://repo-default.voidlinux.org/current/musl
+                break 2
+                ;;
+              *)
+                echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+                read -n 1 -r -p "[Press any key to continue...]" _key
+                break
+                ;;
+              esac
+            done
           done
 
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
+          echo -e -n "\nCopying RSA keys...\n"
+          mkdir -p /mnt/var/db/xbps/keys
+          cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
+
+          echo -e -n "\nInstalling base system...\n\n"
           read -n 1 -r -p "[Press any key to continue...]" _key
-        fi
-      done
+          echo
+          XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
+          XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi \
+            efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl \
+            util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-multilib \
+            void-repo-nonfree void-repo-multilib-nonfree
+          XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"
+          if grep -m 1 "model name" /proc/cpuinfo | grep --ignore-case "intel" &>/dev/null; then
+            XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" intel-ucode
+          fi
 
-    fi
+          echo -e -n "\nMounting folders for chroot...\n"
+          mount -t proc none /mnt/proc
+          mount -t sysfs none /mnt/sys
+          mount --rbind /dev /mnt/dev
+          mount --rbind /run /mnt/run
+          mount --rbind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars/
 
-  done
+          echo -e -n "\nCopying /etc/resolv.conf...\n"
+          cp -L /etc/resolv.conf /mnt/etc/
 
-  while true; do
+          if [[ ! -L /var/services/NetworkManager ]]; then
+            echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
+            cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
+          else
+            echo -e -n "\nCopying /etc/NetworkManager/system-connections/...\n"
+            cp -L /etc/NetworkManager/system-connections/* /mnt/etc/NetworkManager/system-connections/
+          fi
 
-    header_cf
+          # Chrooting
+          echo -e -n "\nChrooting...\n\n"
+          read -n 1 -r -p "[Press any key to continue...]" _key
+          cp "$HOME"/chroot.sh /mnt/root/
+          cp "$HOME"/btrfs_map_physical.c /mnt/root/
 
-    echo -e -n "\nEnter a ${BLUE_LIGHT}label${NORMAL} for the ${BLUE_LIGHT}root${NORMAL} partition without any spaces (i.e. MyRootPartition): "
-    read -r root_name
+          BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encryption_yn="$encryption_yn" luks_ot="$luks_ot" root_partition="$root_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" hdd_ssd="$hdd_ssd" void_packages_repo="$void_packages_repo" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
 
-    if [[ -z "$root_name" ]]; then
-      echo -e -n "\nPlease enter a valid name.\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
-      clear
-    else
-      while true; do
+          echo -e -n "\nCleaning...\n"
+          rm -f /mnt/root/chroot.sh
+          rm -f /mnt/root/btrfs_map_physical.c
+          rm -f /mnt/root/btrfs_map_physical
 
-        echo -e -n "\nYou entered: ${BLUE_LIGHT}$root_name${NORMAL}.\n\n"
-        read -n 1 -r -p "Is this the desired name? (y/n): " yn
+          echo -e -n "\nUnmounting partitions...\n\n"
+          if findmnt /mnt &>/dev/null; then
+            umount --recursive /mnt
+          fi
 
-        if [[ "$yn" == "y" ]] || [[ "$yn" == "Y" ]]; then
-          echo -e -n "\n\n${BLUE_LIGHT}Root${NORMAL} partition ${BLUE_LIGHT}$final_drive${NORMAL} will now be formatted as ${BLUE_LIGHT}BTRFS${NORMAL} with ${BLUE_LIGHT}$root_name${NORMAL} label.\n\n"
-          mkfs.btrfs --force -L "$root_name" "$final_drive"
-          sync
-          echo -e -n "\nPartition successfully formatted.\n\n"
+          if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; then
+            lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
+            vgchange -an /dev/mapper/"$vg_name"
+          fi
+
+          if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]]; then
+            cryptsetup close /dev/mapper/"$encrypted_name"
+          fi
+
+          echo
           read -n 1 -r -p "[Press any key to continue...]" _key
           clear
-          break 2
-        elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
-          echo -e -n "\n\nPlease select another name.\n\n"
+
+        else
+          echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
           read -n 1 -r -p "[Press any key to continue...]" _key
           clear
-          break
-        else
-          echo -e -n "\nPlease answer y or n.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
         fi
       done
     fi
-
-  done
-
-}
-
-function header_cbs {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}        ${GREEN_LIGHT}BTRFS subvolume${NORMAL}        ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-
-}
-
-function create_btrfs_subvolumes {
-
-  header_cbs
-
-  if [[ -n $(lsblk "$final_drive" --discard | awk -F " " 'FNR == 2 {print $3}') ]] && [[ -n $(lsblk "$final_drive" --discard | awk -F " " 'FNR == 2 {print $4}') ]]; then
-    hdd_ssd=ssd
-  else
-    hdd_ssd=hdd
   fi
-
-  echo -e -n "\nBTRFS subvolumes will now be created with default options.\n\n"
-  echo -e -n "Default options:\n"
-  echo -e -n "- rw\n"
-  echo -e -n "- noatime\n"
-  if [[ "$hdd_ssd" == "ssd" ]]; then
-    echo -e -n "- discard=async\n"
-  fi
-  echo -e -n "- compress-force=zstd\n"
-  echo -e -n "- space_cache=v2\n"
-  echo -e -n "- commit=120\n"
-
-  echo -e -n "\nSubvolumes that will be created:\n"
-  echo -e -n "- /@\n"
-  echo -e -n "- /@home\n"
-  echo -e -n "- /@snapshots\n"
-  echo -e -n "- /var/cache/xbps\n"
-  echo -e -n "- /var/tmp\n"
-  echo -e -n "- /var/log\n"
-
-  echo -e -n "\n${BLUE_LIGHT}If you prefer to change any option, please quit this script NOW and modify it according to you tastes.${NORMAL}\n\n"
-  read -n 1 -r -p "Press any key to continue or Ctrl+C to quit now..." _key
-
-  echo -e -n "\n\nThe root partition ${BLUE_LIGHT}$final_drive${NORMAL} will now be mounted to /mnt.\n"
-
-  if grep -q /mnt /proc/mounts; then
-    echo -e -n "Everything mounted to /mnt will now be unmounted...\n"
-    cd "$HOME"
-    umount --recursive /mnt
-    echo -e -n "\nDone.\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" _key
-  fi
-
-  echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
-
-  if [[ "$hdd_ssd" == "ssd" ]]; then
-    export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
-  elif [[ "$hdd_ssd" == "hdd" ]]; then
-    export BTRFS_OPT=rw,noatime,compress-force=zstd,space_cache=v2,commit=120
-  fi
-  mount -o "$BTRFS_OPT" "$final_drive" /mnt
-  btrfs subvolume create /mnt/@
-  btrfs subvolume create /mnt/@home
-  btrfs subvolume create /mnt/@snapshots
-  umount /mnt
-  mount -o "$BTRFS_OPT",subvol=@ "$final_drive" /mnt
-  mkdir /mnt/home
-  mount -o "$BTRFS_OPT",subvol=@home "$final_drive" /mnt/home/
-  mkdir -p /mnt/var/cache
-  btrfs subvolume create /mnt/var/cache/xbps
-  btrfs subvolume create /mnt/var/tmp
-  btrfs subvolume create /mnt/var/log
-
-  echo -e -n "\nDone.\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" _key
-  clear
-
-}
-
-function header_ibsac {
-
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}   ${GREEN_LIGHT}Base system installation${NORMAL}    ${GREEN_DARK}#${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-
-}
-
-function install_base_system_and_chroot {
-
-  header_ibsac
-
-  while true; do
-
-    echo -e -n "\nSelect which ${BLUE_LIGHT}architecture${NORMAL} do you want to use:\n\n"
-
-    select user_arch in x86_64 x86_64-musl; do
-      case "$user_arch" in
-      x86_64)
-        echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n"
-        ARCH="$user_arch"
-        export REPO=https://repo-default.voidlinux.org/current
-        break 2
-        ;;
-      x86_64-musl)
-        echo -e -n "\n${BLUE_LIGHT}$user_arch${NORMAL} selected.\n"
-        ARCH="$user_arch"
-        export REPO=https://repo-default.voidlinux.org/current/musl
-        break 2
-        ;;
-      *)
-        echo -e -n "\nPlease select one of the two architectures.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" _key
-        ;;
-      esac
-    done
-
-  done
-
-  echo -e -n "\nCopying RSA keys...\n"
-  mkdir -p /mnt/var/db/xbps/keys
-  cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
-
-  echo -e -n "\nInstalling base system...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" _key
-  echo
-  XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
-  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-multilib void-repo-nonfree void-repo-multilib-nonfree
-  XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"
-  if grep -m 1 "model name" /proc/cpuinfo | grep --ignore-case "intel" &>/dev/null; then
-    XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" intel-ucode
-  fi
-
-  echo -e -n "\nMounting folders for chroot...\n"
-  mount -t proc none /mnt/proc
-  mount -t sysfs none /mnt/sys
-  mount --rbind /dev /mnt/dev
-  mount --rbind /run /mnt/run
-  mount --rbind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars/
-
-  echo -e -n "\nCopying /etc/resolv.conf...\n"
-  cp -L /etc/resolv.conf /mnt/etc/
-
-  if [[ ! -L /var/services/NetworkManager ]]; then
-    echo -e -n "\nCopying /etc/wpa_supplicant/wpa_supplicant.conf...\n"
-    cp -L /etc/wpa_supplicant/wpa_supplicant.conf /mnt/etc/wpa_supplicant/
-  else
-    echo -e -n "\nCopying /etc/NetworkManager/system-connections/...\n"
-    cp -L /etc/NetworkManager/system-connections/* /mnt/etc/NetworkManager/system-connections/
-  fi
-
-  echo -e -n "\nChrooting...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" _key
-  cp "$HOME"/chroot.sh /mnt/root/
-  cp "$HOME"/btrfs_map_physical.c /mnt/root/
-
-  BTRFS_OPT="$BTRFS_OPT" boot_partition="$boot_partition" encryption_yn="$encryption_yn" luks_ot="$luks_ot" root_partition="$root_partition" encrypted_name="$encrypted_name" lvm_yn="$lvm_yn" vg_name="$vg_name" lv_root_name="$lv_root_name" user_drive="$user_drive" final_drive="$final_drive" user_keyboard_layout="$user_keyboard_layout" hdd_ssd="$hdd_ssd" void_packages_repo="$void_packages_repo" ARCH="$ARCH" BLUE_LIGHT="$BLUE_LIGHT" BLUE_LIGHT_FIND="$BLUE_LIGHT_FIND" GREEN_DARK="$GREEN_DARK" GREEN_LIGHT="$GREEN_LIGHT" NORMAL="$NORMAL" NORMAL_FIND="$NORMAL_FIND" RED_LIGHT="$RED_LIGHT" PS1='(chroot) # ' chroot /mnt/ /bin/bash "$HOME"/chroot.sh
-
-  header_ibsac
-
-  echo -e -n "\nCleaning...\n"
-  rm -f /mnt/root/chroot.sh
-  rm -f /mnt/root/btrfs_map_physical.c
-  rm -f /mnt/root/btrfs_map_physical
-
-  echo -e -n "\nUnmounting partitions...\n\n"
-  if findmnt /mnt &>/dev/null; then
-    umount --recursive /mnt
-  fi
-
-  if [[ "$lvm_yn" == "y" ]] || [[ "$lvm_yn" == "Y" ]]; then
-    lvchange -an /dev/mapper/"$vg_name"-"$lv_root_name"
-    vgchange -an /dev/mapper/"$vg_name"
-  fi
-
-  if [[ "$encryption_yn" == "y" ]] || [[ "$encryption_yn" == "Y" ]]; then
-    cryptsetup close /dev/mapper/"$encrypted_name"
-  fi
-
-  echo
-  read -n 1 -r -p "[Press any key to continue...]" _key
-  clear
-
 }
 
 function outro {
@@ -3050,11 +2974,13 @@ function main {
     echo -e -n "\n9) Set up Logical Volume Management\t......\tLVM: "
     if [[ $lvm_yn =~ ${regex_YES} ]]; then
       echo -e -n "${GREEN_LIGHT}\t\t\tYES${NORMAL}"
-      echo -e -n "\n\t\t\t\t\t......\tLVM partition\t\t${GREEN_LIGHT}${lvm_partition}${NORMAL}\n"
+      echo -e -n "\n\t\t\t\t\t......\tLVM partition\t\t${GREEN_LIGHT}${lvm_partition}${NORMAL}"
     elif [[ $lvm_yn =~ ${regex_NO} ]]; then
       echo -e -n "${RED_LIGHT}\t\t\tNO${NORMAL}"
-      echo -e -n "\n\t\t\t\t\t......\tLVM partition:\t\t${RED_LIGHT}none${NORMAL}\n"
+      echo -e -n "\n\t\t\t\t\t......\tLVM partition:\t\t${RED_LIGHT}none${NORMAL}"
     fi
+
+    echo
 
     echo -e -n "\n10) Set up partition labels: "
     if [[ -n $boot_label ]]; then
@@ -3067,6 +2993,10 @@ function main {
     elif [[ $lvm_yn =~ ${regex_NO} ]]; then
       echo -e -n "\n\t\t\t\t\t......\tROOT label\t\t${RED_LIGHT}none${NORMAL}"
     fi
+
+    echo
+
+    echo -e -n "\n11) Install base system and chroot inside"
 
     echo -e -n "\n\nx) ${RED_LIGHT}Quit and unmount everything.${NORMAL}\n"
 
@@ -3130,6 +3060,11 @@ function main {
       assign_labels
       clear
       ;;
+    11)
+      clear
+      format_create_install_system
+      clear
+      ;;
     x)
       kill_script
       ;;
@@ -3150,9 +3085,6 @@ create_chroot_script
 create_btrfs_map_physical_c
 intro
 main
-#create_filesystems
-#create_btrfs_subvolumes
-#install_base_system_and_chroot
-#outro
+outro
 
 exit 0
