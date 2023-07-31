@@ -1041,7 +1041,7 @@ function void_packages {
                             else
                               repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" "$void_packages_custom_branch" | wc -l)
                             fi
-                            if [[ "$repo_check" == "1" ]]; then
+                            if [[ "$repo_check" != "0" ]]; then
                               echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
                               if [[ -z "$void_packages_custom_branch" ]]; then
                                 git_cmd="git clone $void_packages_custom_repo"
@@ -1052,6 +1052,7 @@ function void_packages {
                             else
                               echo -e -n "\n\n${RED_LIGHT}Please enter a valid public repository url.${NORMAL}\n\n"
                               read -n 1 -r -p "[Press any key to continue...]" _key
+                              break
                             fi
                           done
                         elif [[ $yn =~ $regex_BACK ]]; then
@@ -1072,7 +1073,7 @@ EOSU
                       echo -e -n "\n${GREEN_LIGHT}Void Packages successfully cloned and configured.${NORMAL}\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" _key
                       clear
-                      break 3
+                      break 4
                     else
                       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" _key

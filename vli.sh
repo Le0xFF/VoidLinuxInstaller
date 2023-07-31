@@ -1165,7 +1165,7 @@ function void_packages {
                             else
                               repo_check=$(GIT_TERMINAL_PROMPT=0 git ls-remote "$void_packages_custom_repo" "$void_packages_custom_branch" | wc -l)
                             fi
-                            if [[ "$repo_check" == "1" ]]; then
+                            if [[ "$repo_check" != "0" ]]; then
                               echo -e -n "\nCustom repository ${BLUE_LIGHT}$void_packages_custom_repo${NORMAL} will be used.\n"
                               if [[ -z "$void_packages_custom_branch" ]]; then
                                 git_cmd="git clone $void_packages_custom_repo"
@@ -1176,6 +1176,7 @@ function void_packages {
                             else
                               echo -e -n "\n\n${RED_LIGHT}Please enter a valid public repository url.${NORMAL}\n\n"
                               read -n 1 -r -p "[Press any key to continue...]" _key
+                              break
                             fi
                           done
                         elif [[ $yn =~ $regex_BACK ]]; then
@@ -1196,7 +1197,7 @@ EOSU
                       echo -e -n "\n${GREEN_LIGHT}Void Packages successfully cloned and configured.${NORMAL}\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" _key
                       clear
-                      break 3
+                      break 4
                     else
                       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
                       read -n 1 -r -p "[Press any key to continue...]" _key
@@ -2917,10 +2918,12 @@ function format_create_install_system {
           XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
           XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi \
             efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl \
-            util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-multilib \
-            void-repo-nonfree void-repo-multilib-nonfree
+            util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-nonfree
+          if [[ "$XBPS_ARCH" == "x86_64" ]]; then
+            XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" void-repo-multilib void-repo-multilib-nonfree
+          fi
           XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"
-          if grep -m 1 "model name" /proc/cpuinfo | grep --ignore-case "intel" &>/dev/null; then
+          if [[ "$XBPS_ARCH" == "x86_64" ]] && grep -m 1 "model name" /proc/cpuinfo | grep --ignore-case "intel" &>/dev/null; then
             XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" intel-ucode
           fi
 
@@ -2934,8 +2937,9 @@ function format_create_install_system {
           echo -e -n "\nCopying /etc/resolv.conf...\n"
           cp -L /etc/resolv.conf /mnt/etc/
 
-          echo -e -n "\nCopying /etc/NetworkManager/system-connections/...\n"
-          cp -L /etc/NetworkManager/system-connections/* /mnt/etc/NetworkManager/system-connections/
+          if cp -L /etc/NetworkManager/system-connections/* /mnt/etc/NetworkManager/system-connections/ &>/dev/null; then
+            echo -e -n "\nCopying /etc/NetworkManager/system-connections/...\n"
+          fi
 
           # Chrooting
           echo -e -n "\nChrooting...\n\n"
