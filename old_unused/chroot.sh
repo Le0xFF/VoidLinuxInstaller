@@ -69,6 +69,10 @@ UUID=$ROOT_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
 # Snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
 #UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
 
+# Some applications don't like to have /var/log folders as read only.
+# Log folders, to allow booting snapshots with rd.live.overlay.overlayfs=1
+UUID=$ROOT_UUID /var/log btrfs $BTRFS_OPT,subvol=@/var/log 0 2
+
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
 EOF
