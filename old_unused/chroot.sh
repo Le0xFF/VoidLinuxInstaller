@@ -1158,10 +1158,14 @@ function chroot_main {
 
     echo
 
-    echo -e -n "\n4) Install additional packages"
-    echo -e -n "\n5) Uninstall packages"
-    echo -e -n "\n6) Enable/disable services"
+    echo -e -n "\n4) Change repository mirror"
+    echo -e -n "\n5) Install additional packages"
+    echo -e -n "\n6) Uninstall packages"
     echo -e -n "\n7) Configure Void Packages"
+
+    echo
+
+    echo -e -n "\n8) Enable/disable services"
 
     echo
 
@@ -1188,22 +1192,27 @@ function chroot_main {
       ;;
     4)
       clear
-      xs
+      xmirror
       clear
       ;;
     5)
       clear
-      uninstall_packages
+      xs
       clear
       ;;
     6)
       clear
-      enable_disable_services
+      uninstall_packages
       clear
       ;;
     7)
       clear
       void_packages
+      clear
+      ;;
+    8)
+      clear
+      enable_disable_services
       clear
       ;;
     q)

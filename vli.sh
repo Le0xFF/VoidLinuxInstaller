@@ -1282,10 +1282,14 @@ function chroot_main {
 
     echo
 
-    echo -e -n "\n4) Install additional packages"
-    echo -e -n "\n5) Uninstall packages"
-    echo -e -n "\n6) Enable/disable services"
+    echo -e -n "\n4) Change repository mirror"
+    echo -e -n "\n5) Install additional packages"
+    echo -e -n "\n6) Uninstall packages"
     echo -e -n "\n7) Configure Void Packages"
+
+    echo
+
+    echo -e -n "\n8) Enable/disable services"
 
     echo
 
@@ -1312,22 +1316,27 @@ function chroot_main {
       ;;
     4)
       clear
-      xs
+      xmirror
       clear
       ;;
     5)
       clear
-      uninstall_packages
+      xs
       clear
       ;;
     6)
       clear
-      enable_disable_services
+      uninstall_packages
       clear
       ;;
     7)
       clear
       void_packages
+      clear
+      ;;
+    8)
+      clear
+      enable_disable_services
       clear
       ;;
     q)
@@ -2928,7 +2937,7 @@ function format_create_install_system {
           fi
           if ! XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi \
             efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl \
-            util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-nonfree; then
+            util-linux tar coreutils binutils xtools fzf xmirror plocate ictree xkeyboard-config ckbcomp void-repo-nonfree; then
             echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
             kill_script
           fi
