@@ -453,26 +453,22 @@ function install_bootloader {
               if [[ $encryption_yn =~ $regex_YES ]]; then
                 echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
                 dd bs=512 count=4 if=/dev/random of=/boot/volume.key
-                echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
-                while true; do
+                echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n\n"
+                if ! cryptsetup luksAddKey "$root_partition" /boot/volume.key; then
+                  echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
+                  kill_script
+                else
+                  chmod 000 /boot/volume.key
+                  chmod -R g-rwx,o-rwx /boot
+                  echo -e -n "\nAdding random key to /etc/crypttab...\n"
+                  echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >>/etc/crypttab
+                  echo -e -n "\nAdding random key to dracut configuration files...\n"
+                  echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >>/etc/dracut.conf.d/10-crypt.conf
+                  echo -e -n "\nGenerating new dracut initramfs...\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                   echo
-                  if cryptsetup luksAddKey "$root_partition" /boot/volume.key; then
-                    break
-                  else
-                    echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
-                    kill_script
-                  fi
-                done
-                chmod 000 /boot/volume.key
-                chmod -R g-rwx,o-rwx /boot
-                echo -e -n "\nAdding random key to /etc/crypttab...\n"
-                echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >>/etc/crypttab
-                echo -e -n "\nAdding random key to dracut configuration files...\n"
-                echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >>/etc/dracut.conf.d/10-crypt.conf
-                echo -e -n "\nGenerating new dracut initramfs...\n\n"
-                read -n 1 -r -p "[Press any key to continue...]" _key
-                echo
-                dracut --regenerate-all --force --hostonly
+                  dracut --regenerate-all --force --hostonly
+                fi
               fi
               echo -e -n "\nInstalling GRUB on ${BLUE_LIGHT}/boot/efi${NORMAL} partition with ${BLUE_LIGHT}$bootloader_id${NORMAL} as bootloader-id...\n\n"
               mkdir -p /boot/efi
@@ -517,10 +513,10 @@ function install_bootloader {
   echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
   read -n 1 -r -p "[Press any key to continue...]" _key
   clear
+  header_ib
 
   if [[ $bootloader =~ $regex_GRUB2 ]]; then
     while true; do
-      header_ib
       echo -e -n "\nDo you want to set ${BLUE_LIGHT}${user_keyboard_layout}${NORMAL} keyboard layout also for GRUB2? (y/n): "
       read -r yn
       if [[ $yn =~ $regex_YES ]]; then
@@ -2150,7 +2146,7 @@ function select_destination {
           echo -e -n "\nROOT partition selected as destination: ${BLUE_LIGHT}$root_partition${NORMAL}\n"
         fi
         while true; do
-          echo -e -n "\n${RED_LIGHT}Destination WILL BE WIPED AND PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
+          echo -e -n "\n${RED_LIGHT}DESTINATION WILL BE WIPED AND PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
           echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
           read -r yn
 
@@ -2358,6 +2354,8 @@ function disk_partitioning {
             fi
           else
             user_drive=''
+            clear
+            header_dp
             echo -e -n "\n${RED_LIGHT}Please wipe destination drive again and select GPT as partition table.${NORMAL}\n\n"
             read -n 1 -r -p "[Press any key to continue...]" _key
             clear
@@ -2404,6 +2402,7 @@ function disk_encryption {
           read -r yn
           if [[ $yn =~ ${regex_YES} ]]; then
             if cryptsetup close /dev/mapper/"${encrypted_name}"; then
+              luks_ot=''
               encryption_yn='n'
               encrypted_partition=''
               echo -e -n "\n${RED_LIGHT}Encryption will be disabled.${NORMAL}\n\n"
@@ -2460,20 +2459,16 @@ function disk_encryption {
                   echo -e -n "\nWhich LUKS version do you want to use? (1/2): "
                   read -r luks_ot
                   if [[ "$luks_ot" == "1" ]] || [[ "$luks_ot" == "2" ]]; then
-                    echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$luks_ot${NORMAL}.\n"
-                    while true; do
-                      echo
-                      if cryptsetup luksFormat --type=luks"$luks_ot" "$root_partition"; then
-                        break
-                      else
-                        echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
-                        kill_script
-                      fi
-                    done
-                    echo -e -n "\n${GREEN_LIGHT}Partition successfully encrypted.${NORMAL}\n\n"
-                    read -n 1 -r -p "[Press any key to continue...]" _key
-                    clear
-                    break
+                    echo -e -n "\nUsing LUKS version ${BLUE_LIGHT}$luks_ot${NORMAL}.\n\n"
+                    if cryptsetup luksFormat --type=luks"$luks_ot" "$root_partition" --debug --verbose; then
+                      echo -e -n "\n${GREEN_LIGHT}Partition successfully encrypted.${NORMAL}\n\n"
+                      read -n 1 -r -p "[Press any key to continue...]" _key
+                      clear
+                      break
+                    else
+                      echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                      kill_script
+                    fi
                   else
                     echo -e -n "\n${RED_LIGHT}Please enter 1 or 2.${NORMAL}\n\n"
                     read -n 1 -r -p "[Press any key to continue...]" _key
@@ -2495,21 +2490,17 @@ function disk_encryption {
                       read -r -p "Is this the desired name? (y/n): " yn
 
                       if [[ $yn =~ ${regex_YES} ]]; then
-                        echo -e -n "\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n"
-                        while true; do
-                          echo
-                          if cryptsetup open "$root_partition" "$encrypted_name"; then
-                            break
-                          else
-                            echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
-                            kill_script
-                          fi
-                        done
-                        encrypted_partition=/dev/mapper/"$encrypted_name"
-                        echo -e -n "\n${GREEN_LIGHT}Encrypted partition successfully mounted.${NORMAL}\n\n"
-                        read -n 1 -r -p "[Press any key to continue...]" _key
-                        clear
-                        break 2
+                        echo -e -n "\nPartition will now be mounted as: ${BLUE_LIGHT}/dev/mapper/$encrypted_name${NORMAL}\n\n"
+                        if ! cryptsetup open "$root_partition" "$encrypted_name"; then
+                          echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                          kill_script
+                        else
+                          encrypted_partition=/dev/mapper/"$encrypted_name"
+                          echo -e -n "\n${GREEN_LIGHT}Encrypted partition successfully mounted.${NORMAL}\n\n"
+                          read -n 1 -r -p "[Press any key to continue...]" _key
+                          clear
+                          break 2
+                        fi
                       elif [[ $yn =~ ${regex_NO} ]]; then
                         echo -e -n "\n${RED_LIGHT}Please select another name.${NORMAL}\n\n"
                         read -n 1 -r -p "[Press any key to continue...]" _key
@@ -2572,9 +2563,9 @@ function lvm_creation {
       while true; do
         header_de
         if [[ $encryption_yn =~ ${regex_YES} ]]; then
-          echo -e -n "\nLVM is already enabled for partition ${BLUE_LIGHT}$root_partition${NORMAL}."
-        elif [[ $encryption_yn =~ ${regex_NO} ]]; then
           echo -e -n "\nLVM is already enabled for partition ${BLUE_LIGHT}$encrypted_partition${NORMAL}."
+        elif [[ $encryption_yn =~ ${regex_NO} ]]; then
+          echo -e -n "\nLVM is already enabled for partition ${BLUE_LIGHT}$root_partition${NORMAL}."
         fi
         echo -e -n "\nDo you want to disable it? (y/n): "
         read -r yn
@@ -2634,9 +2625,15 @@ function lvm_creation {
                 if [[ $yn =~ ${regex_YES} ]]; then
                   echo -e -n "\n\nVolume Group will now be created and mounted as: ${BLUE_LIGHT}/dev/mapper/$vg_name${NORMAL}\n\n"
                   if [[ $encryption_yn =~ ${regex_YES} ]]; then
-                    vgcreate "$vg_name" "$encrypted_partition"
+                    if ! vgcreate "$vg_name" "$encrypted_partition"; then
+                      echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                      kill_script
+                    fi
                   elif [[ $encryption_yn =~ ${regex_NO} ]]; then
-                    vgcreate "$vg_name" "$root_partition"
+                    if ! vgcreate "$vg_name" "$root_partition"; then
+                      echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                      kill_script
+                    fi
                   fi
                   echo
                   read -n 1 -r -p "[Press any key to continue...]" _key
@@ -2768,6 +2765,11 @@ function format_create_install_system {
   if [[ -z "$final_drive" ]] || [[ -z "$boot_label" ]] || [[ -z "$root_label" ]]; then
     header_fcis
     echo -e -n "\n${RED_LIGHT}Please complete at least steps 3, 6, 7 and 10 before installing the system.${NORMAL}\n\n"
+    read -n 1 -r -p "[Press any key to continue...]" _key
+    clear
+  elif ! ping -c 1 8.8.8.8 &>/dev/null; then
+    header_fcis
+    echo -e -n "\n${RED_LIGHT}Installation requires internet connection.${NORMAL}\n\n"
     read -n 1 -r -p "[Press any key to continue...]" _key
     clear
   else
@@ -2919,16 +2921,32 @@ function format_create_install_system {
           echo -e -n "\nInstalling base system...\n\n"
           read -n 1 -r -p "[Press any key to continue...]" _key
           echo
-          XBPS_ARCH="$ARCH" xbps-install -Suvy xbps
-          XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi \
-            efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl \
-            util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-nonfree
-          if [[ "$XBPS_ARCH" == "x86_64" ]]; then
-            XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" void-repo-multilib void-repo-multilib-nonfree
+
+          if ! XBPS_ARCH="$ARCH" xbps-install -Suvy xbps; then
+            echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
+            kill_script
           fi
-          XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"
+          if ! XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" base-system btrfs-progs cryptsetup grub-x86_64-efi \
+            efibootmgr lvm2 grub-btrfs grub-btrfs-runit NetworkManager bash-completion nano gcc apparmor git curl \
+            util-linux tar coreutils binutils xtools fzf plocate ictree xkeyboard-config ckbcomp void-repo-nonfree; then
+            echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
+            kill_script
+          fi
+          if [[ "$XBPS_ARCH" == "x86_64" ]]; then
+            if ! XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" void-repo-multilib void-repo-multilib-nonfree; then
+              echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
+              kill_script
+            fi
+          fi
+          if ! XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO"; then
+            echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
+            kill_script
+          fi
           if [[ "$XBPS_ARCH" == "x86_64" ]] && grep -m 1 "model name" /proc/cpuinfo | grep --ignore-case "intel" &>/dev/null; then
-            XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" intel-ucode
+            if ! XBPS_ARCH="$ARCH" xbps-install -Suvy -r /mnt -R "$REPO" intel-ucode; then
+              echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
+              kill_script
+            fi
           fi
 
           echo -e -n "\nMounting folders for chroot...\n"
@@ -2981,7 +2999,8 @@ function format_create_install_system {
           echo
           read -n 1 -r -p "[Press any key to continue...]" _key
           clear
-          break
+
+          outro
 
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
@@ -3005,6 +3024,7 @@ function outro {
 
   read -n 1 -r -p "[Press any key to exit...]" _key
   clear
+  exit 0
 
 }
 
@@ -3185,7 +3205,6 @@ function main {
       clear
       format_create_install_system
       clear
-      break
       ;;
     x)
       kill_script
@@ -3207,5 +3226,3 @@ create_chroot_script
 create_btrfs_map_physical_c
 intro
 main
-outro
-exit 0

@@ -329,26 +329,22 @@ function install_bootloader {
               if [[ $encryption_yn =~ $regex_YES ]]; then
                 echo -e -n "\nGenerating random key to avoid typing password twice at boot...\n\n"
                 dd bs=512 count=4 if=/dev/random of=/boot/volume.key
-                echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n"
-                while true; do
+                echo -e -n "\nRandom key generated, unlocking the encrypted partition...\n\n"
+                if ! cryptsetup luksAddKey "$root_partition" /boot/volume.key; then
+                  echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
+                  kill_script
+                else
+                  chmod 000 /boot/volume.key
+                  chmod -R g-rwx,o-rwx /boot
+                  echo -e -n "\nAdding random key to /etc/crypttab...\n"
+                  echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >>/etc/crypttab
+                  echo -e -n "\nAdding random key to dracut configuration files...\n"
+                  echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >>/etc/dracut.conf.d/10-crypt.conf
+                  echo -e -n "\nGenerating new dracut initramfs...\n\n"
+                  read -n 1 -r -p "[Press any key to continue...]" _key
                   echo
-                  if cryptsetup luksAddKey "$root_partition" /boot/volume.key; then
-                    break
-                  else
-                    echo -e -n "\n${RED_LIGHT}Something went wrong, killing script...${NORMAL}\n\n"
-                    kill_script
-                  fi
-                done
-                chmod 000 /boot/volume.key
-                chmod -R g-rwx,o-rwx /boot
-                echo -e -n "\nAdding random key to /etc/crypttab...\n"
-                echo -e "\n$encrypted_name UUID=$LUKS_UUID /boot/volume.key luks\n" >>/etc/crypttab
-                echo -e -n "\nAdding random key to dracut configuration files...\n"
-                echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >>/etc/dracut.conf.d/10-crypt.conf
-                echo -e -n "\nGenerating new dracut initramfs...\n\n"
-                read -n 1 -r -p "[Press any key to continue...]" _key
-                echo
-                dracut --regenerate-all --force --hostonly
+                  dracut --regenerate-all --force --hostonly
+                fi
               fi
               echo -e -n "\nInstalling GRUB on ${BLUE_LIGHT}/boot/efi${NORMAL} partition with ${BLUE_LIGHT}$bootloader_id${NORMAL} as bootloader-id...\n\n"
               mkdir -p /boot/efi
@@ -393,10 +389,10 @@ function install_bootloader {
   echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
   read -n 1 -r -p "[Press any key to continue...]" _key
   clear
+  header_ib
 
   if [[ $bootloader =~ $regex_GRUB2 ]]; then
     while true; do
-      header_ib
       echo -e -n "\nDo you want to set ${BLUE_LIGHT}${user_keyboard_layout}${NORMAL} keyboard layout also for GRUB2? (y/n): "
       read -r yn
       if [[ $yn =~ $regex_YES ]]; then
