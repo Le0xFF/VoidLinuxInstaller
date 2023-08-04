@@ -200,15 +200,15 @@ EOF
   if [[ "$ARCH" == "x86_64" ]]; then
     header_ic
     echo -e -n "\nSetting the ${BLUE_LIGHT}locale${NORMAL} in /etc/default/libc-locales."
-    echo -e -n "\n\nPress any key to print all the available locales.\n\nKeep in mind the ${BLUE_LIGHT}one line number${NORMAL} you need because that line will be uncommented.\n"
+    echo -e -n "\n\nPress any key to print all the available locales.\n\nPlease remember the ${BLUE_LIGHT}line number${NORMAL} corresponding to the locale you want to enable.\n"
     echo -e -n "\nMove with arrow keys and press \"q\" to exit the list."
     read -n 1 -r _key
     echo
     less --LINE-NUMBERS --RAW-CONTROL-CHARS --no-init /etc/default/libc-locales
     while true; do
-      echo -e -n "\nType only ${BLUE_LIGHT}one line number${NORMAL} you want to uncomment to set your locale and and press [ENTER]: "
+      echo -e -n "\nPlease type the ${BLUE_LIGHT}line number${NORMAL} corresponding to the locale you want to enable and press [ENTER]: "
       read -r user_locale_line_number
-      if [[ -z "$user_locale_line_number" ]]; then
+      if [[ -z "$user_locale_line_number" ]] || [[ "$user_locale_line_number" -lt "11" ]] || [[ "$user_locale_line_number" -gt "499" ]]; then
         echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
         read -n 1 -r -p "[Press any key to continue...]" _key
       else
@@ -1136,13 +1136,27 @@ function finish_chroot {
 
 }
 
+function chroot_shell {
+
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}       ${GREEN_LIGHT}Chroot Bash Shell${NORMAL}       ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
+
+  echo -e -n "\nType \"exit\" anytime to go back to chroot menu.\n\n"
+
+  PS1="${GREEN_DARK}[${NORMAL} ${GREEN_LIGHT}chroot${NORMAL} ${GREEN_DARK}|${NORMAL} ${GREEN_LIGHT}\w${NORMAL} ${GREEN_DARK}]${NORMAL} # " /bin/bash
+
+}
+
 # Main
 
 function header_chroot_main {
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
   echo -e -n "${GREEN_DARK}# VLI #${NORMAL}            ${GREEN_LIGHT}Chroot${NORMAL}             ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
-  echo -e -n "${GREEN_DARK}#######   ${GREEN_LIGHT}Void Linux Installer Menu${NORMAL}   ${GREEN_DARK}#${NORMAL}\n"
+  echo -e -n "${GREEN_DARK}#######${NORMAL}   ${GREEN_LIGHT}Void Linux Installer Menu${NORMAL}   ${GREEN_DARK}#${NORMAL}\n"
   echo -e -n "${GREEN_DARK}#######################################${NORMAL}\n"
 }
 
@@ -1166,6 +1180,10 @@ function chroot_main {
     echo
 
     echo -e -n "\n8) Enable/disable services"
+
+    echo
+
+    echo -e -n "\n9) Open /bin/bash shell"
 
     echo
 
@@ -1213,6 +1231,11 @@ function chroot_main {
     8)
       clear
       enable_disable_services
+      clear
+      ;;
+    9)
+      clear
+      chroot_shell
       clear
       ;;
     q)
