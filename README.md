@@ -95,6 +95,8 @@ bash $HOME/vli.sh
 
 ## How does it work?
 
+The script requires internet connection, because xbps packages must be downloaded for the chroot method to work.
+
 Here is documented how the script works in details. With  It will:
 
 1. prompt the user to eventually change their keyboard layout from a list of all the different available layouts.
@@ -163,6 +165,7 @@ Following the script, at the very end your drive will end up being like the foll
 └─/dev/nvme0n1p2                           259:2    0 942,9G  0 part  
   └─/dev/mapper/<encrypted_name>           254:0    0 942,9G  0 crypt 
     └─/dev/mapper/<vg_name>-<lv_root_name> 254:1    0 942,9G  0 lvm   /.snapshots
+                                                                      /var/log
                                                                       /home
                                                                       /
 ```
