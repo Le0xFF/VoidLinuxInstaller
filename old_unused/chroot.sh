@@ -8,6 +8,13 @@ newuser_yn='n'
 
 # Functions
 
+function press_any_key_to_continue {
+
+  echo -e -n "${BLACK_FG_WHITE_BG}[Press any key to continue...]${NORMAL}"
+  read -n 1 -r _key
+
+}
+
 # Source: https://www.reddit.com/r/voidlinux/comments/jlkv1j/xs_quick_install_tool_for_void_linux/
 function xs {
 
@@ -15,7 +22,7 @@ function xs {
     fzf -m --preview 'xq {1}' --preview-window=right:66%:wrap |
     xargs -ro xi
 
-  read -n 1 -r -p "[Press any key to continue...]" _key
+  press_any_key_to_continue
 
 }
 
@@ -39,7 +46,7 @@ function initial_configuration {
       break
     else
       echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       echo
     fi
   done
@@ -87,12 +94,12 @@ EOF
   echo -e "tmpdir=/tmp" >>/etc/dracut.conf.d/30-tmpfs.conf
 
   echo -e -n "\nGenerating new dracut initramfs...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" _key
+  press_any_key_to_continue
   echo
   dracut --regenerate-all --force --hostonly
 
   echo
-  read -n 1 -r -p "[Press any key to continue...]" _key
+  press_any_key_to_continue
 
   # Set timezone
   clear
@@ -108,11 +115,11 @@ EOF
     read -r user_timezone
     if [[ ! -f /usr/share/zoneinfo/"$user_timezone" ]]; then
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
     else
       sed -i "/#TIMEZONE=/s|.*|TIMEZONE=\"$user_timezone\"|" /etc/rc.conf
       echo -e -n "\n${GREEN_LIGHT}Timezone set to: $user_timezone.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
       break
     fi
@@ -126,11 +133,11 @@ EOF
     sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
     echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
     echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >>/etc/dracut.conf.d/i18n.conf
-    read -n 1 -r -p "[Press any key to continue...]" _key
+    press_any_key_to_continue
     echo
     dracut --regenerate-all --force --hostonly
     echo
-    read -n 1 -r -p "[Press any key to continue...]" _key
+    press_any_key_to_continue
     clear
   else
     echo -e -n "\nSetting ${BLUE_LIGHT}keyboard layout${NORMAL} in /etc/rc.conf.\n\nPress any key to list all the keyboard layouts.\nMove with arrow keys and press \"q\" to exit the list."
@@ -145,17 +152,17 @@ EOF
       read -r user_keyboard_layout
       if [[ -z "$user_keyboard_layout" ]] || ! loadkeys "$user_keyboard_layout" 2>/dev/null; then
         echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" _key
+        press_any_key_to_continue
       else
         sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
         echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n"
         echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
         echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >>/etc/dracut.conf.d/i18n.conf
-        read -n 1 -r -p "[Press any key to continue...]" _key
+        press_any_key_to_continue
         echo
         dracut --regenerate-all --force --hostonly
         echo
-        read -n 1 -r -p "[Press any key to continue...]" _key
+        press_any_key_to_continue
         clear
         break
       fi
@@ -169,7 +176,7 @@ EOF
     read -r hostname
     if [[ -z "$hostname" ]]; then
       echo -e -n "\n${RED_LIGHT}Please enter a valid hostname.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     else
       while true; do
@@ -180,17 +187,17 @@ EOF
           echo "$hostname" >/etc/hostname
           set -o noclobber
           echo -e -n "\n${GREEN_LIGHT}Hostname successfully set.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           clear
           break 2
         elif [[ "$yn" == "n" ]] || [[ "$yn" == "N" ]]; then
           echo -e -n "\n${RED_LIGHT}Please select another hostname.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           clear
           break
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         fi
       done
     fi
@@ -210,7 +217,7 @@ EOF
       read -r user_locale_line_number
       if [[ -z "$user_locale_line_number" ]] || [[ "$user_locale_line_number" -lt "11" ]] || [[ "$user_locale_line_number" -gt "499" ]]; then
         echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" _key
+        press_any_key_to_continue
       else
         while true; do
           user_locale_pre=$(sed -n "${user_locale_line_number}"p /etc/default/libc-locales)
@@ -223,16 +230,16 @@ EOF
             sed -i "$user_locale_line_number s/^#//" /etc/default/libc-locales
             echo -e -n "\nWriting locale ${BLUE_LIGHT}$user_locale${NORMAL} to /etc/locale.conf...\n\n"
             sed -i "/LANG=/s/.*/LANG=$user_locale/" /etc/locale.conf
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
             clear
             break 2
           elif [[ $yn =~ $regex_NO ]]; then
             echo -e -n "\n${RED_LIGHT}Please select another locale.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
             break
           else
             echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
           fi
         done
       fi
@@ -259,7 +266,7 @@ function install_bootloader {
       header_ib
       echo -e -n "\nLUKS version $luks_ot was previously selected.\n${BLUE_LIGHT}EFISTUB${NORMAL} will be used as bootloader.\n\n"
       bootloader="EFISTUB"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       echo
     else
       header_ib
@@ -320,7 +327,7 @@ function install_bootloader {
         read -r bootloader_id
         if [[ -z "$bootloader_id" ]]; then
           echo -e -n "\n${RED_LIGHT}Please enter a valid bootloader-id.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         else
           while true; do
             echo -e -n "\nYou entered: ${BLUE_LIGHT}$bootloader_id${NORMAL}.\n\n"
@@ -341,7 +348,7 @@ function install_bootloader {
                   echo -e -n "\nAdding random key to dracut configuration files...\n"
                   echo -e "install_items+=\" /boot/volume.key /etc/crypttab \"" >>/etc/dracut.conf.d/10-crypt.conf
                   echo -e -n "\nGenerating new dracut initramfs...\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
+                  press_any_key_to_continue
                   echo
                   dracut --regenerate-all --force --hostonly
                 fi
@@ -355,11 +362,11 @@ function install_bootloader {
               break 3
             elif [[ $yn =~ $regex_NO ]]; then
               echo -e -n "\n${RED_LIGHT}Please select another bootloader-id.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
               break
             else
               echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
             fi
           done
         fi
@@ -367,7 +374,7 @@ function install_bootloader {
 
     else
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     fi
 
@@ -387,7 +394,7 @@ function install_bootloader {
   fi
 
   echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" _key
+  press_any_key_to_continue
   clear
   header_ib
 
@@ -473,7 +480,7 @@ End
         break
       else
         echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" _key
+        press_any_key_to_continue
         clear
       fi
     done
@@ -496,7 +503,7 @@ End
   fi
 
   echo
-  read -n 1 -r -p "[Press any key to continue...]" _key
+  press_any_key_to_continue
   clear
 
 }
@@ -551,7 +558,7 @@ function create_swapfile {
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >>/etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           echo
           dracut --regenerate-all --force --hostonly
           if [[ $bootloader =~ $regex_EFISTUB ]]; then
@@ -567,26 +574,26 @@ function create_swapfile {
           fi
           swapoff --all
           echo -e -n "\n${GREEN_LIGHT}Swapfile successfully created and zswap successfully enabled.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           clear
           break 2
 
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         fi
 
       done
 
     elif [[ $yn =~ $regex_NO ]]; then
       echo -e -n "\n${RED_LIGHT}Swapfile will not be created.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
       break
 
     else
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     fi
 
@@ -620,10 +627,10 @@ function create_user {
         read -r newuser
         if [[ -z "$newuser" ]] || [[ $newuser =~ $regex_ROOT ]]; then
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         elif getent passwd "$newuser" &>/dev/null; then
           echo -e -n "\n${RED_LIGHT}User ${newuser} already exists.\nPlease select another username.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           clear
           break
         else
@@ -632,7 +639,7 @@ function create_user {
             read -r yn
             if [[ $yn =~ $regex_NO ]]; then
               echo -e -n "\n${RED_LIGHT}Aborting, please select another name.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
               clear
               break 2
             elif [[ $yn =~ $regex_YES ]]; then
@@ -641,12 +648,12 @@ function create_user {
               echo -e -n "\nutmp, cdrom, optical, mail, storage, scanner, kvm, input, plugdev, users.\n"
               useradd --create-home --groups kmem,wheel,tty,tape,daemon,floppy,disk,lp,dialout,audio,video,utmp,cdrom,optical,mail,storage,scanner,kvm,input,plugdev,users "$newuser"
               echo -e -n "\n${GREEN_LIGHT}User ${newuser} successfully created.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
               newuser_yn="y"
               break 3
             else
               echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
             fi
           done
         fi
@@ -661,7 +668,7 @@ function create_user {
 
     else
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     fi
 
@@ -698,18 +705,18 @@ function change_user_password {
             echo
             if passwd "$user_change_password"; then
               echo -e -n "\n${GREEN_LIGHT}Password successfully changed for user ${user_change_password}.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
               break 3
             else
               echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
               clear
               break 2
             fi
           done
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           clear
         fi
       done
@@ -718,7 +725,7 @@ function change_user_password {
       break
     else
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     fi
   done
@@ -758,23 +765,23 @@ function change_user_shell {
           read -r set_user_shell
           if [[ ! -x "$set_user_shell" ]]; then
             echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
             clear
           else
             echo
             if chsh --shell "$set_user_shell" "$user_change_shell"; then
               echo -e -n "\n${GREEN_LIGHT}Default shell successfully changed.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
             else
               echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
             fi
             clear
             break 3
           fi
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           clear
           break 2
         fi
@@ -784,7 +791,7 @@ function change_user_shell {
       break
     else
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     fi
   done
@@ -812,16 +819,16 @@ function uninstall_packages {
         header_up
         echo -e -n "\nListing all installed packages."
         echo -e -n "\nPress any key to continue and then press \"q\" to exit the list.\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" _key
+        press_any_key_to_continue
         xpkg -m | less --RAW-CONTROL-CHARS --no-init
         echo -e -n "\nPlease enter all the packages you want to uninstall separated by spaces: "
         read -r user_uninstall_packages
         if xbps-remove $user_uninstall_packages; then
           echo -e -n "\n${GREEN_LIGHT}Packages were successfully uninstalled.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         else
           echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         fi
         clear
         break 2
@@ -831,7 +838,7 @@ function uninstall_packages {
       break
     else
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     fi
   done
@@ -870,25 +877,25 @@ function enable_disable_services {
           break
         elif [[ ! -d /etc/sv/"$service_enabler" ]]; then
           echo -e -n "\n${RED_LIGHT}Service $service_enabler does not exist.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           break
         elif [[ -L /etc/runit/runsvdir/default/"$service_enabler" ]]; then
           echo -e -n "\n${RED_LIGHT}Service $service_enabler already enabled.${NORMAL}.\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           break
         elif [[ -z "$service_enabler" ]]; then
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         else
           echo -e -n "\nEnabling service ${BLUE_LIGHT}$service_enabler${NORMAL}...\n"
           if ln -s /etc/sv/"$service_enabler" /etc/runit/runsvdir/default/; then
             echo -e -n "\n${GREEN_LIGHT}Service successfully enabled.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
             clear
             break 2
           else
             echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
           fi
         fi
         ;;
@@ -904,21 +911,21 @@ function enable_disable_services {
           break
         elif [[ ! -L /etc/runit/runsvdir/default/"$service_disabler" ]]; then
           echo -e -n "\n${RED_LIGHT}Service $service_disabler does not exist.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           break
         elif [[ -z "$service_disabler" ]]; then
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
         else
           echo -e -n "\nDisabling service ${BLUE_LIGHT}$service_disabler${NORMAL}...\n"
           if rm -f /etc/runit/runsvdir/default/"$service_disabler"; then
             echo -e -n "\n${GREEN_LIGHT}Service successfully enabled.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
             clear
             break 2
           else
             echo -e -n "\n${RED_LIGHT}Something went wrong, please try again.${NORMAL}\n\n"
-            read -n 1 -r -p "[Press any key to continue...]" _key
+            press_any_key_to_continue
             break
           fi
         fi
@@ -929,7 +936,7 @@ function enable_disable_services {
         ;;
       *)
         echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-        read -n 1 -r -p "[Press any key to continue...]" _key
+        press_any_key_to_continue
         clear
         break
         ;;
@@ -971,10 +978,10 @@ function void_packages {
               break
             elif [[ $void_packages_username =~ $regex_ROOT ]]; then
               echo -e -n "\n${RED_LIGHT}Root user cannot be used to configure Void Packages.${NORMAL}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
             elif ! getent passwd "$void_packages_username" &>/dev/null; then
               echo -e -n "\n${RED_LIGHT}User $void_packages_username do not exists.${RED_LIGHT}\n\n"
-              read -n 1 -r -p "[Press any key to continue...]" _key
+              press_any_key_to_continue
             else
               while true; do
                 clear
@@ -988,7 +995,7 @@ function void_packages {
                   break
                 elif [[ -z "$void_packages_path" ]]; then
                   echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-                  read -n 1 -r -p "[Press any key to continue...]" _key
+                  press_any_key_to_continue
                   clear
                 else
                   while true; do
@@ -996,19 +1003,19 @@ function void_packages {
                       if ! su - "$void_packages_username" --command "mkdir -p $void_packages_path 2> /dev/null"; then
                         echo -e -n "\n${RED_LIGHT}User $void_packages_username cannot create a folder in this directory.${NORMAL}"
                         echo -e -n "\n${RED_LIGHT}Please select another path.${NORMAL}\n\n"
-                        read -n 1 -r -p "[Press any key to continue...]" _key
+                        press_any_key_to_continue
                         break
                       fi
                     else
                       if [[ -n $(ls -A "$void_packages_path") ]]; then
                         echo -e -n "\n${RED_LIGHT}Directory $void_packages_path${NORMAL} is not empty.\nPlease select another path.${NORMAL}\n\n"
-                        read -n 1 -r -p "[Press any key to continue...]" _key
+                        press_any_key_to_continue
                         break
                       fi
                       if [[ $(stat --dereference --format="%U" "$void_packages_path") != "$void_packages_username" ]]; then
                         echo -e -n "\n${RED_LIGHT}User $void_packages_username doesn't have write permission in this directory.${NORMAL}\n"
                         echo -e- n "\n${RED_LIGHT}Please select another path.${NORMAL}\n\n"
-                        read -n 1 -r -p "[Press any key to continue...]" _key
+                        press_any_key_to_continue
                         break
                       fi
                     fi
@@ -1020,7 +1027,7 @@ function void_packages {
                       if [[ -z "$(ls -A $void_packages_path)" ]]; then
                         rm -rf "$void_packages_path"
                       fi
-                      read -n 1 -r -p "[Press any key to continue...]" _key
+                      press_any_key_to_continue
                       clear
                       break
                     elif [[ $yn =~ $regex_YES ]]; then
@@ -1051,7 +1058,7 @@ function void_packages {
                               break 2
                             else
                               echo -e -n "\n\n${RED_LIGHT}Please enter a valid public repository url.${NORMAL}\n\n"
-                              read -n 1 -r -p "[Press any key to continue...]" _key
+                              press_any_key_to_continue
                               break
                             fi
                           done
@@ -1060,7 +1067,7 @@ function void_packages {
                           break 2
                         else
                           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-                          read -n 1 -r -p "[Press any key to continue...]" _key
+                          press_any_key_to_continue
                         fi
                       done
                       echo -e -n "\nSwitching to user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n\n"
@@ -1071,12 +1078,12 @@ echo "XBPS_ALLOW_RESTRICTED=yes" >> "$void_packages_path"/etc/conf
 EOSU
                       echo -e -n "\nLogging out user ${BLUE_LIGHT}$void_packages_username${NORMAL}...\n"
                       echo -e -n "\n${GREEN_LIGHT}Void Packages successfully cloned and configured.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" _key
+                      press_any_key_to_continue
                       clear
                       break 4
                     else
                       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-                      read -n 1 -r -p "[Press any key to continue...]" _key
+                      press_any_key_to_continue
                     fi
                   done
                 fi
@@ -1090,7 +1097,7 @@ EOSU
 
         else
           echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-          read -n 1 -r -p "[Press any key to continue...]" _key
+          press_any_key_to_continue
           clear
         fi
 
@@ -1099,14 +1106,14 @@ EOSU
     elif [[ "$newuser_yn" == "n" ]]; then
       header_vp
       echo -e -n "\n${RED_LIGHT}Please add at least one non-root user to configure additional Void Packages.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
     fi
 
   else
     header_vp
     echo -e -n "\n${RED_LIGHT}No internet connection available.${NORMAL}\n\n"
-    read -n 1 -r -p "[Press any key to continue...]" _key
+    press_any_key_to_continue
     clear
   fi
 
@@ -1126,12 +1133,12 @@ function finish_chroot {
 
   header_fc
   echo -e -n "\nReconfiguring every package...\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" _key
+  press_any_key_to_continue
   echo
   xbps-reconfigure -fa
 
   echo -e -n "\n${GREEN_LIGHT}Everything's done, exiting chroot...${NORMAL}\n\n"
-  read -n 1 -r -p "[Press any key to continue...]" _key
+  press_any_key_to_continue
   clear
 
 }
@@ -1245,7 +1252,7 @@ function chroot_main {
       ;;
     *)
       echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
-      read -n 1 -r -p "[Press any key to continue...]" _key
+      press_any_key_to_continue
       clear
       ;;
     esac
