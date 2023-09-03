@@ -301,6 +301,9 @@ EOF
     done
   fi
 
+  # Set console font to avoid kdfontop.c errors
+  sed -i "/#FONT/s/^#//" /etc/rc.conf
+
   # Set hostname
   while true; do
     header_ic
