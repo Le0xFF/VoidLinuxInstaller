@@ -546,14 +546,10 @@ function create_swapfile {
           fi
           echo -e -n "\nA swapfile of ${BLUE_LIGHT}${swap_size}GB${NORMAL} will be created in ${BLUE_LIGHT}/var/swap/${NORMAL} btrfs subvolume...\n\n"
           btrfs subvolume create /var/swap
-          truncate -s 0 /var/swap/swapfile
-          chattr +C /var/swap/swapfile
-          chmod 600 /var/swap/swapfile
-          dd if=/dev/zero of=/var/swap/swapfile bs=100M count="$((${swap_size} * 10))" status=progress
+          btrfs filesystem mkswapfile /var/swap/swapfile --size "${swap_size}"G
           mkswap --label SwapFile /var/swap/swapfile
           swapon /var/swap/swapfile
-          gcc -O2 "$HOME"/btrfs_map_physical.c -o "$HOME"/btrfs_map_physical
-          RESUME_OFFSET=$(($("$HOME"/btrfs_map_physical /var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}') / $(getconf PAGESIZE)))
+          RESUME_OFFSET=$(btrfs inspect-internal map-swapfile -r /var/swap/swapfile)
           if [[ $bootloader =~ $regex_EFISTUB ]]; then
             sed -i "/OPTIONS=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
           elif [[ $bootloader =~ $regex_GRUB2 ]]; then
