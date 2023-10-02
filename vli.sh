@@ -13,9 +13,16 @@
 trap "kill_script" INT TERM QUIT
 
 # Variables
-
-drive_partition_selection='0'
+## Can be manually modified
 user_drive=''
+boot_partition=''
+root_partition=''
+boot_label=''
+root_label=''
+current_xkeyboard_layout=''
+user_keyboard_layout=''
+## Better not change them
+drive_partition_selection='0'
 encryption_yn='n'
 luks_ot=''
 encrypted_name=''
@@ -25,13 +32,7 @@ vg_name=''
 lv_root_name=''
 lvm_partition=''
 final_drive=''
-boot_partition=''
-root_partition=''
-boot_label=''
-root_label=''
 hdd_ssd=''
-current_xkeyboard_layout=''
-user_keyboard_layout=''
 
 # Constants
 
