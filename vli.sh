@@ -414,15 +414,16 @@ function install_bootloader {
       rm -rf /TEMPBOOT
       echo -e -n "\nSetting correct options in /etc/default/efibootmgr-kernel-hook...\n"
       sed -i "/MODIFY_EFI_ENTRIES=0/s/0/1/" /etc/default/efibootmgr-kernel-hook
+
       if [[ $encryption_yn =~ $regex_YES ]]; then
-        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name\"/" /etc/default/efibootmgr-kernel-hook
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 fbcon=nodefer rd.auto=1 rd.luks.name=$LUKS_UUID=$encrypted_name\"/" /etc/default/efibootmgr-kernel-hook
         if [[ "$hdd_ssd" == "ssd" ]]; then
           sed -i "/OPTIONS=/s/\"$/ rd.luks.allow-discards=$LUKS_UUID&/" /etc/default/efibootmgr-kernel-hook
         fi
       elif { [[ $encryption_yn =~ $regex_NO ]]; } && { [[ $lvm_yn =~ $regex_YES ]]; }; then
-        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 rd.auto=1\"/" /etc/default/efibootmgr-kernel-hook
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 fbcon=nodefer rd.auto=1\"/" /etc/default/efibootmgr-kernel-hook
       else
-        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4\"/" /etc/default/efibootmgr-kernel-hook
+        sed -i "/# OPTIONS=/s/.*/OPTIONS=\"loglevel=4 fbcon=nodefer\"/" /etc/default/efibootmgr-kernel-hook
       fi
       sed -i "/# DISK=/s|.*|DISK=\"\$(lsblk -pd -no pkname \$(findmnt -enr -o SOURCE -M /boot))\"|" /etc/default/efibootmgr-kernel-hook
       sed -i "/# PART=/s_.*_PART=\"\$(lsblk -pd -no pkname \$(findmnt -enr -o SOURCE -M /boot) | grep --color=never -Eo \\\\\"[0-9]+\$\\\\\")\"_" /etc/default/efibootmgr-kernel-hook
