@@ -289,7 +289,7 @@ EOF
         sed -i "/#KEYMAP=/s/.*/KEYMAP=\"$user_keyboard_layout\"/" /etc/rc.conf
         echo -e -n "\nKeyboard layout set to: ${BLUE_LIGHT}$user_keyboard_layout${NORMAL}.\n"
         echo -e -n "\nSetting keymap in dracut configuration and regenerating initramfs...\n\n"
-        echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\ni18n_install_all=\"no\"\"" >>/etc/dracut.conf.d/i18n.conf
+        echo -e "i18n_vars=\"/etc/rc.conf:KEYMAP\"\ni18n_install_all=\"no\"" >>/etc/dracut.conf.d/i18n.conf
         press_any_key_to_continue
         echo
         dracut --regenerate-all --force --hostonly
@@ -300,9 +300,6 @@ EOF
       fi
     done
   fi
-
-  # Set console font to avoid kdfontop.c errors
-  sed -i "/#FONT=/s/^#//" /etc/rc.conf
 
   # Set hostname
   while true; do
@@ -441,6 +438,11 @@ function install_bootloader {
 
     elif [[ $bootloader =~ $regex_GRUB2 ]]; then
       echo -e -n "\nBootloader selected: ${BLUE_LIGHT}$bootloader${NORMAL}.\n"
+
+      # Fix kdfontop.c error
+      # https://github.com/torvalds/linux/blob/master/Documentation/fb/fbcon.rst
+      sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ fbcon=nodefer&/" /etc/default/grub
+
       if [[ $encryption_yn =~ $regex_YES ]]; then
         echo -e -n "\nEnabling CRYPTODISK in GRUB...\n"
         echo -e -n "\nGRUB_ENABLE_CRYPTODISK=y\n" >>/etc/default/grub
