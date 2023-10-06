@@ -679,13 +679,14 @@ function create_swapfile {
           btrfs filesystem mkswapfile /var/swap/swapfile --size "${swap_size}"G
           mkswap --label SwapFile /var/swap/swapfile
           swapon /var/swap/swapfile
+          RESUME_UUID=$(findmnt -no UUID -T /var/swap/swapfile)
           RESUME_OFFSET=$(btrfs inspect-internal map-swapfile -r /var/swap/swapfile)
           if [[ $bootloader =~ $regex_EFISTUB ]]; then
-            sed -i "/OPTIONS=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
+            sed -i "/OPTIONS=/s/\"$/ resume=UUID=$RESUME_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
           elif [[ $bootloader =~ $regex_GRUB2 ]]; then
-            sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
+            sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$RESUME_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
           fi
-          echo -e "\n# SwapFile\n/var/swap/swapfile none swap defaults 0 0" >>/etc/fstab
+          echo -e "\n# SwapFile\n/var/swap/swapfile none swap sw 0 0" >>/etc/fstab
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >>/etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
