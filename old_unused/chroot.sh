@@ -545,19 +545,19 @@ function create_swapfile {
           if [[ -z "$swap_size" ]]; then
             swap_size=$ram_size
           fi
-          echo -e -n "\nA swapfile of ${BLUE_LIGHT}${swap_size}GB${NORMAL} will be created in ${BLUE_LIGHT}/var/swap/${NORMAL} btrfs subvolume...\n\n"
-          btrfs subvolume create /var/swap
-          btrfs filesystem mkswapfile /var/swap/swapfile --size "${swap_size}"G
-          mkswap --label SwapFile /var/swap/swapfile
-          swapon /var/swap/swapfile
-          RESUME_UUID=$(findmnt -no UUID -T /var/swap/swapfile)
-          RESUME_OFFSET=$(btrfs inspect-internal map-swapfile -r /var/swap/swapfile)
+          echo -e -n "\nA swapfile of ${BLUE_LIGHT}${swap_size}GB${NORMAL} will be created in ${BLUE_LIGHT}/swap/${NORMAL} btrfs subvolume...\n\n"
+          btrfs filesystem mkswapfile /swap/swapfile --size "${swap_size}"G
+          mkswap --label SwapFile /swap/swapfile
+          swapon /swap/swapfile
+          RESUME_UUID=$(findmnt -no UUID -T /swap/swapfile)
+          RESUME_OFFSET=$(btrfs inspect-internal map-swapfile -r /swap/swapfile)
           if [[ $bootloader =~ $regex_EFISTUB ]]; then
             sed -i "/OPTIONS=/s/\"$/ resume=UUID=$RESUME_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/efibootmgr-kernel-hook
           elif [[ $bootloader =~ $regex_GRUB2 ]]; then
             sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$RESUME_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
           fi
-          echo -e "\n# SwapFile\n/var/swap/swapfile none swap sw 0 0" >>/etc/fstab
+          echo -e -n "\n# Swap Subvolume\nUUID=$ROOT_UUID /swap btrfs $BTRFS_OPT,subvol=@swap 0 2\n" >>/etc/fstab
+          echo -e -n "\n# SwapFile\n/swap/swapfile none swap sw 0 0\n" >>/etc/fstab
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >>/etc/dracut.conf.d/40-add_zswap_drivers.conf
           echo -e -n "\nRegenerating dracut initramfs...\n\n"
