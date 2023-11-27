@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Author: Le0xFF
+# Author:      Le0xFF
 # Script name: vli.sh
 # Github repo: https://github.com/Le0xFF/VoidLinuxInstaller
 #
@@ -43,6 +43,7 @@ regex_BACK="[Bb][Aa][Cc][Kk]"
 regex_EFISTUB="[Ee][Ff][Ii][Ss][Tt][Uu][Bb]"
 regex_GRUB2="[Gg][Rr][Uu][Bb][2]"
 regex_ROOT="[Rr][Oo][Oo][Tt]"
+regex_FAT32="[Vv][Ff][Aa][Tt]"
 void_packages_repo="https://github.com/void-linux/void-packages.git"
 
 # Colours
@@ -197,17 +198,17 @@ function initial_configuration {
   cat <<EOF >>/etc/fstab
 
 # Root subvolume
-UUID=$ROOT_UUID / btrfs $BTRFS_OPT,subvol=@ 0 1
+UUID=$ROOT_UUID / $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@ 0 1
 
 # Home subvolume
-UUID=$ROOT_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
+UUID=$ROOT_UUID /home $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@home 0 2
 
 # Snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
-#UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
+#UUID=$ROOT_UUID /.snapshots $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@snapshots 0 2
 
 # Some applications don't like to have /var/log folders as read only.
 # Log folders, to allow booting snapshots with rd.live.overlay.overlayfs=1
-UUID=$ROOT_UUID /var/log btrfs $BTRFS_OPT,subvol=@/var/log 0 2
+UUID=$ROOT_UUID /var/log $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@/var/log 0 2
 
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
@@ -523,9 +524,9 @@ function install_bootloader {
   export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
   echo -e -n "\nWriting EFI partition to /etc/fstab...\n"
   if [[ $bootloader =~ $regex_EFISTUB ]]; then
-    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot vfat defaults,noatime 0 2" >>/etc/fstab
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot $(blkid --match-tag TYPE --output value "$boot_partition") defaults,noatime 0 2" >>/etc/fstab
   elif [[ $bootloader =~ $regex_GRUB2 ]]; then
-    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot/efi vfat defaults,noatime 0 2" >>/etc/fstab
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot/efi $(blkid --match-tag TYPE --output value "$boot_partition") defaults,noatime 0 2" >>/etc/fstab
   fi
 
   echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
@@ -685,7 +686,7 @@ function create_swapfile {
           elif [[ $bootloader =~ $regex_GRUB2 ]]; then
             sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$RESUME_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
           fi
-          echo -e -n "\n# Swap Subvolume\nUUID=$ROOT_UUID /swap btrfs $BTRFS_OPT,subvol=@swap 0 2\n" >>/etc/fstab
+          echo -e -n "\n# Swap Subvolume\nUUID=$ROOT_UUID /swap $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@swap 0 2\n" >>/etc/fstab
           echo -e -n "\n# SwapFile\n/swap/swapfile none swap sw 0 0\n" >>/etc/fstab
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >>/etc/dracut.conf.d/40-add_zswap_drivers.conf
@@ -1628,8 +1629,8 @@ function select_destination {
           echo -e -n "\nROOT partition selected as destination: ${BLUE_LIGHT}$root_partition${NORMAL}\n"
         fi
         while true; do
-          echo -e -n "\n${RED_LIGHT}DESTINATION WILL BE WIPED AND PARTITIONED, EVERY DATA INSIDE WILL BE LOST.${NORMAL}\n"
-          echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
+          echo -e -n "\nPartitions can be formatted later in another step, ONLY IF user decides to do it.\n"
+          echo -e -n "Are you sure you want to continue with the selected drive? (y/n):${NORMAL} "
           read -r yn
 
           if [[ $yn =~ ${regex_NO} ]]; then
@@ -2156,7 +2157,7 @@ function lvm_creation {
                   echo -e -n "\nLogical Volume ${BLUE_LIGHT}$lv_root_name${NORMAL} will now be created.\n\n"
                   if lvcreate --name "$lv_root_name" -l +100%FREE "$vg_name"; then
                     echo
-                    read -n 1 -r -p "[Press any key to continue...]" _key
+                    press_any_key_to_continue
                     lvm_partition=/dev/mapper/"$vg_name"-"$lv_root_name"
                     clear
                     break 3
@@ -2264,6 +2265,7 @@ function format_create_install_system {
       while true; do
         header_fcis
         echo -e -n "\n${RED_LIGHT}BY SELECTING YES, EVERYTHING WILL BE FORMATTED, EVERY DATA WILL BE LOST.${NORMAL}\n"
+        echo -e -n "\n${RED_LIGHT}You can later choose if you want to format the EFI partition or not.${NORMAL}\n"
         echo -e -n "${RED_LIGHT}Are you sure you want to continue? (y/n):${NORMAL} "
         read -r yn
 
@@ -2272,26 +2274,47 @@ function format_create_install_system {
           break
         elif [[ $yn =~ ${regex_YES} ]]; then
 
-          # Format partition
-          clear
-          header_fcis
-          echo -e -n "\nFormatting ${BLUE_LIGHT}EFI partition${NORMAL} as ${BLUE_LIGHT}FAT32${NORMAL}...\n\n"
-          if grep -q "$boot_partition" /proc/mounts; then
-            echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
-            cd "$HOME"
-            umount --recursive "$(findmnt "$boot_partition" | awk -F " " 'FNR == 2 {print $1}')"
-            echo -e -n "\nDrive unmounted successfully.\n\n"
-            press_any_key_to_continue
-          fi
-          if mkfs.vfat -n "$boot_label" -F 32 "$boot_partition"; then
-            sync
-            echo -e -n "\n${GREEN_LIGHT}EFI partition successfully formatted.${NORMAL}\n\n"
-            press_any_key_to_continue
-          else
-            echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
-            kill_script
-          fi
+          # Format EFI partition
+          while true; do
+            clear
+            header_fcis
+            echo -e -n "\nDo you want to format the ${BLUE_LIGHT}EFI partition${NORMAL} as ${BLUE_LIGHT}FAT32${NORMAL}? (y/n): "
+            read -r yn
+            if [[ $yn =~ ${regex_NO} ]]; then
+              if [[ $(blkid --match-tag TYPE --output value "$boot_partition") =~ ${regex_FAT32} ]] ; then
+                echo -e -n "\nEFI partition will not be formatted.\n\n"
+                press_any_key_to_continue
+              else
+                echo -e -n "\n${RED_LIGHT}EFI partition $boot_partition is not a FAT32 (vfat) filesystem.${NORMAL}"
+                echo -e -n "\n${RED_LIGHT}Installer will continue but this could lead to an unbootable system.${NORMAL}\n\n"
+                press_any_key_to_continue
+                break
+              fi
+            elif [[ $yn =~ ${regex_YES} ]]; then
+              echo -e -n "\nFormatting ${BLUE_LIGHT}EFI partition${NORMAL} as ${BLUE_LIGHT}FAT32${NORMAL}...\n\n"
+              if grep -q "$boot_partition" /proc/mounts; then
+                echo -e -n "\nPartition already mounted.\nChanging directory to $HOME and unmounting it before formatting...\n"
+                cd "$HOME"
+                umount --recursive "$(findmnt "$boot_partition" | awk -F " " 'FNR == 2 {print $1}')"
+                echo -e -n "\nDrive unmounted successfully.\n\n"
+                press_any_key_to_continue
+              fi
+              if mkfs.vfat -n "$boot_label" -F 32 "$boot_partition"; then
+                sync
+                echo -e -n "\n${GREEN_LIGHT}EFI partition successfully formatted.${NORMAL}\n\n"
+                press_any_key_to_continue
+                break
+              else
+                echo -e -n "\n${RED_LIGHT}Something went wrong, exiting...${NORMAL}\n\n"
+                kill_script
+              fi
+            else
+              echo -e -n "\n${RED_LIGHT}Not a valid input.${NORMAL}\n\n"
+              press_any_key_to_continue
+            fi
+          done
 
+          # Format ROOT partition
           clear
           header_fcis
           echo -e -n "\nRoot partition will be formatted as ${BLUE_LIGHT}BTRFS${NORMAL}...\n\n"

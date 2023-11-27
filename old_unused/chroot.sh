@@ -68,17 +68,17 @@ function initial_configuration {
   cat <<EOF >>/etc/fstab
 
 # Root subvolume
-UUID=$ROOT_UUID / btrfs $BTRFS_OPT,subvol=@ 0 1
+UUID=$ROOT_UUID / $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@ 0 1
 
 # Home subvolume
-UUID=$ROOT_UUID /home btrfs $BTRFS_OPT,subvol=@home 0 2
+UUID=$ROOT_UUID /home $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@home 0 2
 
 # Snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
-#UUID=$ROOT_UUID /.snapshots btrfs $BTRFS_OPT,subvol=@snapshots 0 2
+#UUID=$ROOT_UUID /.snapshots $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@snapshots 0 2
 
 # Some applications don't like to have /var/log folders as read only.
 # Log folders, to allow booting snapshots with rd.live.overlay.overlayfs=1
-UUID=$ROOT_UUID /var/log btrfs $BTRFS_OPT,subvol=@/var/log 0 2
+UUID=$ROOT_UUID /var/log $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@/var/log 0 2
 
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
@@ -394,9 +394,9 @@ function install_bootloader {
   export UEFI_UUID=$(blkid -s UUID -o value "$boot_partition")
   echo -e -n "\nWriting EFI partition to /etc/fstab...\n"
   if [[ $bootloader =~ $regex_EFISTUB ]]; then
-    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot vfat defaults,noatime 0 2" >>/etc/fstab
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot $(blkid --match-tag TYPE --output value "$boot_partition") defaults,noatime 0 2" >>/etc/fstab
   elif [[ $bootloader =~ $regex_GRUB2 ]]; then
-    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot/efi vfat defaults,noatime 0 2" >>/etc/fstab
+    echo -e "\n# EFI partition\nUUID=$UEFI_UUID /boot/efi $(blkid --match-tag TYPE --output value "$boot_partition") defaults,noatime 0 2" >>/etc/fstab
   fi
 
   echo -e -n "\nBootloader ${BLUE_LIGHT}$bootloader${NORMAL} successfully installed.\n\n"
@@ -556,7 +556,7 @@ function create_swapfile {
           elif [[ $bootloader =~ $regex_GRUB2 ]]; then
             sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$RESUME_UUID resume_offset=$RESUME_OFFSET&/" /etc/default/grub
           fi
-          echo -e -n "\n# Swap Subvolume\nUUID=$ROOT_UUID /swap btrfs $BTRFS_OPT,subvol=@swap 0 2\n" >>/etc/fstab
+          echo -e -n "\n# Swap Subvolume\nUUID=$ROOT_UUID /swap $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@swap 0 2\n" >>/etc/fstab
           echo -e -n "\n# SwapFile\n/swap/swapfile none swap sw 0 0\n" >>/etc/fstab
           echo -e -n "\nEnabling zswap...\n"
           echo "add_drivers+=\" lz4hc lz4hc_compress z3fold \"" >>/etc/dracut.conf.d/40-add_zswap_drivers.conf
