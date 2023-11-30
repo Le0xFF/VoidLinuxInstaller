@@ -126,6 +126,7 @@ Here is documented how the script works in details. With  It will:
         * `/@`
         * `/@home`
         * `/@snapshots`
+        * `/@swap`
         * `/var/cache/xbps`
         * `/var/tmp`
         * `/var/log`
@@ -199,9 +200,7 @@ In case a wrong password was put in GRUB2, a shell will be dropped.
 
 In order to boot the system, the encrypted partition have to be unlocked and the right GRUB configuration file must be loaded.
 
-### GRUB2 standard keyboard layout
-
-If a custom keyboard layout was **not** choosen, the following commands must be put in GRUB2 shell:
+This can be done with the following commands, regardless of whether a custom keyboard layout in GRUB was set or not:
 
 ``` bash
 # unlock all the encrypted partitions
@@ -212,9 +211,9 @@ insmod normal
 normal
 ```
 
-### GRUB2 custom keyboard layout
+### Alternative method
 
-If a custom keyboard layout was choosen, the following commands must be put in GRUB2 shell:
+The following method is a little more complicated and should not be used, even if it works as well. It's kept only for archive purpose.
 
 ``` bash
 # unlock all the encrypted partitions
