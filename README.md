@@ -48,6 +48,7 @@ Pull requests are absolutely welcome!
 
 ![ScriptScreenshot_0](imgs/ScriptScreenshot_0.png)
 ![ScriptScreenshot_1](imgs/ScriptScreenshot_1.png)
+![ScriptScreenshot_2](imgs/ScriptScreenshot_2.png)
 
 <br>
 
