@@ -198,17 +198,17 @@ function initial_configuration {
   cat <<EOF >>/etc/fstab
 
 # Root subvolume
-UUID=$ROOT_UUID / $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@ 0 1
+UUID=$ROOT_UUID / $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@ 0 0
 
 # Home subvolume
-UUID=$ROOT_UUID /home $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@home 0 2
+UUID=$ROOT_UUID /home $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@home 0 0
 
 # Snapshots subvolume, uncomment the following line after creating a config for root [/] in snapper
-#UUID=$ROOT_UUID /.snapshots $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@snapshots 0 2
+#UUID=$ROOT_UUID /.snapshots $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@snapshots 0 0
 
 # Some applications don't like to have /var/log folders as read only.
 # Log folders, to allow booting snapshots with rd.live.overlay.overlayfs=1
-UUID=$ROOT_UUID /var/log $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@/var/log 0 2
+UUID=$ROOT_UUID /var/log $(blkid --match-tag TYPE --output value "$final_drive") $BTRFS_OPT,subvol=@/var/log 0 0
 
 # TMPfs
 tmpfs /tmp tmpfs defaults,noatime,mode=1777 0 0
