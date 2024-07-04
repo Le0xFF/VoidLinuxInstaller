@@ -2371,9 +2371,9 @@ function format_create_install_system {
           echo -e -n "\nCreating BTRFS subvolumes and mounting them to /mnt...\n"
 
           if [[ "$hdd_ssd" == "ssd" ]]; then
-            export BTRFS_OPT=rw,noatime,discard=async,compress-force=zstd,space_cache=v2,commit=120
+            export BTRFS_OPT=rw,defaults,noatime,compress=zstd
           elif [[ "$hdd_ssd" == "hdd" ]]; then
-            export BTRFS_OPT=rw,noatime,compress-force=zstd,space_cache=v2,commit=120
+            export BTRFS_OPT=rw,defaults,noatime,compress=zstd
           fi
           mount -o "$BTRFS_OPT" "$final_drive" /mnt
           btrfs subvolume create /mnt/@
